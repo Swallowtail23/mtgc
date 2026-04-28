@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.82
-Date:        24/12/25
+Version:     1.83
+Date:        28/04/26
 Name:        ajaxdeckfragments_lib.php
 Purpose:     Fragment rendering helpers for deck detail AJAX updates.
 Notes:       -
@@ -11,7 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-function deckdetailFragmentRegistry()
+function deckdetailFragmentRegistry(): array
 {
     return [
         [
@@ -83,7 +83,7 @@ function deckdetailFragmentRegistry()
     ];
 }
 
-function deckdetailFragmentMap($fragmentRegistry = null)
+function deckdetailFragmentMap(?array $fragmentRegistry = null): array
 {
     $fragmentRegistry = $fragmentRegistry ?? deckdetailFragmentRegistry();
     $fragmentMap = [];
@@ -93,7 +93,7 @@ function deckdetailFragmentMap($fragmentRegistry = null)
     return $fragmentMap;
 }
 
-function deckdetailDefaultFragments($fragmentRegistry = null)
+function deckdetailDefaultFragments(?array $fragmentRegistry = null): array
 {
     $fragmentRegistry = $fragmentRegistry ?? deckdetailFragmentRegistry();
     $defaults = [];
@@ -105,7 +105,7 @@ function deckdetailDefaultFragments($fragmentRegistry = null)
     return $defaults;
 }
 
-function deckdetailFragmentTargets($fragmentRegistry = null)
+function deckdetailFragmentTargets(?array $fragmentRegistry = null): array
 {
     $fragmentRegistry = $fragmentRegistry ?? deckdetailFragmentRegistry();
     $targets = [];
@@ -115,7 +115,7 @@ function deckdetailFragmentTargets($fragmentRegistry = null)
     return $targets;
 }
 
-function deckdetailRenderFragments($requestedFragments, $fragmentMapOverride = null)
+function deckdetailRenderFragments(array $requestedFragments, ?array $fragmentMapOverride = null): array
 {
     if (isset($GLOBALS) && is_array($GLOBALS)) :
         foreach ($GLOBALS as $key => $value) :
@@ -152,7 +152,7 @@ function deckdetailRenderFragments($requestedFragments, $fragmentMapOverride = n
     return $fragments;
 }
 
-function deckdetailBuildFragmentResponse($requestedFragments, $fragmentMapOverride = null)
+function deckdetailBuildFragmentResponse(array $requestedFragments, ?array $fragmentMapOverride = null): array
 {
     return [
         'success' => true,

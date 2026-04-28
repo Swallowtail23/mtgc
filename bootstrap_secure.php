@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.21
-Date:        13/01/26
+Version:     1.22
+Date:        28/04/26
 Name:        bootstrap_secure.php
 Purpose:     Secure bootstrap wrapper that runs session setup.
 Notes:       -
@@ -24,7 +24,7 @@ endif;
 $ctx = require APP_ROOT . '/bootstrap.php';
 
 if (!function_exists('mtgSecurePageSetup')) :
-    function mtgSecurePageSetup($db, AppConfig $appConfig): array
+    function mtgSecurePageSetup(\mysqli $db, AppConfig $appConfig): array
     {
         if (!isset($_SESSION['user']) or !$_SESSION["logged"]) :
             // capture entered URL

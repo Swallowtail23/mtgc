@@ -34,32 +34,32 @@ class PasswordCheckStub extends PasswordCheckReal
     public $sentLinks = [];
     public $statusUpdates = [];
 
-    protected function findUserByEmail($email)
+    protected function findUserByEmail(string $email): ?array
     {
         return $this->users[$email] ?? null;
     }
 
-    protected function ensureResetTable()
+    protected function ensureResetTable(): void
     {
     }
 
-    protected function persistResetToken($email, $tokenHash, $expires)
+    protected function persistResetToken(string $email, string $tokenHash, string $expires): bool
     {
         $this->tokens[$email] = ['token_hash' => $tokenHash, 'expires_at' => $expires];
         return true;
     }
 
-    public function fetchResetRecord($email)
+    public function fetchResetRecord(string $email): ?array
     {
         return $this->tokens[$email] ?? null;
     }
 
-    protected function clearResetRecord($email)
+    protected function clearResetRecord(string $email): void
     {
         unset($this->tokens[$email]);
     }
 
-    protected function clearExpiredResetTokens()
+    protected function clearExpiredResetTokens(): void
     {
         foreach ($this->tokens as $email => $data) {
             if (strtotime($data['expires_at']) < time()) {
@@ -68,13 +68,13 @@ class PasswordCheckStub extends PasswordCheckReal
         }
     }
 
-    protected function updateUserStatus($email, $status)
+    protected function updateUserStatus(string $email, string $status): bool
     {
         $this->statusUpdates[] = ['email' => $email, 'status' => $status];
         return true;
     }
 
-    protected function updateUserPassword($email, $hashedPassword, $setActive = false)
+    protected function updateUserPassword(string $email, string $hashedPassword, bool $setActive = false): bool
     {
         if (!isset($this->users[$email])) {
             return false;
@@ -83,17 +83,17 @@ class PasswordCheckStub extends PasswordCheckReal
         return true;
     }
 
-    protected function getCurrentPasswordHash($email)
+    protected function getCurrentPasswordHash(string $email): ?string
     {
         return $this->users[$email]['password'] ?? null;
     }
 
-    public function sendPasswordChangeNotification($email)
+    public function sendPasswordChangeNotification(string $email): bool
     {
         return true;
     }
 
-    protected function sendResetEmail($email, $link)
+    protected function sendResetEmail(string $email, string $link): bool
     {
         $this->sentLinks[] = ['email' => $email, 'link' => $link];
         return true;

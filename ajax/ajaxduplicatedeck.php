@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.27
-Date:        13/01/26
+Version:     1.28
+Date:        28/04/26
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
 Notes:       -
@@ -137,7 +137,7 @@ else :
 endif;
 
 // Function to echo JSON response and exit
-function returnResponse(array $response)
+function returnResponse(array $response): void
 {
     AjaxResponse::json($response, http_response_code());
 }

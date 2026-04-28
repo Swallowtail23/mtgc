@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.17
-Date:        04/02/26
+Version:     2.20
+Date:        28/04/26
 Name:        deckdetail_decklist.php
 Purpose:     Deck detail main/sideboard list fragment.
 Notes:       -
@@ -14,6 +14,50 @@ To do:       -
 use MTG\Cards\CardUtils;
 use MTG\Cards\DeckManager;
 use MTG\Cards\ImageManager;
+
+if (
+    !isset($result, $sideresult, $db, $appConfig, $gameRules, $msg, $userEmail)
+    || !($result instanceof \mysqli_result)
+    || !($sideresult instanceof \mysqli_result)
+) :
+    echo '<div id="decklist-fragment"></div>';
+    return;
+endif;
+
+$decktype = $decktype ?? '';
+$deckNumber = $deckNumber ?? 0;
+if (!isset($deck_legality_list) || !is_array($deck_legality_list)) :
+    $deck_legality_list = [];
+endif;
+$red_font_tag = $red_font_tag ?? '';
+$firebrick_font_tag = $firebrick_font_tag ?? '';
+$illegal_tag = '';
+$deckcardname = '';
+$illegal_cards = $illegal_cards ?? false;
+$deck_colour_mismatch = $deck_colour_mismatch ?? false;
+$cdr_colours_raw = $cdr_colours_raw ?? '';
+$uniquecard_ref = $uniquecard_ref ?? [];
+$total = $total ?? 0;
+$sidetotal = $sidetotal ?? 0;
+$cmctotal = $cmctotal ?? 0;
+$cmc = $cmc ?? array_fill(0, 7, 0);
+$creatures = $creatures ?? 0;
+$instantsorcery = $instantsorcery ?? 0;
+$other = $other ?? 0;
+$lands = $lands ?? 0;
+
+$deckdetailCardLegality = function (array $deckLegalityList, string $cardId): ?string {
+    foreach ($deckLegalityList as $deckLegality) :
+        if (!is_array($deckLegality)) :
+            continue;
+        endif;
+        if ((string) ($deckLegality['id'] ?? '') === $cardId) :
+            return isset($deckLegality['legality']) ? (string) $deckLegality['legality'] : null;
+        endif;
+    endforeach;
+
+    return null;
+};
 
 $rulesAnyQuantity = $gameRules->getArray('any_quantity');
 $rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
@@ -144,19 +188,14 @@ endif;
                                     $imageUrl = $imageFunction['front'];
                                 endif;
                                 $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
-                                if ($deck_legality_list != '') :
+                                if ($deck_legality_list !== []) :
                                     $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
-                                    $index = array_search("$cardId", array_column($deck_legality_list, 'id'));
-                                    if ($index !== false) :
-                                        $card_legal = $deck_legality_list[$index]['legality'];
-                                        if ($card_legal === 'legal' or $card_legal === null) :
-                                            $illegal_tag = '';
-                                        else :
+                                    $card_legal = $deckdetailCardLegality($deck_legality_list, (string) $cardId);
+                                    if ($card_legal === 'legal' or $card_legal === null) :
+                                        $illegal_tag = '';
+                                    else :
                                             $msg->logMessage('[DEBUG]', "Card not legal in this format");
                                             $illegal_cards = true;
-                                        endif;
-                                    else :
-                                        $illegal_tag = '';
                                     endif;
                                 else :
                                     $illegal_tag = '';
@@ -330,19 +369,14 @@ endif;
                                         $imageUrl = $imageFunction['front'];
                                     endif;
                                     $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
-                                    if ($deck_legality_list != '') :
+                                    if ($deck_legality_list !== []) :
                                         $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
-                                        $index = array_search("$cardId", array_column($deck_legality_list, 'id'));
-                                        if ($index !== false) :
-                                            $card_legal = $deck_legality_list[$index]['legality'];
-                                            if ($card_legal === 'legal' or $card_legal === null) :
-                                                $illegal_tag = '';
-                                            else :
+                                        $card_legal = $deckdetailCardLegality($deck_legality_list, (string) $cardId);
+                                        if ($card_legal === 'legal' or $card_legal === null) :
+                                            $illegal_tag = '';
+                                        else :
                                                 $msg->logMessage('[DEBUG]', "Card not legal in this format");
                                                 $illegal_cards = true;
-                                            endif;
-                                        else :
-                                            $illegal_tag = '';
                                         endif;
                                     else :
                                         $illegal_tag = '';
@@ -551,19 +585,14 @@ endif;
                                 $rowqty = $rowqty + 1;
                             endwhile;
                             $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
-                            if ($deck_legality_list != '') :
+                            if ($deck_legality_list !== []) :
                                 $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
-                                $index = array_search("$cardId", array_column($deck_legality_list, 'id'));
-                                if ($index !== false) :
-                                    $card_legal = $deck_legality_list[$index]['legality'];
-                                    if ($card_legal === 'legal' or $card_legal === null) :
-                                        $illegal_tag = '';
-                                    else :
+                                $card_legal = $deckdetailCardLegality($deck_legality_list, (string) $cardId);
+                                if ($card_legal === 'legal' or $card_legal === null) :
+                                    $illegal_tag = '';
+                                else :
                                         $msg->logMessage('[DEBUG]', "Card not legal in this format");
                                         $illegal_cards = true;
-                                    endif;
-                                else :
-                                    $illegal_tag = '';
                                 endif;
                             else :
                                 $illegal_tag = '';
@@ -867,19 +896,14 @@ endif;
                                 $rowqty = $rowqty + 1;
                             endwhile;
                             $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
-                            if ($deck_legality_list != '') :
+                            if ($deck_legality_list !== []) :
                                 $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
-                                $index = array_search("$cardId", array_column($deck_legality_list, 'id'));
-                                if ($index !== false) :
-                                    $card_legal = $deck_legality_list[$index]['legality'];
-                                    if ($card_legal === 'legal' or $card_legal === null) :
-                                        $illegal_tag = '';
-                                    else :
+                                $card_legal = $deckdetailCardLegality($deck_legality_list, (string) $cardId);
+                                if ($card_legal === 'legal' or $card_legal === null) :
+                                    $illegal_tag = '';
+                                else :
                                         $msg->logMessage('[DEBUG]', "Card not legal in this format");
                                         $illegal_cards = true;
-                                    endif;
-                                else :
-                                    $illegal_tag = '';
                                 endif;
                             else :
                                 $illegal_tag = '';
@@ -1152,19 +1176,14 @@ endif;
                                 $rowqty = $rowqty + 1;
                             endwhile;
                             $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
-                            if ($deck_legality_list != '') :
+                            if ($deck_legality_list !== []) :
                                 $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
-                                $index = array_search("$cardId", array_column($deck_legality_list, 'id'));
-                                if ($index !== false) :
-                                    $card_legal = $deck_legality_list[$index]['legality'];
-                                    if ($card_legal === 'legal' or $card_legal === null) :
-                                        $illegal_tag = '';
-                                    else :
+                                $card_legal = $deckdetailCardLegality($deck_legality_list, (string) $cardId);
+                                if ($card_legal === 'legal' or $card_legal === null) :
+                                    $illegal_tag = '';
+                                else :
                                         $msg->logMessage('[DEBUG]', "Card not legal in this format");
                                         $illegal_cards = true;
-                                    endif;
-                                else :
-                                    $illegal_tag = '';
                                 endif;
                             else :
                                 $illegal_tag = '';
@@ -1503,19 +1522,14 @@ endif;
                                 $rowqty = $rowqty + 1;
                             endwhile;
                             $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
-                            if ($deck_legality_list != '') :
+                            if ($deck_legality_list !== []) :
                                 $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
-                                $index = array_search("$cardId", array_column($deck_legality_list, 'id'));
-                                if ($index !== false) :
-                                    $card_legal = $deck_legality_list[$index]['legality'];
-                                    if ($card_legal === 'legal' or $card_legal === null) :
-                                        $illegal_tag = '';
-                                    else :
+                                $card_legal = $deckdetailCardLegality($deck_legality_list, (string) $cardId);
+                                if ($card_legal === 'legal' or $card_legal === null) :
+                                    $illegal_tag = '';
+                                else :
                                         $msg->logMessage('[DEBUG]', "Card not legal in this format");
                                         $illegal_cards = true;
-                                    endif;
-                                else :
-                                    $illegal_tag = '';
                                 endif;
                             else :
                                 $illegal_tag = '';
@@ -1814,26 +1828,20 @@ endif;
                             $msg->logMessage('[DEBUG]', "Sideboard card '$cardname ($cardset $cardnumber)'");
                             $isPlanePhenomenon = $detectPlanePhenomenon($card_type);
                             if (
-                                $deck_legality_list != ''
+                                $deck_legality_list !== []
                                 and !$isPlanePhenomenon
                             ) :
                                 $msg->logMessage(
                                     '[DEBUG]',
                                     "Checking legality for sideboard card '$cardname' ('$card_type')"
                                 );
-                                $index = array_search("$cardId", array_column($deck_legality_list, 'id'));
-                                if ($index !== false) :
-                                    $card_legal = $deck_legality_list[$index]['legality'];
-                                    if ($card_legal === 'legal' or $card_legal === null) :
-                                        $msg->logMessage('[DEBUG]', "Card legality is 'legal' or null");
-                                        $illegal_tag = '';
-                                    else :
-                                        $msg->logMessage('[DEBUG]', "Card not legal in this format");
-                                        $illegal_cards = true;
-                                    endif;
-                                else :
-                                    $msg->logMessage('[DEBUG]', "Card legality is unknown");
+                                $card_legal = $deckdetailCardLegality($deck_legality_list, (string) $cardId);
+                                if ($card_legal === 'legal' or $card_legal === null) :
+                                    $msg->logMessage('[DEBUG]', "Card legality is 'legal' or null");
                                     $illegal_tag = '';
+                                else :
+                                    $msg->logMessage('[DEBUG]', "Card not legal in this format");
+                                    $illegal_cards = true;
                                 endif;
                             else :
                                 $msg->logMessage('[DEBUG]', "Card legality is not needed");

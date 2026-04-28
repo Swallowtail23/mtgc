@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.34
-Date:        02/02/26
+Version:     6.35
+Date:        28/04/26
 Name:        users.php
 Purpose:     User administrative tasks
 Notes:       {none}
@@ -12,7 +12,6 @@ To do:       -
 */
 
 use MTG\Auth\PasswordCheck;
-use MTG\Admin\AdminSettings;
 
 // Bootstrap
 $ctx                        = require dirname(__DIR__) . '/bootstrap_secure.php';
@@ -39,7 +38,7 @@ $rulesCurrencies            = $gameRules->getArray('currencies');
 
 // Content
 $msg->logMessage('[DEBUG]', 'users.php loaded; initialising admin user management page');
-function shouldRequirePasswordForNewUser($emailEnabled)
+function shouldRequirePasswordForNewUser(bool $emailEnabled): bool
 {
     return $emailEnabled === false;
 }
@@ -60,6 +59,13 @@ $msg->logMessage(
     'New user creation requires password: ' . ($requirePassword === true ? 'yes' : 'no')
 );
 
+$newuser                    = '';
+$password                   = '';
+$postemail_raw              = '';
+$postemail                  = '';
+$username_raw               = '';
+$updateusers                = '';
+$updatearray                = [];
 
 if (isset($_POST['newuser'])) :
     $msg->logMessage('[DEBUG]', 'New user form submission detected');

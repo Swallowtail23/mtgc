@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.35
-Date:        04/02/26
+Version:     1.36
+Date:        28/04/26
 Name:        deckdetail_colour_identity.php
 Purpose:     Deck detail colour identity fragment.
 Notes:       -
@@ -13,7 +13,10 @@ To do:       -
 
 use MTG\Cards\CardUtils;
 
-$rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
+$decktype = $decktype ?? '';
+$cdr_colours = $cdr_colours ?? '';
+$cdr_colours_raw = $cdr_colours_raw ?? '';
+$rulesCommanderDeckTypes = isset($gameRules) ? $gameRules->getArray('commander_decktypes') : [];
 
 ?>
 <div id="deck-colour-identity-fragment">

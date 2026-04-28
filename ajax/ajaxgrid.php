@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.26
-Date:        12/01/26
+Version:     5.28
+Date:        28/04/26
 Name:        ajaxgrid.php
 Purpose:     Processes updates from Grid/Bulk views of index.php
 Notes:       {none}
@@ -59,6 +59,9 @@ else :
     $priceMgr = new PriceManager($db, $appConfig, $userEmail);
     $msg->logMessage('[DEBUG]', "Ajax grid update user context loaded");
 
+    $response = [];
+    $qty = 0;
+    $sqlqty = 0;
     $cardId = $_POST['cardid'] ?? '';
     if (Validation::validUUID($cardId, $appConfig) === false) :
         $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) Called with invalid card UUID");
@@ -176,6 +179,7 @@ else :
             );
     endif;
         // Run update
+        $updatequery = '';
     if (isset($_POST['newqty'])) :
         $updatequery = "
                 INSERT INTO $mytable (normal,id)
@@ -194,6 +198,11 @@ else :
                 VALUES (?,?)
                 ON DUPLICATE KEY UPDATE
                 etched = ?";
+    endif;
+    if ($updatequery === '') :
+        $response['status'] = 'error';
+        $response['message'] = "Invalid call";
+        AjaxResponse::json($response, 400);
     endif;
         $params = [$sqlqty, $sqlid, $sqlqty];
         $sqlupdate = $db->execute_query($updatequery, $params);
@@ -228,6 +237,13 @@ else :
         AjaxResponse::json($response, 400);
     else :
             $checkresult = $checkresultqry->fetch_assoc();
+        if ($checkresult === false) :
+            $checkresult = [
+                'normal' => 0,
+                'foil' => 0,
+                'etched' => 0
+            ];
+        endif;
         if (isset($_POST['newqty'])) :
             if ((int)$sqlqty === (int)$checkresult['normal']) :
                 $msg->logMessage(

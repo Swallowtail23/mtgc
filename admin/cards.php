@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.35
-Date:        02/02/26
+Version:     5.36
+Date:        28/04/26
 Name:        cards.php
 Purpose:     Card administrative tasks
 Notes:       {none}
@@ -13,7 +13,7 @@ To do:       -
 
 use MTG\Cards\ImageManager;
 use MTG\Core\Validation;
-use MTG\Admin\AdminSettings;
+use MTG\Auth\SessionManager;
 
 // Bootstrap
 $ctx                        = require dirname(__DIR__) . '/bootstrap_secure.php';
@@ -33,6 +33,8 @@ $user                       = $sessionUser->id();
 $userName                   = $sessionUser->userName();
 $userEmail                  = $sessionUser->email();
 $admin                      = $sessionUser->adminLevel();
+$csrfToken                  = SessionManager::generateCsrfToken();
+$csrfEsc                    = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8');
 
 // Content
 // Check if user is logged in, if not redirect to login.php
@@ -43,6 +45,13 @@ $msg->logMessage('[ERROR]', "Admin is $admin");
 if ($admin !== 1) :
     require APP_ROOT . '/admin/reject.php';
 endif;
+
+$resultArray = [];
+$userResultArray = [];
+$collectionResultArray = [];
+$migrationResultArray = [];
+$actionMessage = '';
+$actionClass = 'notice';
 
 // Find if this card is in any decks
 if (isset($_GET['cardtoedit'])) :
@@ -60,6 +69,8 @@ if (isset($_GET['cardtoedit'])) :
 
     $stmt = $db->prepare($sql);
     if ($stmt) :
+        $deckName = '';
+        $deckOwner = '';
         $stmt->bind_param("s", $id);
         $stmt->execute();
         $stmt->bind_result($deckName, $deckOwner);
@@ -74,6 +85,8 @@ if (isset($_GET['cardtoedit'])) :
     $sql2 = "SELECT usernumber,username FROM users";
     $stmt = $db->prepare($sql2);
     if ($stmt) :
+        $userNumber = 0;
+        $userName = '';
         $stmt->execute();
         $stmt->bind_result($userNumber, $userName);
     else :
@@ -101,6 +114,7 @@ if (isset($_GET['cardtoedit'])) :
 
         // Check if the statement was prepared successfully
         if ($stmt) :
+            $total = 0;
             $stmt->bind_param("s", $id);
             if ($stmt->error) {
                 throw new Exception("[ERROR] Bind error: " . $stmt->error);
@@ -131,6 +145,14 @@ if (isset($_GET['cardtoedit'])) :
              WHERE old_scryfall_id = ?";
     $stmt = $db->prepare($sql3);
     if ($stmt) :
+        $date = '';
+        $strategy = '';
+        $new_id = '';
+        $migration_note = '';
+        $migration_name = '';
+        $migration_uri = '';
+        $migration_coll_number = '';
+        $db_match = 0;
         $stmt->bind_param("s", $id);
         if ($stmt->error) {
             throw new Exception("[ERROR] Bind error: " . $stmt->error);
@@ -163,47 +185,73 @@ if (isset($_GET['cardtoedit'])) :
     endwhile;
     $stmt->close();
 endif;
-if ((isset($_GET['delete'])) and ($_GET['delete'] == 'DELETE')) :
-    if (isset($_GET['id'])) :
-        $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
-    endif;
-    $msg->logMessage('[ERROR]', "Delete card $id called by $userEmail from {$_SERVER['REMOTE_ADDR']}");
 
-    // Delete from cards_scry
-    $sql = "DELETE FROM cards_scry WHERE id = ?";
-    if ($stmt = $db->prepare($sql)) :
-        $stmt->bind_param("s", $id);
-        $result = $stmt->execute();
-        if ($result === false) :
-            throw new Exception("[ERROR] cards.php: Deleting card: " . $db->error);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') :
+    $submittedToken = $_POST['csrf_token'] ?? '';
+    if (!SessionManager::validateCsrfToken($submittedToken)) :
+        $msg->logMessage('[ERROR]', 'CSRF token mismatch in admin/cards.php');
+        throw new Exception("[ERROR] cards.php: Invalid request token");
+    endif;
+
+    $action = filter_input(INPUT_POST, 'card_action', FILTER_UNSAFE_RAW);
+    $idRaw = filter_input(INPUT_POST, 'id', FILTER_UNSAFE_RAW);
+    $id = is_string($idRaw) ? Validation::validUUID($idRaw, $appConfig) : false;
+    if ($id === false) :
+        $msg->logMessage('[ERROR]', "Admin card action called without valid UUID");
+        throw new Exception("[ERROR] cards.php: Invalid UUID");
+    endif;
+
+    if ($action === 'delete') :
+        $msg->logMessage('[ERROR]', "Delete card $id called by $userEmail from {$_SERVER['REMOTE_ADDR']}");
+
+        // Delete from cards_scry
+        $sql = "DELETE FROM cards_scry WHERE id = ?";
+        if ($stmt = $db->prepare($sql)) :
+            $stmt->bind_param("s", $id);
+            $result = $stmt->execute();
+            if ($result === false) :
+                throw new Exception("[ERROR] cards.php: Deleting card: " . $db->error);
+            else :
+                // Check if delete was successful
+                $stmt = $db->prepare("SELECT id FROM cards_scry WHERE id = ?");
+                $stmt->bind_param("s", $id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $rowcount = $result->num_rows;
+                if ($rowcount === 0) :
+                    $msg->logMessage('[NOTICE]', "Delete card $id successful");
+                    $actionMessage = 'Card deleted';
+                    $actionClass = 'success';
+                else :
+                    $actionMessage = 'Card was not deleted';
+                    $actionClass = 'error';
+                endif;
+            endif;
         else :
-            // Check if delete was successful
-            $stmt = $db->prepare("SELECT id FROM cards_scry WHERE id = ?");
+            throw new Exception("[ERROR] cards.php: Preparing SQL: " . $db->error);
+        endif;
+
+        // Delete from migrations
+        $sql = "DELETE FROM migrations WHERE old_scryfall_id = ?";
+        if ($stmt = $db->prepare($sql)) :
             $stmt->bind_param("s", $id);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $rowcount = $result->num_rows;
-            if ($rowcount === 0) :
-                $msg->logMessage('[NOTICE]', "Delete card $id successful");
-                ?> <div class="alert-box success" id="setdeletealert2"><span>success: </span>Deleted</div> <?php
-            endif;
+        endif;
+    elseif ($action === 'refresh_image') :
+        $msg->logMessage('[NOTICE]', "Refresh card image $id called by $userEmail from {$_SERVER['REMOTE_ADDR']}");
+        $obj = new ImageManager($db, $appConfig, $gameRules);
+        $refreshResult = $obj->refreshImage($id);
+        if (is_array($refreshResult) && ($refreshResult['success'] ?? false) === true) :
+            $actionMessage = 'Image refresh processed';
+            $actionClass = 'success';
+        else :
+            $actionMessage = 'Image refresh failed';
+            $actionClass = 'error';
         endif;
     else :
-        throw new Exception("[ERROR] cards.php: Preparing SQL: " . $db->error);
+        $msg->logMessage('[ERROR]', "Unknown admin card action '$action'");
+        throw new Exception("[ERROR] cards.php: Unknown action");
     endif;
-
-    // Delete from migrations
-    $sql = "DELETE FROM migrations WHERE old_scryfall_id = ?";
-    if ($stmt = $db->prepare($sql)) :
-        $stmt->bind_param("s", $id);
-        $stmt->execute();
-    endif;
-elseif ((isset($_GET['deleteimg'])) and ($_GET['deleteimg'] == 'DELETEIMG')) :
-    if (isset($_GET['id'])) :
-        $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
-    endif;
-    $obj = new ImageManager($db, $appConfig, $gameRules);
-    $obj->refreshImage($id);
 endif;
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
@@ -232,30 +280,40 @@ require APP_ROOT . '/includes/menu.php';
     <div id='page'>
         <div class='staticpagecontent'>
             <div> <?php
+            if ($actionMessage !== '') :
+                $actionClassEsc = htmlspecialchars($actionClass, ENT_QUOTES, 'UTF-8');
+                $actionMessageEsc = htmlspecialchars($actionMessage, ENT_QUOTES, 'UTF-8');
+                ?>
+                <div class="alert-box <?php echo $actionClassEsc; ?>" id="cardactionalert">
+                    <span><?php echo $actionClassEsc; ?>: </span><?php echo $actionMessageEsc; ?>
+                </div>
+                <?php
+            endif;
             if (isset($_GET['cardtoedit'])) :  ?>
                     <h3>Delete cards / images</h3>
                     <?php echo "Card id loaded: $id"; ?>
                         <br><br>
-                        <form id='carddeleteform' action="?" method="GET">
+                        <form id='carddeleteform' action="?" method="POST">
                             <input type='hidden' name='id' value='<?php echo "$id";?>' >
+                            <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
+                            <input type="hidden" name="card_action" value="delete">
                             <input
                                 class='profilebutton'
                                 id='deletebutton'
-                                name='delete'
                                 type="submit"
                                 value="DELETE"
                                 onclick="return confirm('Do you really want to delete this card?');"
                             >
                         </form>
                         <br>
-                        <form id='cardimgdeleteform' action="?" method="GET">
+                        <form id='cardimgdeleteform' action="?" method="POST">
                             <input type='hidden' name='id' value='<?php echo "$id";?>' >
+                            <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
+                            <input type="hidden" name="card_action" value="refresh_image">
                             <button
                                 class='profilebutton'
                                 id='deleteimgbutton'
-                                name='deleteimg'
                                 type="submit"
-                                value="DELETEIMG"
                                 onclick="return confirm('Do you really want to refresh this card image?');">
                                 <span 
                                     class='material-symbols-outlined' 
@@ -341,16 +399,8 @@ require APP_ROOT . '/includes/menu.php';
                     else :
                             echo 'None';
                     endif;
-            elseif (isset($imageUrl) and $imageUrl !== '' and $imagedelete === 'success') :
-                    echo "<h3>Image delete processed</h3>";
-                    echo "$imageUrl deleted";
-                if (isset($imagebackdelete)) :
-                    echo "$imagebackurl deleted";
-                endif;
+            elseif ($actionMessage !== '') :
                     echo "<meta http-equiv='refresh' content='2;url=cards.php'>";
-            elseif (isset($imageUrl) and $imageUrl !== '' and $imagedelete === 'failure') :
-                    echo "<h3>Image delete NOT processed</h3>";
-                    echo "$imagedelete $imageUrl NOT deleted";
             else :
                     echo "<h3>Load this page from a card details page to delete a card or its image</h3>";
             endif; ?>

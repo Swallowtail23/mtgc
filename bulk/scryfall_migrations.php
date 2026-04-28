@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.31
-Date:        13/01/26
+Version:     2.32
+Date:        28/04/26
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
 Notes:       {none}
@@ -15,6 +15,7 @@ To do:       -
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
 use MTG\Bulk\ScryfallImport;
+use MTG\Core\AppConfig;
 use MTG\Core\Filesystem;
 use MTG\Core\MyPHPMailer;
 
@@ -45,7 +46,13 @@ $action_text = '';
 // How old to overwrite
 $max_fileage = 23 * 3600;
 
-function getMigrationData($url, $file_location, $max_fileage, $pageNumber, $appConfig)
+function getMigrationData(
+    string $url,
+    string $file_location,
+    int $max_fileage,
+    int $pageNumber,
+    AppConfig $appConfig
+): string
 {
     global $msg;
     $msg->logMessage('[DEBUG]', "Fetching Download URI: $url");
@@ -84,7 +91,7 @@ function getMigrationData($url, $file_location, $max_fileage, $pageNumber, $appC
     return $page;
 }
 
-function checkMigrationDataForMore($file, $appConfig)
+function checkMigrationDataForMore(string $file, AppConfig $appConfig): string
 {
     global $msg;
 
@@ -102,7 +109,7 @@ function checkMigrationDataForMore($file, $appConfig)
     return $next_page;
 }
 
-function clearDBMigrations($db, $appConfig)
+function clearDBMigrations(\mysqli $db, AppConfig $appConfig): void
 {
     global $msg;
 
@@ -113,7 +120,7 @@ function clearDBMigrations($db, $appConfig)
     endif;
 }
 
-function getRowCount($file)
+function getRowCount(string $file): int
 {
     $data = Items::fromFile($file, ['decoder' => new ExtJsonDecoder(true)]);
     $count = 0;
@@ -129,7 +136,7 @@ function getRowCount($file)
     return $count;
 }
 
-function safeDeleteCheck($id, $db, $appConfig)
+function safeDeleteCheck(string $id, \mysqli $db, AppConfig $appConfig): ?int
 {
     $safeScore = null;
     global $msg;

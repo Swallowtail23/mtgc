@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.30
-Date:        13/01/26
+Version:     1.33
+Date:        28/04/26
 Name:        ajaxphoto.php
 Purpose:     PHP script to import deck photo
 Notes:       -
@@ -109,7 +109,12 @@ else :
                     $uploadFile = $deckPhotosDir . $deckNumber . '.jpg';
 
                     // Check if the file size is greater than 1MB
-                    list($width, $height) = getimagesize($_FILES['photo']['tmp_name']);
+                    $imageSize = getimagesize($_FILES['photo']['tmp_name']);
+                if ($imageSize === false) :
+                    $response['message'] = 'Failed to get image size';
+                    returnResponse($response);
+                endif;
+                    [$width, $height] = $imageSize;
                 if ($width > 800 or $height > 800) :
                     $msg->logMessage('[DEBUG]', "Resizing $uploadFile using php-gd");
 
@@ -134,7 +139,14 @@ else :
                     endif;
 
                         // Assess new dimensions based on a maximum single length of 800px
-                        list($width, $height) = getimagesize($_FILES['photo']['tmp_name']);
+                        $imageSize = getimagesize($_FILES['photo']['tmp_name']);
+                    if ($imageSize === false) :
+                        $response['message'] = 'Failed to get image size';
+                        returnResponse($response);
+                    endif;
+                        [$width, $height] = $imageSize;
+                        $newWidth = 0;
+                        $newHeight = 0;
                     if ($width > $height) :
                         $newWidth = 800;
                         $newHeight = ($height / $width) * $newWidth;
@@ -249,7 +261,7 @@ else :
 endif;
 
 // Function to echo JSON response and exit
-function returnResponse(array $response)
+function returnResponse(array $response): void
 {
     AjaxResponse::json($response, http_response_code());
 }

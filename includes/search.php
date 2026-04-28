@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.23
-Date:        26/03/26
+Version:     6.24
+Date:        28/04/26
 Name:        search.php
 Purpose:     Layout for search on index.php
 Notes:       -
@@ -11,11 +11,17 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-$rulesSearchLangs = $gameRules->getArray('search_langs');
-
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
+
+if (!isset($gameRules, $db)) :
+    return;
+endif;
+
+$layout = $layout ?? 'grid';
+$name = $name ?? '';
+$rulesSearchLangs = $gameRules->getArray('search_langs');
 ?>
 <script type="text/javascript">
     function submitPrep()

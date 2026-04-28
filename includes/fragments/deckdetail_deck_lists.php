@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.31
-Date:        26/12/25
+Version:     1.32
+Date:        28/04/26
 Name:        deckdetail_deck_lists.php
 Purpose:     Deck detail deck lists fragment wrapper.
 Notes:       -
@@ -11,6 +11,8 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+$total = $total ?? 0;
+$sidetotal = $sidetotal ?? 0;
 $hasDeckLists = ($total + $sidetotal > 0);
 ?>
 <div id="deck-lists-fragment" data-has-content="<?php echo $hasDeckLists ? '1' : '0'; ?>">

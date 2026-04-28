@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.26
-Date:        23/02/26
+Version:     1.27
+Date:        28/04/26
 Name:        setimgreload.php
 Purpose:     Trigger reload all images for a set
 Notes:       -
@@ -41,6 +41,7 @@ if (isset($argv[1])) :
         $stmt->execute();
         $stmt->store_result();
         $msg->logMessage('[ERROR]', "Number of images to be refreshed in $setcode: " . $stmt->num_rows);
+        $cardId = '';
         $stmt->bind_result($cardId);
         $iteration = 1;
         $fail_count = 0;

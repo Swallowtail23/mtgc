@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        25/11/25
+Version:     1.2
+Date:        28/04/26
 Name:        bulkmenus.php
 Purpose:     PHP script to display menus of index.php results on bulk page.
 Notes:       {none}
@@ -14,6 +14,8 @@ To do:       -
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
+
+$getstringbulk = $getstringbulk ?? '';
 ?>
 
 <div id="gridcmd" class='gridlist fullsize'>

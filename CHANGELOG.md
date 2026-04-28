@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 
 - Login Turnstile verification now fails closed for login submissions that omit the
   `cf-turnstile-response` field, preventing direct POST bypass of the server-side challenge.
+- Admin card deletion and image refresh actions now require POST, CSRF validation, and UUID validation.
 
 ### Infrastructure
 

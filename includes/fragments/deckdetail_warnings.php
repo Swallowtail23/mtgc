@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.32
-Date:        12/01/26
+Version:     1.33
+Date:        28/04/26
 Name:        deckdetail_warnings.php
 Purpose:     Deck detail warnings fragment.
 Notes:       -
@@ -11,9 +11,15 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-$rulesFiftyCardDecks = $gameRules->getArray('fiftycarddecks');
-$rulesHundredCardDecks = $gameRules->getArray('hundredcarddecks');
-$rulesSixtyCardDecks = $gameRules->getArray('sixtycarddecks');
+$decktype = $decktype ?? '';
+$total = $total ?? 0;
+$illegal_cards = $illegal_cards ?? false;
+$deck_colour_mismatch = $deck_colour_mismatch ?? false;
+$red_font_tag = $red_font_tag ?? '';
+$firebrick_font_tag = $firebrick_font_tag ?? '';
+$rulesFiftyCardDecks = isset($gameRules) ? $gameRules->getArray('fiftycarddecks') : [];
+$rulesHundredCardDecks = isset($gameRules) ? $gameRules->getArray('hundredcarddecks') : [];
+$rulesSixtyCardDecks = isset($gameRules) ? $gameRules->getArray('sixtycarddecks') : [];
 
 ?>
 <?php

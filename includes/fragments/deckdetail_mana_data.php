@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.4
-Date:        26/12/25
+Version:     1.5
+Date:        28/04/26
 Name:        deckdetail_mana_data.php
 Purpose:     Deck detail mana/deck value calculations for fragments.
 Notes:       -
@@ -11,6 +11,25 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+$decktype = $decktype ?? '';
+$total = $total ?? 0;
+$sidetotal = $sidetotal ?? 0;
+$total_cards = $total_cards ?? 0;
+$side_total_cards = $side_total_cards ?? 0;
+$lands = $lands ?? 0;
+$cmctotal = $cmctotal ?? 0;
+$w = $w ?? 0;
+$u = $u ?? 0;
+$b = $b ?? 0;
+$r = $r ?? 0;
+$g = $g ?? 0;
+$c = $c ?? 0;
+$gw = $gw ?? 0;
+$gu = $gu ?? 0;
+$gb = $gb ?? 0;
+$gr = $gr ?? 0;
+$gg = $gg ?? 0;
+$gc = $gc ?? 0;
 $show_mana_block = false;
 $avgcmc = null;
 $main_total = isset($total) ? $total : ($total_cards ?? 0);

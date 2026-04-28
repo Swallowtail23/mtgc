@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.45
-Date:        02/02/26
+Version:     6.46
+Date:        28/04/26
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       -
@@ -108,7 +108,7 @@ $currentVersion = getAppVersion($msg);
 /**
  * Read the last N lines from a log file without loading it entirely.
  */
-function getLogTailLines(Message $msg, $filepath, $maxLines = 8)
+function getLogTailLines(Message $msg, string $filepath, int $maxLines = 8): array
 {
     if (!is_readable($filepath)) :
         $msg->logMessage('[ERROR]', "Log file not readable: $filepath");
@@ -130,6 +130,9 @@ function getLogTailLines(Message $msg, $filepath, $maxLines = 8)
         $seek = min(ftell($handle), $buffer);
         fseek($handle, -$seek, SEEK_CUR);
         $chunk = fread($handle, $seek);
+        if ($chunk === false) :
+            break;
+        endif;
         $output = $chunk . $output;
         fseek($handle, -$seek, SEEK_CUR);
         $linesFound += substr_count($chunk, "\n");
@@ -152,7 +155,7 @@ function getLogTailLines(Message $msg, $filepath, $maxLines = 8)
     return array_slice($allLines, -$maxLines);
 }
 
-function isPathWritable($path)
+function isPathWritable(mixed $path): bool
 {
     if (!is_string($path)) :
         return false;
@@ -670,11 +673,14 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
     }
 endif;
 
-function getPostedValue($name, $default = '')
+function getPostedValue(string $name, mixed $default = ''): string
 {
     $value = filter_input(INPUT_POST, $name, FILTER_UNSAFE_RAW);
-    if ($value === null) :
-        return $default;
+    if ($value === null || $value === false) :
+        return (string) $default;
+    endif;
+    if (!is_scalar($value)) :
+        return (string) $default;
     endif;
     return trim($value);
 }
@@ -2158,6 +2164,8 @@ require APP_ROOT . '/includes/menu.php';
                     $stmt3 = $db->prepare($sql3);
                     if ($stmt3) :
                         $stmt3->execute();
+                        $userNumberRow = 0;
+                        $userNameRow = '';
                         $stmt3->bind_result($userNumberRow, $userNameRow);
                         while ($stmt3->fetch()) :
                             $userResultArray[] = array(

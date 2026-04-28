@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.41
-Date:        27/12/25
+Version:     1.42
+Date:        28/04/26
 Name:        deckdetail_random_draw.php
 Purpose:     Deck detail random draw fragment.
 Notes:       -
@@ -11,6 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+$decktype = $decktype ?? '';
 $random_draw_refs = isset($uniquecard_ref) ? $uniquecard_ref : [];
 $random_draw_enabled = isset($uniquecard_ref) && count($uniquecard_ref) > 6 && $decktype != 'Wishlist';
 $hasRandomDraw = $random_draw_enabled;

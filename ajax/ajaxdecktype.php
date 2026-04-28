@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.29
-Date:        15/01/26
+Version:     1.30
+Date:        28/04/26
 Name:        ajaxdecktype.php
 Purpose:     AJAX deck type updates for deck detail.
 Notes:       -
@@ -185,7 +185,7 @@ endif;
 
 returnResponse($response);
 
-function getDeckVersion($db, $deckNumber)
+function getDeckVersion(\mysqli $db, int|string $deckNumber): int
 {
     $versionQuery = "SELECT (UNIX_TIMESTAMP(deck_updated_at) * 1000000 + MICROSECOND(deck_updated_at)) AS deck_version
         FROM decks WHERE decknumber = ? LIMIT 1";
@@ -197,7 +197,7 @@ function getDeckVersion($db, $deckNumber)
     return 0;
 }
 
-function returnResponse($response)
+function returnResponse(array $response): void
 {
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     header('Pragma: no-cache');

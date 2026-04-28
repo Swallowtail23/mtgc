@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.23
-Date:        13/01/26
+Version:     1.24
+Date:        28/04/26
 Name:        ajaxsets.php
 Purpose:     PHP script to update sets page
 Notes:       -
@@ -54,6 +54,8 @@ else :
         $filter = $_GET['filter'];
         $setsPerPage = intval($_GET['setsPerPage']);
         $offset = intval($_GET['offset']);
+        $numRows = 0;
+        $numPages = 0;
 
         $msg->logMessage('[DEBUG]', "Called with filter '$filter', setsPerPage '$setsPerPage', offset '$offset'");
 

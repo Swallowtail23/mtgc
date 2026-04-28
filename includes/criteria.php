@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     8.7
-Date:        11/04/26
+Version:     8.10
+Date:        28/04/26
 Name:        criteria.php
 Purpose:     PHP script to build search criteria
 Notes:       {none}
@@ -16,6 +16,79 @@ use MTG\Core\Validation;
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
+
+$msg = $msg ?? new class {
+    public function logMessage(): void
+    {
+    }
+};
+$adv = $adv ?? '';
+$allprintings = $allprintings ?? '';
+$artifact = $artifact ?? '';
+$arena = $arena ?? '';
+$battle = $battle ?? '';
+$black = $black ?? '';
+$blue = $blue ?? '';
+$cmcoperator = $cmcoperator ?? '';
+$cmcvalue = $cmcvalue ?? '';
+$collqty = $collqty ?? '';
+$collqtyoperator = $collqtyoperator ?? '';
+$colourExcl = $colourExcl ?? '';
+$colourOp = $colourOp ?? '';
+$colourless = $colourless ?? '';
+$common = $common ?? '';
+$creature = $creature ?? '';
+$criteria = $criteria ?? '';
+$enchantment = $enchantment ?? '';
+$exact = $exact ?? '';
+$foilonly = $foilonly ?? '';
+$gametypeExcl = $gametypeExcl ?? '';
+$gametypeOp = $gametypeOp ?? '';
+$green = $green ?? '';
+$instant = $instant ?? '';
+$land = $land ?? '';
+$legal = $legal ?? '';
+$legendary = $legendary ?? '';
+$loyalty = $loyalty ?? '';
+$loyaltyoperator = $loyaltyoperator ?? '';
+$mytable = $mytable ?? '';
+$mythic = $mythic ?? '';
+$name = $name ?? '';
+$new = $new ?? '';
+$numberregexsearch = $numberregexsearch ?? '';
+$online = $online ?? '';
+$paper = $paper ?? '';
+$planeswalker = $planeswalker ?? '';
+$power = $power ?? '';
+$poweroperator = $poweroperator ?? '';
+$query = $query ?? '';
+$rare = $rare ?? '';
+$red = $red ?? '';
+$scope = $scope ?? '';
+$searchLang = $searchLang ?? '';
+$searchability = $searchability ?? '';
+$searchabilityexact = $searchabilityexact ?? '';
+$searchname = $searchname ?? '';
+$searchnotes = $searchnotes ?? '';
+$searchpromo = $searchpromo ?? '';
+$searchsetcode = $searchsetcode ?? '';
+$searchtype = $searchtype ?? '';
+$selectAll = $selectAll ?? '';
+$selectedSets = $selectedSets ?? [];
+$setcoderegexsearch = $setcoderegexsearch ?? '';
+$sorcery = $sorcery ?? '';
+$sortBy = $sortBy ?? '';
+$sorting = $sorting ?? '';
+$token = $token ?? '';
+$tough = $tough ?? '';
+$toughoperator = $toughoperator ?? '';
+$tribal = $tribal ?? '';
+$tribe = $tribe ?? '';
+$typeOp = $typeOp ?? '';
+$uncommon = $uncommon ?? '';
+$validsearch = $validsearch ?? '';
+$white = $white ?? '';
+$order = $order ?? '';
 
 if (empty($_GET)) :
     $validsearch = "";

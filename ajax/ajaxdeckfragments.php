@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.31
-Date:        05/02/26
+Version:     1.32
+Date:        28/04/26
 Name:        ajaxdeckfragments.php
 Purpose:     AJAX fragment updates for deck detail derived sections.
 Notes:       -
@@ -127,7 +127,7 @@ $response = deckdetailBuildFragmentResponse($requestedFragments);
 $response['version'] = isset($deck_version) ? (int) $deck_version : 0;
 returnResponse($response);
 
-function returnResponse($response)
+function returnResponse(array $response): void
 {
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     header('Pragma: no-cache');

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        26/12/25
+Version:     1.4
+Date:        28/04/26
 Name:        deckdetail_mana_value.php
 Purpose:     Deck detail mana value chart fragment.
 Notes:       -
@@ -11,6 +11,9 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+$show_mana_block = $show_mana_block ?? false;
+$avgcmc = $avgcmc ?? null;
+$cmc = $cmc ?? array_fill(0, 7, 0);
 ?>
 <?php
 $hasManaValue = $show_mana_block;

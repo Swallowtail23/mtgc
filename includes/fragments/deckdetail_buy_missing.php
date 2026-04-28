@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        24/12/25
+Version:     1.2
+Date:        28/04/26
 Name:        deckdetail_buy_missing.php
 Purpose:     Deck detail buy missing fragment.
 Notes:       -
@@ -10,6 +10,11 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+$total = $total ?? 0;
+$sidetotal = $sidetotal ?? 0;
+$requiredlist = $requiredlist ?? '';
+$requiredbuy = $requiredbuy ?? '';
 
 ?>
 <tbody id="deck-buy-fragment">

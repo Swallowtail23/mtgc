@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        11/01/26
+Version:     1.1
+Date:        28/04/26
 Name:        AdminSettings.php
 Purpose:     Admin settings helpers.
 Notes:       -
@@ -18,6 +18,9 @@ use MTG\Core\Message;
 
 class AdminSettings
 {
+    /**
+     * @param \mysqli|object $db
+     */
     public static function getCssVersionSuffix($db, AppConfig $appConfig): string
     {
         $msg = new Message($appConfig);
@@ -49,7 +52,10 @@ class AdminSettings
         endif;
     }
 
-    public static function setMaintenanceMode($toggle, $db, AppConfig $appConfig): bool
+    /**
+     * @param \mysqli|object $db
+     */
+    public static function setMaintenanceMode(string $toggle, $db, AppConfig $appConfig): bool
     {
         $msg = new Message($appConfig);
         $toggle = strtolower(trim((string) $toggle));
@@ -96,7 +102,10 @@ class AdminSettings
         endif;
     }
 
-    public static function checkMaintenanceMode($user, $db, AppConfig $appConfig): int
+    /**
+     * @param \mysqli|object $db
+     */
+    public static function checkMaintenanceMode(int $user, $db, AppConfig $appConfig): int
     {
         $msg = new Message($appConfig);
 

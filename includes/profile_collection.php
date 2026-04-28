@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.10
-Date:        11/01/26
+Version:     1.11
+Date:        28/04/26
 Name:        profile_collection.php
 Purpose:     Shared collection value display for profile/collection pages.
 Notes:       -
@@ -16,6 +16,10 @@ use MTG\Core\Message;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
+endif;
+
+if (!isset($appConfig, $db, $mytable)) :
+    return;
 endif;
 
 $msg = new Message($appConfig);

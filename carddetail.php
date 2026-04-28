@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     22.71
-Date:        27/02/26
+Version:     22.72
+Date:        28/04/26
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -61,6 +61,7 @@ $msg->logMessage('[DEBUG]', "Admin is $admin");
 
 // Enable / disable deck functionality
 $decks_on = 1;
+$cardId = false;
 
 // Pass data to this form by e.g. ?id=123456
 // GET is used from results page, POST is used for database update query.
@@ -1726,6 +1727,9 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                             <?php
 
                             // Price section
+                            $localnormal = '';
+                            $localfoil = '';
+                            $localetched = '';
                             if (
                                 isset($scryfallresult["price"])
                                 and $scryfallresult["price"] !== ""
@@ -2097,6 +2101,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                 endif;
                                     // Deck status: created (1), failed (10), or confirmed ownership/existence (2)
                                     $msg->logMessage('[NOTICE]', "Decksuccess code is {$decksuccess['flag']}");
+                                $cardchecksuccess = 0;
                                 if ($decksuccess['flag'] !== 10) :  // Deck exists and belongs to the caller
                                     if ($decksuccess['flag'] === 2) : // Not a new deck, run card check
                                         $msg->logMessage(
@@ -2226,12 +2231,11 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     endif;
                                 endforeach;
                             endif;
-                            $t = 0;
                             $grpdecks = array();
                             if (isset($grpuser)) :
-                                foreach ($grpuser as $decksgrprow) :
-                                    $grpuserid = $grpuser[$t]['id'];
-                                    $grpusername = ucfirst($grpuser[$t]['name']);
+                                foreach ($grpuser as $grpuserrow) :
+                                    $grpuserid = $grpuserrow['id'];
+                                    $grpusername = ucfirst($grpuserrow['name']);
                                     $msg->logMessage('[DEBUG]', "Checking user $grpusername for $cardId");
                                     $obj = new DeckManager(
                                         $db,
@@ -2240,7 +2244,6 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                         $userEmail
                                     );
                                     $ingrpdecks = $obj->deckCardCheck($cardId, $grpuserid);
-                                    $t = $t + 1;
                                     if (!empty($ingrpdecks)) :
                                         foreach ($ingrpdecks as $decksgrprow) :
                                             if ($decksgrprow['qty'] != '') :

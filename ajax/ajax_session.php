@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        12/01/26
+Version:     1.1
+Date:        28/04/26
 Name:        ajax_session.php
 Purpose:     Shared session-user loader for AJAX endpoints without full secure bootstrap.
 Notes:       -
@@ -18,7 +18,7 @@ use MTG\Core\Message;
 use MTG\Core\Http\AjaxResponse;
 
 if (!function_exists('requireAjaxSessionUser')) :
-    function requireAjaxSessionUser($db, AppConfig $appConfig, Message $msg): SessionUser
+    function requireAjaxSessionUser(mixed $db, AppConfig $appConfig, Message $msg): SessionUser
     {
         if (!isset($_SESSION['logged'], $_SESSION['user']) || $_SESSION['logged'] !== true) :
             AjaxResponse::text("<meta http-equiv='refresh' content='2;url=/login.php'>");

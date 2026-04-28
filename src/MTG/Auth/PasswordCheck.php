@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.12
-Date:        12/01/26
+Version:     1.15
+Date:        28/04/26
 Name:        PasswordCheck.php
 Purpose:     Password validation class.
 Notes:       -
@@ -20,18 +20,21 @@ use MTG\Core\MyPHPMailer;
 class PasswordCheck
 {
     /**
-    * @var \mysqli|object
+    * @var \mysqli|object|null
     */
     private $db;
-    private $message;
-    private $siteTitle;
-    private $adminEmail;
-    private $emailEnabled;
-    private $baseUrl;
-    private $appConfig;
+    private Message $message;
+    private string $siteTitle;
+    private string $adminEmail;
+    private bool $emailEnabled;
+    private string $baseUrl;
+    private AppConfig $appConfig;
 
-    public $passwordvalidate;
+    public int $passwordvalidate = 0;
 
+    /**
+     * @param \mysqli|object|null $db
+     */
     public function __construct($db, AppConfig $appConfig)
     {
         $this->db = $db;
@@ -46,7 +49,7 @@ class PasswordCheck
     /**
      * Request a password reset link (token sent via email if enabled).
      */
-    public function requestResetToken($email, $forceChange = false)
+    public function requestResetToken(string $email, bool $forceChange = false): bool
     {
         if (!$this->emailEnabled) :
             $this->message->logMessage('[NOTICE]', 'Password reset request blocked; email disabled');
@@ -89,7 +92,7 @@ class PasswordCheck
     /**
      * Complete password reset using token.
      */
-    public function completeReset($email, $token, $newPassword)
+    public function completeReset(string $email, string $token, string $newPassword): bool
     {
         if (!$this->emailEnabled) :
             $this->message->logMessage('[NOTICE]', 'Complete reset blocked; email disabled');
@@ -142,7 +145,7 @@ class PasswordCheck
         return true;
     }
 
-    public function validatePassword($email, $password)
+    public function validatePassword(string $email, string $password): int
     {
         /**
          * Returns:
@@ -185,7 +188,7 @@ class PasswordCheck
         return $this->passwordvalidate;
     }
 
-    public static function validPass($candidate)
+    public static function validPass(string $candidate): bool
     {
         if (!preg_match_all('$\S*(?=\S{8,})(?=\S*[a-z])(?=\S*[A-Z])(?=\S*[\d])\S*$', $candidate, $hole)) :
             return false;
@@ -195,7 +198,7 @@ class PasswordCheck
         $hole = '';
     }
 
-    public function passwordReset($email, $admin)
+    public function passwordReset(string $email, int $admin): int
     {
         if (!isset($email)) :
             $this->message->logMessage("[DEBUG]", "Called without target account");
@@ -285,7 +288,7 @@ class PasswordCheck
         return 1;
     }
 
-    private function generateRandomPassword($length = 10)
+    private function generateRandomPassword(int $length = 10): string
     {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ&$@^*-_';
         $charactersLength = strlen($characters);
@@ -299,7 +302,7 @@ class PasswordCheck
     /**
      * Look up a user by email, returning an array or null.
      */
-    protected function findUserByEmail($email)
+    protected function findUserByEmail(string $email): ?array
     {
         $query = "SELECT usernumber, email FROM users WHERE email = ? LIMIT 1";
         $stmt = $this->db->prepare($query);
@@ -329,7 +332,7 @@ class PasswordCheck
     /**
      * Ensure password_resets table exists.
      */
-    protected function ensureResetTable()
+    protected function ensureResetTable(): void
     {
         $create = "CREATE TABLE IF NOT EXISTS password_resets (
             email VARCHAR(255) PRIMARY KEY,
@@ -343,7 +346,7 @@ class PasswordCheck
     /**
      * Store/reset token.
      */
-    protected function persistResetToken($email, $tokenHash, $expires)
+    protected function persistResetToken(string $email, string $tokenHash, string $expires): bool
     {
         $query = "INSERT INTO password_resets (email, token_hash, expires_at, created_at)
                   VALUES (?, ?, ?, NOW())
@@ -362,7 +365,7 @@ class PasswordCheck
     /**
      * Notify user their password has changed (best-effort).
      */
-    public function sendPasswordChangeNotification($email)
+    public function sendPasswordChangeNotification(string $email): bool
     {
         if (!$this->emailEnabled) :
             $this->message->logMessage(
@@ -395,7 +398,7 @@ class PasswordCheck
     /**
      * Fetch current password hash for a user.
      */
-    protected function getCurrentPasswordHash($email)
+    protected function getCurrentPasswordHash(string $email): ?string
     {
         $query = "SELECT password FROM users WHERE email = ? LIMIT 1";
         $stmt = $this->db->prepare($query);
@@ -423,7 +426,7 @@ class PasswordCheck
     /**
      * Fetch stored reset token.
      */
-    public function fetchResetRecord($email)
+    public function fetchResetRecord(string $email): ?array
     {
         $query = "SELECT token_hash, expires_at FROM password_resets WHERE email = ? LIMIT 1";
         $stmt = $this->db->prepare($query);
@@ -453,7 +456,7 @@ class PasswordCheck
     /**
      * Clear reset token.
      */
-    protected function clearResetRecord($email)
+    protected function clearResetRecord(string $email): void
     {
         $query = "DELETE FROM password_resets WHERE email = ?";
         $stmt = $this->db->prepare($query);
@@ -468,7 +471,7 @@ class PasswordCheck
     /**
      * Clear expired reset tokens.
      */
-    protected function clearExpiredResetTokens()
+    protected function clearExpiredResetTokens(): void
     {
         $query = "DELETE FROM password_resets WHERE expires_at < NOW()";
         $this->db->query($query);
@@ -477,7 +480,7 @@ class PasswordCheck
     /**
      * Allow callers to clear reset token for an email.
      */
-    public function clearResetForEmail($email)
+    public function clearResetForEmail(string $email): void
     {
         $this->clearResetRecord($email);
     }
@@ -485,7 +488,7 @@ class PasswordCheck
     /**
      * Update user status helper.
      */
-    protected function updateUserStatus($email, $status)
+    protected function updateUserStatus(string $email, string $status): bool
     {
         $query = "UPDATE users SET status = ?, badlogins = 0 WHERE email = ?";
         $stmt = $this->db->prepare($query);
@@ -501,7 +504,7 @@ class PasswordCheck
     /**
      * Update user password.
      */
-    protected function updateUserPassword($email, $hashedPassword, $setActive = false)
+    protected function updateUserPassword(string $email, string $hashedPassword, bool $setActive = false): bool
     {
         if ($setActive) :
             $query = "UPDATE users SET password = ?, badlogins = 0, status = 'active' WHERE email = ?";
@@ -521,7 +524,7 @@ class PasswordCheck
     /**
      * Send reset email via PHPMailer wrapper.
      */
-    protected function sendResetEmail($email, $link)
+    protected function sendResetEmail(string $email, string $link): bool
     {
         if (!class_exists(MyPHPMailer::class)) :
             $this->message->logMessage('[ERROR]', "MyPHPMailer class not available");
@@ -540,10 +543,12 @@ class PasswordCheck
         return $mail->sendEmail($email, true, $subject, $bodyHtml, $bodyText);
     }
 
-    public function newUser($userName, $postemail, $password = '')
+    public function newUser(string $userName, string $postemail, string $password = ''): int
     {
         $msg = new Message($this->appConfig);
         $dbName = (string) $this->appConfig->database('name', '');
+        $usersuccess = 0;
+        $tablesuccess = null;
         $postemail = trim($postemail);
         if (!filter_var($postemail, FILTER_VALIDATE_EMAIL)) :
             $msg->logMessage('[NOTICE]', "Email validation failed in newUser for input '$postemail'");

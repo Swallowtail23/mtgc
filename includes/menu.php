@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.7
-Date:        02/12/25
+Version:     2.8
+Date:        28/04/26
 Name:        menu.php
 Purpose:     PHP script to display menu
 Notes:       -
@@ -16,6 +16,8 @@ use MTG\Core\Message;
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
+
+$userEmail = $userEmail ?? '';
 ?>
 
 <div id='menubuttondiv' class="togglemenu">
@@ -33,7 +35,7 @@ endif;
         <?php
 
         //If Update notice within last week, display NEW on menu
-        if (isset($db)) :
+        if (isset($db, $appConfig)) :
             if ($rowqry = $db->execute_query("SELECT date FROM updatenotices ORDER by date DESC LIMIT 1")) :
                 $row = $rowqry->fetch_assoc();
                 if (is_array($row) && isset($row['date'])) :

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.5
-Date:        15/01/26
+Version:     1.6
+Date:        28/04/26
 Name:        ajaxdecksimport.php
 Purpose:     AJAX deck import for deck list page.
 Notes:       -
@@ -14,6 +14,7 @@ To do:       -
 use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
 use MTG\Core\Http\AjaxResponse;
+use MTG\Core\Message;
 
 // Bootstrap
 $ctx                        = require dirname(__DIR__) . '/bootstrap.php';
@@ -159,7 +160,7 @@ $response['decktype'] = $deckType;
 $response['status'] = $result;
 returnResponse($response);
 
-function resolveDeckNameConflict($db, $user, $deckName, $msg)
+function resolveDeckNameConflict(\mysqli $db, int $user, string $deckName, Message $msg): string
 {
     $candidate = $deckName;
     $counter = 1;
@@ -177,7 +178,7 @@ function resolveDeckNameConflict($db, $user, $deckName, $msg)
     return $candidate;
 }
 
-function deckNameExists($db, $user, $deckName)
+function deckNameExists(\mysqli $db, int $user, string $deckName): bool
 {
     $query = "SELECT decknumber FROM decks WHERE owner = ? AND deckname = ? LIMIT 1";
     $result = $db->execute_query($query, [$user, $deckName]);
@@ -187,7 +188,7 @@ function deckNameExists($db, $user, $deckName)
     return $result->num_rows > 0;
 }
 
-function returnResponse($response)
+function returnResponse(array $response): void
 {
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     header('Pragma: no-cache');
@@ -195,7 +196,7 @@ function returnResponse($response)
     AjaxResponse::json($response, http_response_code());
 }
 
-function getDeckCardCount($db, $deckNumber, $msg)
+function getDeckCardCount(\mysqli $db, int|string $deckNumber, Message $msg): ?int
 {
     $sql = "SELECT COUNT(*) AS total FROM deckcards WHERE decknumber = ? AND (cardqty > 0 OR sideqty > 0)";
     $msg->logMessage('[DEBUG]', "Decks import card count query for deck $deckNumber");
@@ -208,7 +209,7 @@ function getDeckCardCount($db, $deckNumber, $msg)
     return (int) ($row['total'] ?? 0);
 }
 
-function deleteDeckByNumber($db, $deckNumber, $msg)
+function deleteDeckByNumber(\mysqli $db, int|string $deckNumber, Message $msg): void
 {
     $msg->logMessage('[DEBUG]', "Decks import removing empty deck $deckNumber");
     $deleteCardsSql = "DELETE FROM deckcards WHERE decknumber = ?";

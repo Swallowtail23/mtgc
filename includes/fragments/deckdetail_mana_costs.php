@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        26/12/25
+Version:     1.4
+Date:        28/04/26
 Name:        deckdetail_mana_costs.php
 Purpose:     Deck detail mana costs and sources fragment.
 Notes:       -
@@ -13,6 +13,32 @@ To do:       -
 
 use MTG\Cards\CardUtils;
 
+$show_mana_block = $show_mana_block ?? false;
+$decktype = $decktype ?? '';
+$w = $w ?? 0;
+$u = $u ?? 0;
+$b = $b ?? 0;
+$r = $r ?? 0;
+$g = $g ?? 0;
+$c = $c ?? 0;
+$gw = $gw ?? 0;
+$gu = $gu ?? 0;
+$gb = $gb ?? 0;
+$gr = $gr ?? 0;
+$gg = $gg ?? 0;
+$gc = $gc ?? 0;
+$w_percent = $w_percent ?? 0;
+$u_percent = $u_percent ?? 0;
+$b_percent = $b_percent ?? 0;
+$r_percent = $r_percent ?? 0;
+$g_percent = $g_percent ?? 0;
+$c_percent = $c_percent ?? 0;
+$gw_percent = $gw_percent ?? 0;
+$gu_percent = $gu_percent ?? 0;
+$gb_percent = $gb_percent ?? 0;
+$gr_percent = $gr_percent ?? 0;
+$gg_percent = $gg_percent ?? 0;
+$gc_percent = $gc_percent ?? 0;
 $hasManaCosts = $show_mana_block && $decktype != 'Wishlist';
 ?>
 <div id="deck-mana-costs-fragment" data-has-content="<?php echo $hasManaCosts ? '1' : '0'; ?>">

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.83
-Date:        27/03/26
+Version:     1.84
+Date:        28/04/26
 Name:        header.php
 Purpose:     PHP script to display header
 Notes:       -
@@ -16,6 +16,11 @@ use MTG\Auth\SessionManager;
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
+
+$validsearch = $validsearch ?? '';
+$qtyresults = $qtyresults ?? 0;
+$maxresults = $maxresults ?? 0;
+$perpage = $perpage ?? 0;
 ?>
 
 <script>

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.12
-Date:        04/02/26
+Version:     2.13
+Date:        28/04/26
 Name:        deckdetail_data.php
 Purpose:     Deck detail data calculations for fragments and page rendering.
 Notes:       -
@@ -11,9 +11,27 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-use MTG\Cards\CardUtils;
 use MTG\Cards\DeckManager;
 use MTG\Cards\ImageManager;
+
+if (!isset($db, $deckNumber, $appConfig, $gameRules, $userEmail, $mytable, $msg)) :
+    return;
+endif;
+
+$deckName = '';
+$notes = '';
+$sidenotes = '';
+$decktype = '';
+$deck_updated_at = null;
+$deck_version = null;
+$deck_legality_list = [];
+$resultNameTotals = [];
+$total_cards = 0;
+$side_total_cards = 0;
+$requiredlist = '';
+$requiredbuy = '';
+$cdr_colours_raw = '';
+$cdr_colours = '';
 
 // Get deck details from database
 if (
