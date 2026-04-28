@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.10
+Version:     1.11
 Date:        11/01/26
 Name:        CollectionStats.php
 Purpose:     Compute collection totals and values for a user.
@@ -20,7 +20,7 @@ use MTG\Core\Message;
 class CollectionStats
 {
     /**
-    * @var mysqli
+    * @var \mysqli|object
     */
     private $db;
     private $message;

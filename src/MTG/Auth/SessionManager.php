@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.14
+Version:     1.15
 Date:        04/02/26
 Name:        SessionManager.php
 Purpose:     Check login class, get user details or force session destroy and return to login.php.
@@ -19,7 +19,7 @@ use MTG\Core\Message;
 class SessionManager
 {
     /**
-    * @var mysqli
+    * @var \mysqli|object
     */
     private $db;
     private $adminip;

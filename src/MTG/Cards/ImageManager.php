@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.20
+Version:     1.21
 Date:        23/02/26
 Name:        ImageManager.php
 Purpose:     Local image management class.
@@ -32,7 +32,7 @@ class ImageManager
     private const IMAGE_MAX_AGE = 604800; // 7 days
 
     /**
-    * @var mysqli
+    * @var \mysqli|object
     */
     private $db;
     /**

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.8
 Date:        12/01/26
 Name:        TrustedDeviceManager.php
 Purpose:     Manage trusted device tokens for extended session handling.
@@ -19,7 +19,7 @@ use MTG\Core\Message;
 class TrustedDeviceManager
 {
     /**
-    * @var mysqli
+    * @var \mysqli|object
     */
     private $db;
     private $appConfig;

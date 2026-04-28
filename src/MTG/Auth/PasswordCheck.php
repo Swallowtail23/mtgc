@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.11
+Version:     1.12
 Date:        12/01/26
 Name:        PasswordCheck.php
 Purpose:     Password validation class.
@@ -20,7 +20,7 @@ use MTG\Core\MyPHPMailer;
 class PasswordCheck
 {
     /**
-    * @var mysqli
+    * @var \mysqli|object
     */
     private $db;
     private $message;

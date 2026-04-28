@@ -161,7 +161,7 @@ class DbStub
 
 class StmtStub
 {
-    private $db;
+    private DbStub $db;
     private $rows;
     public $error = '';
 

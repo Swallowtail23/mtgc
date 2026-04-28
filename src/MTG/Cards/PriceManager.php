@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.9
 Date:        05/02/26
 Name:        PriceManager.php
 Purpose:     Price management class.
@@ -20,7 +20,7 @@ use MTG\Core\UserAgent;
 class PriceManager
 {
     /**
-    * @var mysqli
+    * @var \mysqli|object
     */
     private $db;
     private $appConfig;

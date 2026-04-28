@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.6
 Date:        11/01/26
 Name:        CollectionHistory.php
 Purpose:     Collection value history retrieval and export helpers.
@@ -20,7 +20,7 @@ use MTG\Core\MyPHPMailer;
 class CollectionHistory
 {
     /**
-    * @var mysqli
+    * @var \mysqli|object
     */
     private $db;
     private $appConfig;

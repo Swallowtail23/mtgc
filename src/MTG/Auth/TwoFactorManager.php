@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.7
 Date:        12/01/26
 Name:        TwoFactorManager.php
 Purpose:     Handles 2FA setup, verification, and management.
@@ -21,7 +21,7 @@ use MTG\Core\MyPHPMailer;
 class TwoFactorManager
 {
     /**
-    * @var mysqli
+    * @var \mysqli|object
     */
     private $db;
     private $appConfig;

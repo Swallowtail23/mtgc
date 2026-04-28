@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.11
+Version:     1.12
 Date:        11/01/26
 Name:        ClassName.php
 Purpose:     {Short description of what this class does}.
@@ -18,7 +18,7 @@ class ClassName
     /**
      * Database connection handle.
      *
-     * @var mysqli
+     * @var \mysqli|object
      */
     private $db;
     private $appConfig;
@@ -47,7 +47,7 @@ class ClassName
     /**
      * Constructor.
      *
-     * @param mysqli      $db         Database connection.
+     * @param \mysqli|object $db      Database connection.
      * @param AppConfig   $appConfig  App configuration container.
      * @param string|null $identifier Optional per-instance identifier (e.g. user email).
      */

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.23
+Version:     1.24
 Date:        24/03/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
@@ -22,7 +22,7 @@ use MTG\Core\Validation;
 class ImportExport
 {
     /**
-    * @var mysqli
+    * @var \mysqli|object
     */
     private $db;
     /**

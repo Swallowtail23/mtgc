@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.29
+Version:     2.30
 Date:        15/01/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
@@ -22,7 +22,7 @@ use MTG\Core\Validation;
 class DeckManager
 {
     /**
-    * @var mysqli
+    * @var \mysqli|object
     */
     private $db;
     /**
