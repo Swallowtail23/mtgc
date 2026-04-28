@@ -1,6 +1,18 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        TrustedDeviceManagerTest.php
+Purpose:     Tests trusted device token and cookie behavior.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use PHPUnit\Framework\TestCase;
+use MTG\Core\AppConfig;
 
 require_once __DIR__ . '/bootstrap.php';
 
@@ -26,15 +38,15 @@ function getRealTrustedDeviceManagerClass(): string
 
 class TrustedDeviceResultStub
 {
-    private $rows;
-    private $position = 0;
+    private array $rows;
+    private int $position = 0;
 
     public function __construct(array $rows)
     {
         $this->rows = array_values($rows);
     }
 
-    public function fetch_assoc()
+    public function fetch_assoc(): ?array
     {
         if ($this->position < count($this->rows)) :
             return $this->rows[$this->position++];
@@ -46,16 +58,16 @@ class TrustedDeviceResultStub
 
 class TrustedDeviceStmtStub
 {
-    public $num_rows;
-    public $error = '';
-    public $affected_rows;
-    public $boundParams = [];
-    public $executed = false;
-    private $executeReturn;
-    private $resultRows;
-    private $boundResultRefs = [];
+    public int $num_rows;
+    public string $error = '';
+    public int $affected_rows;
+    public array $boundParams = [];
+    public bool $executed = false;
+    private bool $executeReturn;
+    private array $resultRows;
+    private array $boundResultRefs = [];
 
-    public function __construct($executeReturn = true, array $resultRows = [], $affectedRows = 0)
+    public function __construct(bool $executeReturn = true, array $resultRows = [], int $affectedRows = 0)
     {
         $this->executeReturn = $executeReturn;
         $this->resultRows = $resultRows;
@@ -63,27 +75,28 @@ class TrustedDeviceStmtStub
         $this->affected_rows = $affectedRows;
     }
 
-    public function bind_param($types, &...$vars)
+    public function bind_param(string $types, mixed &...$vars): void
     {
+        unset($types);
         $this->boundParams = $vars;
     }
 
-    public function execute()
+    public function execute(): bool
     {
         $this->executed = true;
         return $this->executeReturn;
     }
 
-    public function store_result()
+    public function store_result(): void
     {
     }
 
-    public function bind_result(&...$vars)
+    public function bind_result(mixed &...$vars): void
     {
         $this->boundResultRefs = &$vars;
     }
 
-    public function fetch()
+    public function fetch(): bool
     {
         if (!empty($this->resultRows)) :
             $row = $this->resultRows[0];
@@ -96,32 +109,33 @@ class TrustedDeviceStmtStub
         return false;
     }
 
-    public function get_result()
+    public function get_result(): TrustedDeviceResultStub
     {
         return new TrustedDeviceResultStub($this->resultRows);
     }
 
-    public function close()
+    public function close(): void
     {
     }
 }
 
 class TrustedDeviceMysqliStub
 {
-    private $preparedStatements;
-    private $queryResult;
-    public $error = '';
-    public $affected_rows;
+    private array $preparedStatements;
+    private mixed $queryResult;
+    public string $error = '';
+    public int $affected_rows;
 
-    public function __construct(array $preparedStatements = [], $queryResult = true, $affectedRows = 0)
+    public function __construct(array $preparedStatements = [], mixed $queryResult = true, int $affectedRows = 0)
     {
         $this->preparedStatements = $preparedStatements;
         $this->queryResult = $queryResult;
         $this->affected_rows = $affectedRows;
     }
 
-    public function prepare($query)
+    public function prepare(string $query): TrustedDeviceStmtStub|false
     {
+        unset($query);
         if (empty($this->preparedStatements)) :
             $this->error = 'No prepared statements available';
             return false;
@@ -130,19 +144,20 @@ class TrustedDeviceMysqliStub
         return array_shift($this->preparedStatements);
     }
 
-    public function query($query)
+    public function query(string $query): mixed
     {
+        unset($query);
         return $this->queryResult;
     }
 }
 
 class TrustedDeviceManagerTest extends TestCase
 {
-    private $originalServer;
-    private $originalCookie;
-    private $originalSecret;
-    private $appConfig;
-    private $managerClass;
+    private array $originalServer;
+    private array $originalCookie;
+    private string|false $originalSecret;
+    private AppConfig $appConfig;
+    private string $managerClass;
 
     protected function setUp(): void
     {
@@ -174,7 +189,7 @@ class TrustedDeviceManagerTest extends TestCase
         endif;
     }
 
-    private function makeManager(TrustedDeviceMysqliStub $db)
+    private function makeManager(TrustedDeviceMysqliStub $db): object
     {
         $class = $this->managerClass;
         return new $class($db, $this->appConfig);

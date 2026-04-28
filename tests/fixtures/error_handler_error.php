@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        error_handler_error.php
+Purpose:     Fixture script for error handler notice tests.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 require __DIR__ . '/../../vendor/autoload.php';
 
 use MTG\Core\AppConfig;

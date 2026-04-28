@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        PriceManagerUpdateTest.php
+Purpose:     Tests price manager collection value update transactions.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use PHPUnit\Framework\TestCase;
 
 function getRealPriceManagerClassForUpdate(): string
@@ -111,15 +122,15 @@ class PriceManagerUpdateTest extends TestCase
 
 class PriceManagerUpdateDbStub
 {
-    public $error = 'stub error';
-    public $affected_rows = 0;
-    public $beginCalled = 0;
-    public $commitCalled = 0;
-    public $rollbackCalled = 0;
-    private $queryReturn = true;
-    private $commitReturn = true;
-    private $prepareReturn = true;
-    private $executeReturn = true;
+    public string $error = 'stub error';
+    public int $affected_rows = 0;
+    public int $beginCalled = 0;
+    public int $commitCalled = 0;
+    public int $rollbackCalled = 0;
+    private bool $queryReturn = true;
+    private bool $commitReturn = true;
+    private bool $prepareReturn = true;
+    private bool $executeReturn = true;
 
     public function __construct(array $overrides = [])
     {
@@ -130,31 +141,33 @@ class PriceManagerUpdateDbStub
         }
     }
 
-    public function begin_transaction()
+    public function begin_transaction(): bool
     {
         $this->beginCalled++;
         return true;
     }
 
-    public function query($sql)
+    public function query(string $sql): bool
     {
+        unset($sql);
         return $this->queryReturn;
     }
 
-    public function commit()
+    public function commit(): bool
     {
         $this->commitCalled++;
         return $this->commitReturn;
     }
 
-    public function rollback()
+    public function rollback(): bool
     {
         $this->rollbackCalled++;
         return true;
     }
 
-    public function prepare($sql)
+    public function prepare(string $sql): PriceManagerUpdateStmtStub|false
     {
+        unset($sql);
         if ($this->prepareReturn === false) {
             return false;
         }
@@ -164,24 +177,25 @@ class PriceManagerUpdateDbStub
 
 class PriceManagerUpdateStmtStub
 {
-    private $executeReturn;
+    private bool $executeReturn;
 
-    public function __construct($executeReturn)
+    public function __construct(bool $executeReturn)
     {
         $this->executeReturn = $executeReturn;
     }
 
-    public function bind_param($types, &...$values)
+    public function bind_param(string $types, mixed &...$values): bool
     {
+        unset($types, $values);
         return true;
     }
 
-    public function execute()
+    public function execute(): bool
     {
         return $this->executeReturn;
     }
 
-    public function close()
+    public function close(): void
     {
     }
 }

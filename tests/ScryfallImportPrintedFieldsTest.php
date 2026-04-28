@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        26/02/26
+Version:     1.1
+Date:        28/04/26
 Name:        ScryfallImportPrintedFieldsTest.php
 Purpose:     Verifies printed type/text fields are captured in Scryfall bulk import binds.
 Notes:       -
@@ -18,80 +18,83 @@ use PHPUnit\Framework\TestCase;
 
 class PrintedFieldsQueryStub
 {
-    public $num_rows = 1;
+    public int $num_rows = 1;
 
-    public function free()
+    public function free(): void
     {
     }
 }
 
 class PrintedFieldsInsertStmt
 {
-    public $affected_rows = 1;
-    public $captured = [];
-    private $refs = [];
+    public int $affected_rows = 1;
+    public array $captured = [];
+    private array $refs = [];
 
-    public function bind_param($types, &...$vars)
+    public function bind_param(string $types, mixed &...$vars): bool
     {
+        unset($types);
         $this->refs = &$vars;
         return true;
     }
 
-    public function execute()
+    public function execute(): bool
     {
         $this->captured = $this->refs;
         return true;
     }
 
-    public function close()
+    public function close(): void
     {
     }
 }
 
 class PrintedFieldsHashStmt
 {
-    public $num_rows = 0;
+    public int $num_rows = 0;
 
-    public function bind_param($types, &...$vars)
+    public function bind_param(string $types, mixed &...$vars): bool
+    {
+        unset($types, $vars);
+        return true;
+    }
+
+    public function execute(): bool
     {
         return true;
     }
 
-    public function execute()
+    public function store_result(): bool
     {
         return true;
     }
 
-    public function store_result()
+    public function bind_result(mixed &...$vars): bool
+    {
+        unset($vars);
+        return true;
+    }
+
+    public function fetch(): bool
     {
         return true;
     }
 
-    public function bind_result(&...$vars)
-    {
-        return true;
-    }
-
-    public function fetch()
-    {
-        return true;
-    }
-
-    public function free_result()
+    public function free_result(): void
     {
     }
 
-    public function close()
+    public function close(): void
     {
     }
 }
 
 class PrintedFieldsDbStub
 {
-    public $error = '';
-    private $prepareCount = 0;
-    public $insertStmt;
-    public $hashStmt;
+    public string $error = '';
+    private int $prepareCount = 0;
+    public PrintedFieldsInsertStmt $insertStmt;
+    public PrintedFieldsHashStmt $hashStmt;
 
     public function __construct(PrintedFieldsInsertStmt $insertStmt, PrintedFieldsHashStmt $hashStmt)
     {
@@ -99,13 +102,15 @@ class PrintedFieldsDbStub
         $this->hashStmt = $hashStmt;
     }
 
-    public function query($sql)
+    public function query(string $sql): PrintedFieldsQueryStub
     {
+        unset($sql);
         return new PrintedFieldsQueryStub();
     }
 
-    public function prepare($sql)
+    public function prepare(string $sql): PrintedFieldsInsertStmt|PrintedFieldsHashStmt
     {
+        unset($sql);
         $this->prepareCount++;
         if ($this->prepareCount === 1) :
             return $this->insertStmt;
@@ -113,17 +118,17 @@ class PrintedFieldsDbStub
         return $this->hashStmt;
     }
 
-    public function begin_transaction()
+    public function begin_transaction(): bool
     {
         return true;
     }
 
-    public function commit()
+    public function commit(): bool
     {
         return true;
     }
 
-    public function rollback()
+    public function rollback(): bool
     {
         return true;
     }

@@ -1,15 +1,26 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        IndexTest.php
+Purpose:     Tests index page rendering with a stubbed runtime context.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 
 class IndexTest extends TestCase
 {
-    private $originalSession;
-    private $originalDb;
-    private $originalLogfile;
-    private $originalSendmailPath;
+    private array $originalSession = [];
+    private mixed $originalDb = null;
+    private mixed $originalLogfile = null;
+    private string|false $originalSendmailPath = false;
 
     protected function setUp(): void
     {

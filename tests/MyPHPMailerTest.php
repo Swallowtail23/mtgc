@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        MyPHPMailerTest.php
+Purpose:     Tests PHPMailer configuration wrapper behavior.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use PHPUnit\Framework\TestCase;
 use MTG\Core\AppConfig;
 use MTG\Core\MyPHPMailer;
@@ -8,8 +19,8 @@ require_once __DIR__ . '/../src/MTG/Core/MyPHPMailer.php';
 
 class MyPHPMailerTest extends TestCase
 {
-    private $tempLog;
-    private $appConfig;
+    private string $tempLog;
+    private AppConfig $appConfig;
 
     protected function setUp(): void
     {

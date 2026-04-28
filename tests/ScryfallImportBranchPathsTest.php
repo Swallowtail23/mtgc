@@ -1,34 +1,45 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        ScryfallImportBranchPathsTest.php
+Purpose:     Tests Scryfall import update path classification.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Bulk\ScryfallImport;
 use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
 
 class ScryfallBranchQueryStub
 {
-    public $num_rows;
+    public int $num_rows;
 
-    public function __construct($numRows)
+    public function __construct(int $numRows)
     {
         $this->num_rows = $numRows;
     }
 
-    public function free()
+    public function free(): void
     {
     }
 }
 
 class ScryfallBranchState
 {
-    public $contentHashRef;
-    public $priceHashRef;
+    public mixed $contentHashRef = null;
+    public mixed $priceHashRef = null;
 }
 
 class ScryfallBranchInsertStmt
 {
-    public $affected_rows = 2;
-    private $state;
-    private $affectedQueue;
+    public int $affected_rows = 2;
+    private ScryfallBranchState $state;
+    private array $affectedQueue;
 
     public function __construct(ScryfallBranchState $state, array $affectedQueue)
     {
@@ -36,15 +47,16 @@ class ScryfallBranchInsertStmt
         $this->affectedQueue = $affectedQueue;
     }
 
-    public function bind_param($types, &...$vars)
+    public function bind_param(string $types, mixed &...$vars): bool
     {
+        unset($types);
         $count = count($vars);
         $this->state->contentHashRef = &$vars[$count - 5];
         $this->state->priceHashRef = &$vars[$count - 4];
         return true;
     }
 
-    public function execute()
+    public function execute(): bool
     {
         if (!empty($this->affectedQueue)) :
             $this->affected_rows = array_shift($this->affectedQueue);
@@ -52,18 +64,18 @@ class ScryfallBranchInsertStmt
         return true;
     }
 
-    public function close()
+    public function close(): void
     {
     }
 }
 
 class ScryfallBranchHashStmt
 {
-    public $num_rows = 1;
-    private $state;
-    private $modes;
-    private $contentRef;
-    private $priceRef;
+    public int $num_rows = 1;
+    private ScryfallBranchState $state;
+    private array $modes;
+    private mixed $contentRef = null;
+    private mixed $priceRef = null;
 
     public function __construct(ScryfallBranchState $state, array $modes)
     {
@@ -71,30 +83,31 @@ class ScryfallBranchHashStmt
         $this->modes = $modes;
     }
 
-    public function bind_param($types, &...$vars)
+    public function bind_param(string $types, mixed &...$vars): bool
+    {
+        unset($types, $vars);
+        return true;
+    }
+
+    public function execute(): bool
     {
         return true;
     }
 
-    public function execute()
-    {
-        return true;
-    }
-
-    public function store_result()
+    public function store_result(): bool
     {
         $this->num_rows = 1;
         return true;
     }
 
-    public function bind_result(&...$vars)
+    public function bind_result(mixed &...$vars): bool
     {
         $this->contentRef = &$vars[0];
         $this->priceRef = &$vars[1];
         return true;
     }
 
-    public function fetch()
+    public function fetch(): bool
     {
         $mode = array_shift($this->modes) ?? 'both';
         $content = $this->state->contentHashRef ?? '';
@@ -117,35 +130,37 @@ class ScryfallBranchHashStmt
         return true;
     }
 
-    public function free_result()
+    public function free_result(): void
     {
     }
 
-    public function close()
+    public function close(): void
     {
     }
 }
 
 class ScryfallBranchDbStub
 {
-    public $error = '';
-    private $prepareCount = 0;
-    private $insertStmt;
-    private $hashStmt;
+    public string $error = '';
+    private int $prepareCount = 0;
+    private ScryfallBranchInsertStmt $insertStmt;
+    private ScryfallBranchHashStmt $hashStmt;
 
-    public function __construct($insertStmt, $hashStmt)
+    public function __construct(ScryfallBranchInsertStmt $insertStmt, ScryfallBranchHashStmt $hashStmt)
     {
         $this->insertStmt = $insertStmt;
         $this->hashStmt = $hashStmt;
     }
 
-    public function query($sql)
+    public function query(string $sql): ScryfallBranchQueryStub
     {
+        unset($sql);
         return new ScryfallBranchQueryStub(1);
     }
 
-    public function prepare($sql)
+    public function prepare(string $sql): ScryfallBranchInsertStmt|ScryfallBranchHashStmt
     {
+        unset($sql);
         $this->prepareCount++;
         if ($this->prepareCount === 1) :
             return $this->insertStmt;
@@ -153,17 +168,17 @@ class ScryfallBranchDbStub
         return $this->hashStmt;
     }
 
-    public function begin_transaction()
+    public function begin_transaction(): bool
     {
         return true;
     }
 
-    public function commit()
+    public function commit(): bool
     {
         return true;
     }
 
-    public function rollback()
+    public function rollback(): bool
     {
         return true;
     }

@@ -1,12 +1,23 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        DeckManagerHelpersTest.php
+Purpose:     Tests deck manager helper methods.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Cards\DeckManager;
 use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
 
 class DeckManagerHelpersTest extends TestCase
 {
-    private $gameRules;
+    private GameRules $gameRules;
 
     protected function setUp(): void
     {
@@ -101,7 +112,7 @@ class DeckManagerHelpersTest extends TestCase
         $manager->deckLegalList(1, 'Commander', 'legal_commander');
     }
 
-    private function buildDeckManager($db = null)
+    private function buildDeckManager(mixed $db = null): DeckManager
     {
         $db = $db ?: new DeckManagerHelpersDb([], []);
         return new DeckManager(
@@ -115,19 +126,19 @@ class DeckManagerHelpersTest extends TestCase
 
 class DeckManagerHelpersDb
 {
-    public $error = 'stub error';
-    private $cards;
-    private $legality;
-    private $failOn;
+    public string $error = 'stub error';
+    private array $cards;
+    private array $legality;
+    private ?string $failOn;
 
-    public function __construct(array $cards, array $legality, $failOn = null)
+    public function __construct(array $cards, array $legality, ?string $failOn = null)
     {
         $this->cards = $cards;
         $this->legality = $legality;
         $this->failOn = $failOn;
     }
 
-    public function execute_query($sql, $params)
+    public function execute_query(string $sql, array $params): DeckManagerHelpersResult|false
     {
         if (strpos($sql, 'FROM deckcards') !== false) {
             if ($this->failOn === 'deckcards') {
@@ -152,12 +163,12 @@ class DeckManagerHelpersDb
 
 class DeckManagerHelpersResult
 {
-    private $cards = [];
-    private $index = 0;
-    private $field;
-    private $value;
+    private array $cards = [];
+    private int $index = 0;
+    private ?string $field;
+    private mixed $value = null;
 
-    public function __construct($data, $field = null)
+    public function __construct(mixed $data, ?string $field = null)
     {
         if (is_array($data)) {
             $this->cards = $data;
@@ -167,7 +178,7 @@ class DeckManagerHelpersResult
         $this->field = $field;
     }
 
-    public static function extractField($sql)
+    public static function extractField(string $sql): string
     {
         if (preg_match('/SELECT\\s+([a-zA-Z0-9_]+)\\s+FROM/i', $sql, $matches)) {
             return $matches[1];
@@ -175,7 +186,7 @@ class DeckManagerHelpersResult
         return 'legality';
     }
 
-    public function fetch_assoc()
+    public function fetch_assoc(): ?array
     {
         if ($this->index >= count($this->cards)) {
             return null;
@@ -185,8 +196,9 @@ class DeckManagerHelpersResult
         return ['cardnumber' => $card];
     }
 
-    public function fetch_array($mode)
+    public function fetch_array(int $mode): array
     {
+        unset($mode);
         return [$this->field => $this->value];
     }
 }

@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        TwoFactorManagerTest.php
+Purpose:     Tests two-factor manager lookup behavior.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/bootstrap.php';
@@ -20,16 +31,16 @@ function getRealTwoFactorManagerClass(): string
 
 class TwoFactorResultStub
 {
-    public $num_rows;
-    private $row;
+    public int $num_rows;
+    private array $row;
 
-    public function __construct($numRows, $row)
+    public function __construct(int $numRows, array $row)
     {
         $this->num_rows = $numRows;
         $this->row = $row;
     }
 
-    public function fetch_assoc()
+    public function fetch_assoc(): array
     {
         return $this->row;
     }
@@ -37,24 +48,25 @@ class TwoFactorResultStub
 
 class TwoFactorStmtStub
 {
-    private $result;
+    private TwoFactorResultStub $result;
 
-    public function __construct($result)
+    public function __construct(TwoFactorResultStub $result)
     {
         $this->result = $result;
     }
 
-    public function bind_param($types, &...$params)
+    public function bind_param(string $types, mixed &...$params): bool
+    {
+        unset($types, $params);
+        return true;
+    }
+
+    public function execute(): bool
     {
         return true;
     }
 
-    public function execute()
-    {
-        return true;
-    }
-
-    public function get_result()
+    public function get_result(): TwoFactorResultStub
     {
         return $this->result;
     }
@@ -62,15 +74,16 @@ class TwoFactorStmtStub
 
 class TwoFactorDbStub
 {
-    private $stmt;
+    private TwoFactorStmtStub $stmt;
 
-    public function __construct($stmt)
+    public function __construct(TwoFactorStmtStub $stmt)
     {
         $this->stmt = $stmt;
     }
 
-    public function prepare($query)
+    public function prepare(string $query): TwoFactorStmtStub
     {
+        unset($query);
         return $this->stmt;
     }
 }

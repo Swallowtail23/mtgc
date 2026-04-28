@@ -1,12 +1,23 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        DeckManagerCopyLimitTest.php
+Purpose:     Tests deck manager card copy limit enforcement.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Cards\DeckManager;
 use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
 
 class DeckManagerCopyLimitTest extends TestCase
 {
-    private function buildManager($db): DeckManager
+    private function buildManager(mixed $db): DeckManager
     {
         $gameRules = new GameRules([
             'any_quantity' => [],
@@ -81,14 +92,14 @@ class DeckManagerCopyLimitTest extends TestCase
 
 class DeckManagerCopyLimitDb
 {
-    public $error = 'stub error';
-    private $cardName;
-    private $cardType;
-    private $ability;
-    private $deckType;
-    private $existingNames;
-    private $existingTotalQty;
-    private $cardRowCount;
+    public string $error = 'stub error';
+    private string $cardName;
+    private string $cardType;
+    private string $ability;
+    private string $deckType;
+    private array $existingNames;
+    private int $existingTotalQty;
+    private int $cardRowCount;
 
     public function __construct(array $config)
     {
@@ -101,8 +112,9 @@ class DeckManagerCopyLimitDb
         $this->cardRowCount = $config['cardRowCount'];
     }
 
-    public function execute_query($sql, $params = [])
+    public function execute_query(string $sql, array $params = []): DeckManagerCopyLimitResult|DeckManagerCopyLimitRowCountResult|bool
     {
+        unset($params);
         if (strpos($sql, 'FROM cards_scry') !== false && strpos($sql, 'name,type') !== false) {
             return new DeckManagerCopyLimitResult([[
                 'name' => $this->cardName,
@@ -147,15 +159,15 @@ class DeckManagerCopyLimitDb
 
 class DeckManagerCopyLimitResult
 {
-    private $rows;
-    private $index = 0;
+    private array $rows;
+    private int $index = 0;
 
     public function __construct(array $rows)
     {
         $this->rows = $rows;
     }
 
-    public function fetch_assoc()
+    public function fetch_assoc(): ?array
     {
         if ($this->index >= count($this->rows)) {
             return null;
@@ -168,16 +180,16 @@ class DeckManagerCopyLimitResult
 
 class DeckManagerCopyLimitRowCountResult
 {
-    public $num_rows;
-    private $row;
+    public int $num_rows;
+    private array $row;
 
-    public function __construct($numRows, array $row)
+    public function __construct(int $numRows, array $row)
     {
         $this->num_rows = $numRows;
         $this->row = $row;
     }
 
-    public function fetch_assoc()
+    public function fetch_assoc(): array
     {
         return $this->row;
     }

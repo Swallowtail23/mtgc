@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        ImageManagerTest.php
+Purpose:     Tests image manager refresh and placeholder behavior.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Cards\ImageManager;
 use MTG\Core\AppConfig;
 use MTG\Core\GameRules;
@@ -16,18 +27,25 @@ class FakeDbForImages
 
 class TestImageManager extends ImageManager
 {
-    public $diffReturn = false;
-    public $diffCalled = 0;
-    public $forceUnreadable = false;
-    public $forceExists = true;
-    public $unreadablePaths = [];
+    public bool $diffReturn = false;
+    public int $diffCalled = 0;
+    public bool $forceUnreadable = false;
+    public bool $forceExists = true;
+    public array $unreadablePaths = [];
 
+    /**
+     * @param string $remoteUrl
+     * @param string $localFilePath
+     */
     public function diffImage($remoteUrl, $localFilePath)
     {
         $this->diffCalled++;
         return $this->diffReturn;
     }
 
+    /**
+     * @param string $path
+     */
     protected function isReadable($path)
     {
         if (isset($this->unreadablePaths[$path]) && $this->unreadablePaths[$path]) {
@@ -39,6 +57,9 @@ class TestImageManager extends ImageManager
         return parent::isReadable($path);
     }
 
+    /**
+     * @param string $path
+     */
     protected function fileExists($path)
     {
         if (isset($this->unreadablePaths[$path]) && $this->unreadablePaths[$path]) {
@@ -53,9 +74,15 @@ class TestImageManager extends ImageManager
 
 class TestRefreshImageManager extends ImageManager
 {
-    public $responses = [];
-    public $callCount = 0;
+    public array $responses = [];
+    public int $callCount = 0;
 
+    /**
+     * @param string $setcode
+     * @param string $cardId
+     * @param string $layout
+     * @param bool $allowFetch
+     */
     public function getImage($setcode, $cardId, $layout, $allowFetch = true)
     {
         $index = $this->callCount;
@@ -72,11 +99,11 @@ class TestRefreshImageManager extends ImageManager
 
 class ImageManagerTest extends TestCase
 {
-    private $appConfig;
-    private $gameRules;
-    private $tempDir;
-    private $imgRoot;
-    private $remoteUrl;
+    private AppConfig $appConfig;
+    private GameRules $gameRules;
+    private string $tempDir;
+    private string $imgRoot;
+    private string $remoteUrl;
 
     protected function setUp(): void
     {
@@ -149,7 +176,7 @@ class ImageManagerTest extends TestCase
         $this->removeDir($this->tempDir);
     }
 
-    private function removeDir($dir): void
+    private function removeDir(string $dir): void
     {
         if (!is_dir($dir)) {
             return;
@@ -164,7 +191,7 @@ class ImageManagerTest extends TestCase
         rmdir($dir);
     }
 
-    private function createLocalImage($setcode, $cardId, $ageSeconds = 0): string
+    private function createLocalImage(string $setcode, string $cardId, int $ageSeconds = 0): string
     {
         $path = $this->imgRoot . $setcode . '/' . $cardId . '.jpg';
         if (!is_dir(dirname($path))) {
@@ -241,8 +268,13 @@ class ImageManagerTest extends TestCase
     public function testDiffImageTouchOnMatch()
     {
         $manager = new class (new FakeDbForImages(), $this->appConfig, $this->gameRules) extends ImageManager {
+            /**
+             * @param string $remoteUrl
+             * @param string $localFilePath
+             */
             public function diffImage($remoteUrl, $localFilePath)
             {
+                unset($remoteUrl);
                 clearstatcache(true, $localFilePath);
                 usleep(200000); // 0.2s delay to ensure mtime bump
                 @touch($localFilePath);
@@ -271,20 +303,25 @@ class ImageManagerTest extends TestCase
         $fileUrl = 'file://' . $remoteFile;
 
         $db = new class ($fileUrl) {
-            private $fileUrl;
-            public function __construct($fileUrl)
+            private string $fileUrl;
+
+            public function __construct(string $fileUrl)
             {
                 $this->fileUrl = $fileUrl;
             }
-            public function execute_query($sql, $params)
+
+            public function execute_query(string $sql, array $params): object
             {
+                unset($sql, $params);
                 return new class ($this->fileUrl) {
-                    private $fileUrl;
-                    public function __construct($fileUrl)
+                    private string $fileUrl;
+
+                    public function __construct(string $fileUrl)
                     {
                         $this->fileUrl = $fileUrl;
                     }
-                    public function fetch_array()
+
+                    public function fetch_array(): array
                     {
                         return [
                             'image_uri' => $this->fileUrl,
@@ -314,10 +351,11 @@ class ImageManagerTest extends TestCase
         $this->createLocalImage($setcode, $cardId, 0);
 
         $db = new class {
-            public function execute_query($sql, $params)
+            public function execute_query(string $sql, array $params): object
             {
+                unset($sql, $params);
                 return new class {
-                    public function fetch_array()
+                    public function fetch_array(): array
                     {
                         return [
                             'image_uri' => 'http://example.test/front.jpg',
@@ -348,10 +386,11 @@ class ImageManagerTest extends TestCase
         file_put_contents($backPath, 'image-bytes');
 
         $db = new class {
-            public function execute_query($sql, $params)
+            public function execute_query(string $sql, array $params): object
             {
+                unset($sql, $params);
                 return new class {
-                    public function fetch_array()
+                    public function fetch_array(): array
                     {
                         return [
                             'image_uri' => 'http://example.test/front.jpg',
@@ -381,8 +420,9 @@ class ImageManagerTest extends TestCase
     public function testRefreshImageReturnsFailureArrayWhenCardLookupFails()
     {
         $db = new class {
-            public function execute_query($sql, $params)
+            public function execute_query(string $sql, array $params): false
             {
+                unset($sql, $params);
                 return false;
             }
         };
@@ -408,10 +448,11 @@ class ImageManagerTest extends TestCase
         file_put_contents($backPath, 'old-back');
 
         $db = new class {
-            public function execute_query($sql, $params)
+            public function execute_query(string $sql, array $params): object
             {
+                unset($sql, $params);
                 return new class {
-                    public function fetch_assoc()
+                    public function fetch_assoc(): array
                     {
                         return [
                             'id' => 'refresh-card',

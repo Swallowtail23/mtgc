@@ -1,11 +1,23 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        AjaxResponseTest.php
+Purpose:     Tests AJAX response helpers in isolated fixture processes.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use PHPUnit\Framework\TestCase;
 
 class AjaxResponseTest extends TestCase
 {
     private function runFixture(string $script, array $env): array
     {
+        $pipes = [];
         $process = proc_open(
             ['php', $script],
             [
@@ -17,11 +29,15 @@ class AjaxResponseTest extends TestCase
             array_merge($_ENV, $env)
         );
 
+        if ($process === false) :
+            return ['', 'Failed to start fixture process.', 1];
+        endif;
+
         $stdout = stream_get_contents($pipes[1]);
         $stderr = stream_get_contents($pipes[2]);
-        foreach ($pipes as $pipe) {
+        foreach ($pipes as $pipe) :
             fclose($pipe);
-        }
+        endforeach;
         $code = proc_close($process);
 
         return [$stdout, $stderr, $code];

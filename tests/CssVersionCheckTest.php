@@ -1,13 +1,24 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        CssVersionCheckTest.php
+Purpose:     Tests CSS version suffix settings lookup.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Admin\AdminSettings;
 use MTG\Core\AppConfig;
 use PHPUnit\Framework\TestCase;
 
 class CssVersionCheckTest extends TestCase
 {
-    private $tempLog;
-    private $appConfig;
+    private string $tempLog;
+    private AppConfig $appConfig;
 
     protected function setUp(): void
     {
@@ -68,9 +79,11 @@ class CssVersionCheckTest extends TestCase
     public function testReturnsMinWhenQueryFails()
     {
         $db = new class {
-            public $error = 'fail';
-            public function execute_query($sql)
+            public string $error = 'fail';
+
+            public function execute_query(string $sql): false
             {
+                unset($sql);
                 return false;
             }
         };
@@ -81,16 +94,19 @@ class CssVersionCheckTest extends TestCase
     public function testReturnsExpectedBasedOnUseminFlag()
     {
         $db = new class {
-            public function execute_query($sql)
+            public function execute_query(string $sql): object
             {
+                unset($sql);
                 return new class {
-                    private $returnMin;
-                    private $fetched = false;
-                    public function __construct($returnMin = true)
+                    private bool $returnMin;
+                    private bool $fetched = false;
+
+                    public function __construct(bool $returnMin = true)
                     {
                         $this->returnMin = $returnMin;
                     }
-                    public function fetch_assoc()
+
+                    public function fetch_assoc(): ?array
                     {
                         if ($this->fetched) {
                             return null;
@@ -98,7 +114,7 @@ class CssVersionCheckTest extends TestCase
                         $this->fetched = true;
                         return ['usemin' => $this->returnMin ? 1 : 0];
                     }
-                    public function free()
+                    public function free(): void
                     {
                     }
                 };
@@ -108,11 +124,13 @@ class CssVersionCheckTest extends TestCase
         $this->assertSame('-min', AdminSettings::getCssVersionSuffix($db, $this->appConfig));
 
         $db = new class {
-            public function execute_query($sql)
+            public function execute_query(string $sql): object
             {
+                unset($sql);
                 return new class {
-                    private $fetched = false;
-                    public function fetch_assoc()
+                    private bool $fetched = false;
+
+                    public function fetch_assoc(): ?array
                     {
                         if ($this->fetched) {
                             return null;
@@ -120,7 +138,7 @@ class CssVersionCheckTest extends TestCase
                         $this->fetched = true;
                         return ['usemin' => 0];
                     }
-                    public function free()
+                    public function free(): void
                     {
                     }
                 };

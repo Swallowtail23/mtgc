@@ -1,30 +1,41 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        DeckManagerTest.php
+Purpose:     Tests deck manager batch insert behavior.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Cards\DeckManager;
 use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
 
 class DeckStmtStub
 {
-    public $types;
-    public $values;
-    public $executed = false;
-    public $error = '';
+    public string $types = '';
+    public array $values = [];
+    public bool $executed = false;
+    public string $error = '';
 
-    public function bind_param($types, &...$values)
+    public function bind_param(string $types, mixed &...$values): bool
     {
         $this->types = $types;
         $this->values = $values;
         return true;
     }
 
-    public function execute()
+    public function execute(): bool
     {
         $this->executed = true;
         return true;
     }
 
-    public function close()
+    public function close(): bool
     {
         return true;
     }
@@ -32,15 +43,15 @@ class DeckStmtStub
 
 class DeckDbStub
 {
-    public $query;
-    public $stmt;
+    public string $query = '';
+    public DeckStmtStub $stmt;
 
-    public function __construct($stmt)
+    public function __construct(DeckStmtStub $stmt)
     {
         $this->stmt = $stmt;
     }
 
-    public function prepare($query)
+    public function prepare(string $query): DeckStmtStub
     {
         $this->query = $query;
         return $this->stmt;

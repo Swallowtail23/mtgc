@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        LoginHandlerStampTest.php
+Purpose:     Tests login timestamp updates.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Auth\LoginHandler;
 use PHPUnit\Framework\TestCase;
 
@@ -7,16 +18,16 @@ require_once __DIR__ . '/bootstrap.php';
 
 class LoginStampDbStub
 {
-    public $lastQuery;
-    public $lastParams;
-    private $result;
+    public string $lastQuery = '';
+    public array $lastParams = [];
+    private bool $result;
 
-    public function __construct($result)
+    public function __construct(bool $result)
     {
         $this->result = $result;
     }
 
-    public function execute_query($query, $params)
+    public function execute_query(string $query, array $params): bool
     {
         $this->lastQuery = $query;
         $this->lastParams = $params;

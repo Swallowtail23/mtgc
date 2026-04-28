@@ -1,13 +1,25 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        index_stubs.php
+Purpose:     Provides stub classes for index tests.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 namespace MTG\Core {
     if (!class_exists(INI::class, false)) {
         class INI
         {
-            public $data;
+            public array $data;
 
-            public function __construct($file = null, $sections = true)
+            public function __construct(?string $file = null, bool $sections = true)
             {
+                unset($file, $sections);
                 $this->data = [
                     'general' => [
                         'URL' => 'http://localhost',
@@ -98,7 +110,7 @@ namespace MTG\Auth {
                 return $_SESSION['csrf_token'];
             }
 
-            public static function validateCsrfToken($submittedToken)
+            public static function validateCsrfToken(mixed $submittedToken): bool
             {
                 return is_string($submittedToken) && isset($_SESSION['csrf_token'])
                     && hash_equals($_SESSION['csrf_token'], $submittedToken);

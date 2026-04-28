@@ -1,17 +1,28 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        ProfilePreferencesTest.php
+Purpose:     Tests profile preference persistence helpers.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Core\Message;
 use MTG\Profile\ProfilePreferences;
 use PHPUnit\Framework\TestCase;
 
 class ProfilePreferencesDbStub
 {
-    public $query;
-    public $params;
-    public $result = true;
-    public $error = 'db-error';
+    public string $query = '';
+    public array $params = [];
+    public bool $result = true;
+    public string $error = 'db-error';
 
-    public function execute_query($query, $params)
+    public function execute_query(string $query, array $params): bool
     {
         $this->query = $query;
         $this->params = $params;

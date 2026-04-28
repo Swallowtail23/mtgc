@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        ScryfallImportTest.php
+Purpose:     Tests Scryfall bulk metadata helpers.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Bulk\ScryfallImport;
 use MTG\Core\AppConfig;
 use MTG\Core\GameRules;
@@ -7,15 +18,29 @@ use PHPUnit\Framework\TestCase;
 
 class ScryfallImportStub extends ScryfallImport
 {
-    public static $fetchMap = [];
-    public static $downloadCalls = 0;
-    public static $downloadResults = [];
+    public static array $fetchMap = [];
+    public static int $downloadCalls = 0;
+    public static array $downloadResults = [];
 
+    /**
+     * @param string $url
+     * @param mixed $msg
+     * @param string $context
+     * @return array|false
+     */
     public static function fetchJson($url, $msg, $context, AppConfig $appConfig)
     {
+        unset($msg, $context, $appConfig);
         return self::$fetchMap[$url] ?? false;
     }
 
+    /**
+     * @param string $url
+     * @param string $dest
+     * @param mixed $msg
+     * @param string $context
+     * @param bool $debug
+     */
     public static function downloadBulk(
         $url,
         $dest,
@@ -24,6 +49,7 @@ class ScryfallImportStub extends ScryfallImport
         $context = 'downloadBulk',
         $debug = false
     ) {
+        unset($url, $msg, $appConfig, $context, $debug);
         self::$downloadCalls++;
         if (!empty(self::$downloadResults)) :
             $next = array_shift(self::$downloadResults);
@@ -42,30 +68,31 @@ class ScryfallImportStub extends ScryfallImport
 
 class BulkQueryStub
 {
-    public $num_rows;
+    public int $num_rows;
 
-    public function __construct($numRows)
+    public function __construct(int $numRows)
     {
         $this->num_rows = $numRows;
     }
 
-    public function free()
+    public function free(): void
     {
     }
 }
 
 class BulkDbStub
 {
-    public $error = '';
-    private $responses;
+    public string $error = '';
+    private array $responses;
 
     public function __construct(array $responses)
     {
         $this->responses = $responses;
     }
 
-    public function query($sql)
+    public function query(string $sql): mixed
     {
+        unset($sql);
         return array_shift($this->responses);
     }
 }

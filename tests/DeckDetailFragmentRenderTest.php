@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        DeckDetailFragmentRenderTest.php
+Purpose:     Tests deck detail fragment rendering helpers.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use PHPUnit\Framework\TestCase;
 
 class DeckDetailFragmentRenderTest extends TestCase
@@ -27,8 +38,9 @@ class DeckDetailFragmentRenderTest extends TestCase
         $rate = 1.25;
         $targetCurrency = 'USD';
         $msg = new class {
-            public function logMessage($level, $message)
+            public function logMessage(string $level, string $message): void
             {
+                unset($level, $message);
             }
         };
 

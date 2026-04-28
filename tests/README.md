@@ -1,11 +1,13 @@
-Manual Bulk Import Test
+# Manual Bulk Import Test
 
 Purpose
 Verify the bulk import change detection using the two fixture files:
+
 - tests/test_data/bulk_sample_10.json
 - tests/test_data/bulk_sample_10_copy.json
 
 What It Does
+
 - Ensures `cards_scry_test` exists (creates from `cards_scry` if missing).
 - Truncates `cards_scry_test`.
 - Imports `bulk_sample_10.json` (baseline).
@@ -21,6 +23,7 @@ Expected Summary
 Test summary: total 10, added 1, price only 2, content only 2, both 2
 
 Notes
+
 - This is a manual/local test only.
 - The test will wipe all data in `cards_scry_test`.
 - The PHPUnit test uses `MTG_BULK_TEST_INI` or defaults to `/opt/mtg/mtg_new.ini`.

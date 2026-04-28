@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        SessionManagerTest.php
+Purpose:     Tests session manager currency rate state.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use PHPUnit\Framework\TestCase;
 
 function getRealSessionManagerClass(): string
@@ -18,48 +29,49 @@ function getRealSessionManagerClass(): string
 
 class RateStmtStub
 {
-    public $num_rows = 1;
-    private $rate;
-    private $lastUpdate;
-    private $boundRate;
-    private $boundLastUpdate;
+    public int $num_rows = 1;
+    private string $rate;
+    private int $lastUpdate;
+    private mixed $boundRate = null;
+    private mixed $boundLastUpdate = null;
 
-    public function __construct($rate, $lastUpdate)
+    public function __construct(string $rate, int $lastUpdate)
     {
         $this->rate = $rate;
         $this->lastUpdate = $lastUpdate;
     }
 
-    public function bind_param($types, &...$params)
+    public function bind_param(string $types, mixed &...$params): bool
+    {
+        unset($types, $params);
+        return true;
+    }
+
+    public function execute(): bool
     {
         return true;
     }
 
-    public function execute()
+    public function store_result(): bool
     {
         return true;
     }
 
-    public function store_result()
-    {
-        return true;
-    }
-
-    public function bind_result(&...$vars)
+    public function bind_result(mixed &...$vars): bool
     {
         $this->boundRate = &$vars[0];
         $this->boundLastUpdate = &$vars[1];
         return true;
     }
 
-    public function fetch()
+    public function fetch(): bool
     {
         $this->boundRate = $this->rate;
         $this->boundLastUpdate = $this->lastUpdate;
         return true;
     }
 
-    public function close()
+    public function close(): bool
     {
         return true;
     }
@@ -67,23 +79,24 @@ class RateStmtStub
 
 class RateDbStub
 {
-    private $stmt;
-    public $error = '';
+    private RateStmtStub $stmt;
+    public string $error = '';
 
-    public function __construct($stmt)
+    public function __construct(RateStmtStub $stmt)
     {
         $this->stmt = $stmt;
     }
 
-    public function prepare($query)
+    public function prepare(string $query): RateStmtStub
     {
+        unset($query);
         return $this->stmt;
     }
 }
 
 class SessionManagerTest extends TestCase
 {
-    private function getPrivateProperty($object, string $property)
+    private function getPrivateProperty(object $object, string $property): mixed
     {
         $ref = new ReflectionProperty($object, $property);
         $ref->setAccessible(true);

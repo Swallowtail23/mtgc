@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        PriceManagerTest.php
+Purpose:     Tests price manager card data selection behavior.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Core\AppConfig;
 use PHPUnit\Framework\TestCase;
 
@@ -21,16 +32,16 @@ function getRealPriceManagerClass(): string
 
 class PriceResultStub
 {
-    public $num_rows;
-    private $row;
+    public int $num_rows;
+    private ?array $row;
 
-    public function __construct($numRows, $row)
+    public function __construct(int $numRows, ?array $row)
     {
         $this->num_rows = $numRows;
         $this->row = $row;
     }
 
-    public function fetch_assoc()
+    public function fetch_assoc(): ?array
     {
         return $this->row;
     }
@@ -38,23 +49,24 @@ class PriceResultStub
 
 class PriceDbStub
 {
-    public $error = '';
-    private $cardsResult;
-    private $jsonResult;
+    public string $error = '';
+    private PriceResultStub $cardsResult;
+    private PriceResultStub $jsonResult;
 
-    public function __construct($cardsResult, $jsonResult)
+    public function __construct(PriceResultStub $cardsResult, PriceResultStub $jsonResult)
     {
         $this->cardsResult = $cardsResult;
         $this->jsonResult = $jsonResult;
     }
 
-    public function real_escape_string($value)
+    public function real_escape_string(string $value): string
     {
         return $value;
     }
 
-    public function execute_query($query, $params)
+    public function execute_query(string $query, array $params): PriceResultStub|false
     {
+        unset($params);
         if (strpos($query, 'FROM cards_scry') !== false) :
             return $this->cardsResult;
         endif;

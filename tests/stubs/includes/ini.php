@@ -1,6 +1,16 @@
 <?php
 
-// Stub ini for index tests to avoid real config and DB connections.
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        ini.php
+Purpose:     Provides a stub ini/bootstrap context for index tests.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 require_once __DIR__ . '/../../../src/MTG/Core/AppConfig.php';
 require_once __DIR__ . '/../../../src/MTG/Core/AppContext.php';
 require_once __DIR__ . '/../../../src/MTG/Core/GameRules.php';
@@ -91,16 +101,17 @@ if (!isset($GLOBALS['db'])) :
         $GLOBALS['db'] = new class extends \mysqli {
             public function __construct()
             {
-                $this->init();
             }
 
-            public function set_charset($charset)
+            public function set_charset(string $charset): bool
             {
+                unset($charset);
                 return true;
             }
 
             public function execute_query(string $query, ?array $params = null): \mysqli_result|bool
             {
+                unset($query, $params);
                 return new class extends \mysqli_result {
                     public function __construct()
                     {
@@ -131,6 +142,7 @@ if (!isset($GLOBALS['db'])) :
 
             public function query(string $query, int $result_mode = MYSQLI_STORE_RESULT): \mysqli_result|bool
             {
+                unset($query, $result_mode);
                 return new class extends \mysqli_result {
                     public function __construct()
                     {
@@ -149,9 +161,9 @@ if (!isset($GLOBALS['db'])) :
                 };
             }
 
-            public function real_escape_string($str)
+            public function real_escape_string(string $string): string
             {
-                return $str;
+                return $string;
             }
         };
     endif;

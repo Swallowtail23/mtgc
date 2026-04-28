@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        CollectionHistoryTest.php
+Purpose:     Tests collection history CSV and query mapping behavior.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Cards\CollectionHistory;
 use MTG\Core\AppConfig;
 use PHPUnit\Framework\TestCase;
@@ -8,7 +19,7 @@ require_once __DIR__ . '/bootstrap.php';
 
 class CollectionHistoryTest extends TestCase
 {
-    private function buildConfig($logfile): AppConfig
+    private function buildConfig(int|string $logfile): AppConfig
     {
         $iniArray = [
             'general' => [
@@ -143,18 +154,19 @@ class CollectionHistoryTest extends TestCase
 
 class DbStub
 {
-    public $error = '';
-    public $lastTypes = '';
-    public $lastParams = [];
-    private $rows;
+    public string $error = '';
+    public string $lastTypes = '';
+    public array $lastParams = [];
+    private array $rows;
 
     public function __construct(array $rows)
     {
         $this->rows = $rows;
     }
 
-    public function prepare($query)
+    public function prepare(string $query): StmtStub
     {
+        unset($query);
         return new StmtStub($this, $this->rows);
     }
 }
@@ -162,8 +174,8 @@ class DbStub
 class StmtStub
 {
     private DbStub $db;
-    private $rows;
-    public $error = '';
+    private array $rows;
+    public string $error = '';
 
     public function __construct(DbStub $db, array $rows)
     {
@@ -171,24 +183,24 @@ class StmtStub
         $this->rows = $rows;
     }
 
-    public function bind_param($types, &...$params)
+    public function bind_param(string $types, mixed &...$params): bool
     {
         $this->db->lastTypes = $types;
         $this->db->lastParams = $params;
         return true;
     }
 
-    public function execute()
+    public function execute(): bool
     {
         return true;
     }
 
-    public function get_result()
+    public function get_result(): ResultStub
     {
         return new ResultStub($this->rows);
     }
 
-    public function close()
+    public function close(): bool
     {
         return true;
     }
@@ -196,15 +208,15 @@ class StmtStub
 
 class ResultStub
 {
-    private $rows;
-    private $index = 0;
+    private array $rows;
+    private int $index = 0;
 
     public function __construct(array $rows)
     {
         $this->rows = $rows;
     }
 
-    public function fetch_assoc()
+    public function fetch_assoc(): ?array
     {
         if ($this->index >= count($this->rows)) {
             return null;

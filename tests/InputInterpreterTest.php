@@ -1,13 +1,25 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        InputInterpreterTest.php
+Purpose:     Tests import input interpretation.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Cards\ImportExport;
+use MTG\Core\AppConfig;
 use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
 
 class InputInterpreterTest extends TestCase
 {
-    private $appConfig;
-    private $gameRules;
+    private AppConfig $appConfig;
+    private GameRules $gameRules;
 
     protected function setUp(): void
     {

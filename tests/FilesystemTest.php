@@ -1,12 +1,23 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        FilesystemTest.php
+Purpose:     Tests filesystem helper behavior.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Core\AppConfig;
 use MTG\Core\Filesystem;
 use PHPUnit\Framework\TestCase;
 
 class FilesystemTest extends TestCase
 {
-    private $appConfig;
+    private AppConfig $appConfig;
 
     protected function setUp(): void
     {

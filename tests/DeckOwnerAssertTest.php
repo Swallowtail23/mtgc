@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        DeckOwnerAssertTest.php
+Purpose:     Tests deck ownership assertion behavior.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Cards\DeckManager;
 use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
@@ -39,7 +50,7 @@ class DeckOwnerAssertTest extends TestCase
         $manager->assertDeckOwner(10, 1, 'unit-test');
     }
 
-    private function buildDeckManager($db)
+    private function buildDeckManager(mixed $db): DeckManager
     {
         $anyQuantity = $GLOBALS['any_quantity'] ?? [];
         $gameRules = new GameRules([
@@ -60,18 +71,19 @@ class DeckOwnerAssertTest extends TestCase
 
 class DeckOwnerAssertTestDb
 {
-    public $error = 'stub error';
-    private $row;
-    private $shouldFail;
+    public string $error = 'stub error';
+    private ?array $row;
+    private bool $shouldFail;
 
-    public function __construct($row, $shouldFail = false)
+    public function __construct(?array $row, bool $shouldFail = false)
     {
         $this->row = $row;
         $this->shouldFail = $shouldFail;
     }
 
-    public function execute_query($sql, $params)
+    public function execute_query(string $sql, array $params): DeckOwnerAssertTestResult|false
     {
+        unset($sql, $params);
         if ($this->shouldFail) {
             return false;
         }
@@ -81,14 +93,14 @@ class DeckOwnerAssertTestDb
 
 class DeckOwnerAssertTestResult
 {
-    private $row;
+    private ?array $row;
 
-    public function __construct($row)
+    public function __construct(?array $row)
     {
         $this->row = $row;
     }
 
-    public function fetch_assoc()
+    public function fetch_assoc(): ?array
     {
         return $this->row;
     }

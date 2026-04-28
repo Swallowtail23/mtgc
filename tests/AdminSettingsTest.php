@@ -1,12 +1,23 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        AdminSettingsTest.php
+Purpose:     Tests admin settings helpers.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Admin\AdminSettings;
 use MTG\Core\AppConfig;
 use PHPUnit\Framework\TestCase;
 
 class AdminSettingsTest extends TestCase
 {
-    private $appConfig;
+    private AppConfig $appConfig;
 
     protected function setUp(): void
     {
@@ -25,8 +36,9 @@ class AdminSettingsTest extends TestCase
     public function testSetMaintenanceModeRejectsInvalidToggle()
     {
         $db = new class {
-            public function prepare($query)
+            public function prepare(string $query): false
             {
+                unset($query);
                 return false;
             }
         };
@@ -37,18 +49,20 @@ class AdminSettingsTest extends TestCase
     public function testSetMaintenanceModeSucceeds()
     {
         $db = new class {
-            public function prepare($query)
+            public function prepare(string $query): object
             {
+                unset($query);
                 return new class {
-                    public function bind_param($types, &...$vars)
+                    public function bind_param(string $types, mixed &...$vars): bool
+                    {
+                        unset($types, $vars);
+                        return true;
+                    }
+                    public function execute(): bool
                     {
                         return true;
                     }
-                    public function execute()
-                    {
-                        return true;
-                    }
-                    public function close()
+                    public function close(): void
                     {
                     }
                 };
@@ -62,14 +76,16 @@ class AdminSettingsTest extends TestCase
     public function testCheckMaintenanceModeReturnsExpectedValues()
     {
         $db = new class {
-            private $calls = 0;
-            public $error = 'fail';
-            public function execute_query($sql, $params = [])
+            private int $calls = 0;
+            public string $error = 'fail';
+
+            public function execute_query(string $sql, array $params = []): object|false
             {
+                unset($sql, $params);
                 $this->calls++;
                 if ($this->calls === 1) {
                     return new class {
-                        public function fetch_assoc()
+                        public function fetch_assoc(): array
                         {
                             return ['mtce' => 0];
                         }
@@ -82,21 +98,23 @@ class AdminSettingsTest extends TestCase
         $this->assertSame(0, AdminSettings::checkMaintenanceMode(1, $db, $this->appConfig));
 
         $db = new class {
-            private $calls = 0;
-            public $error = 'fail';
-            public function execute_query($sql, $params = [])
+            private int $calls = 0;
+            public string $error = 'fail';
+
+            public function execute_query(string $sql, array $params = []): object
             {
+                unset($sql, $params);
                 $this->calls++;
                 if ($this->calls === 1) {
                     return new class {
-                        public function fetch_assoc()
+                        public function fetch_assoc(): array
                         {
                             return ['mtce' => 1];
                         }
                     };
                 }
                 return new class {
-                    public function fetch_assoc()
+                    public function fetch_assoc(): array
                     {
                         return ['admin' => 1];
                     }
@@ -107,21 +125,23 @@ class AdminSettingsTest extends TestCase
         $this->assertSame(2, AdminSettings::checkMaintenanceMode(1, $db, $this->appConfig));
 
         $db = new class {
-            private $calls = 0;
-            public $error = 'fail';
-            public function execute_query($sql, $params = [])
+            private int $calls = 0;
+            public string $error = 'fail';
+
+            public function execute_query(string $sql, array $params = []): object
             {
+                unset($sql, $params);
                 $this->calls++;
                 if ($this->calls === 1) {
                     return new class {
-                        public function fetch_assoc()
+                        public function fetch_assoc(): array
                         {
                             return ['mtce' => 1];
                         }
                     };
                 }
                 return new class {
-                    public function fetch_assoc()
+                    public function fetch_assoc(): array
                     {
                         return ['admin' => 0];
                     }

@@ -1,26 +1,39 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        LoginHandlerTest.php
+Purpose:     Tests login handler authentication flows.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 namespace andkab\Turnstile {
     class Turnstile
     {
-        public static $verifyResult;
+        public static mixed $verifyResult = null;
 
-        public function __construct($secret)
+        public function __construct(?string $secret)
         {
+            unset($secret);
         }
 
-        public function verify($response, $remote)
+        public function verify(?string $response, ?string $remote): object
         {
+            unset($response, $remote);
             return self::$verifyResult ?: new class {
-                public function isSuccess()
+                public function isSuccess(): bool
                 {
                     return true;
                 }
-                public function hasErrors()
+                public function hasErrors(): bool
                 {
                     return false;
                 }
-                public $errorCodes = [];
+                public array $errorCodes = [];
             };
         }
     }
@@ -30,14 +43,16 @@ namespace MTG\Auth {
     if (!class_exists(PasswordCheck::class, false)) {
         class PasswordCheck
         {
-            public static $result = 10;
+            public static int $result = 10;
 
-            public function __construct($db = null, $appConfig = null)
+            public function __construct(mixed $db = null, mixed $appConfig = null)
             {
+                unset($db, $appConfig);
             }
 
-            public function validatePassword($email, $password)
+            public function validatePassword(string $email, string $password): int
             {
+                unset($email, $password);
                 return self::$result;
             }
         }
@@ -46,20 +61,23 @@ namespace MTG\Auth {
     if (!class_exists(TwoFactorManager::class, false)) {
         class TwoFactorManager
         {
-            public static $enabled = false;
-            public $verificationStarted = false;
+            public static bool $enabled = false;
+            public bool $verificationStarted = false;
 
-            public function __construct($db = null, $appConfig = null)
+            public function __construct(mixed $db = null, mixed $appConfig = null)
             {
+                unset($db, $appConfig);
             }
 
-            public function isEnabled($userId)
+            public function isEnabled(int $userId): bool
             {
+                unset($userId);
                 return self::$enabled;
             }
 
-            public function startVerification($userId, $email)
+            public function startVerification(int $userId, string $email): void
             {
+                unset($userId, $email);
                 $this->verificationStarted = true;
             }
         }
@@ -68,37 +86,38 @@ namespace MTG\Auth {
     if (!class_exists(UserStatus::class, false)) {
         class UserStatus
         {
-            public static $badLoginResult = ['count' => 0, 'code' => 1];
-            public static $userStatusResult = ['code' => 10, 'number' => 1, 'admin' => 0];
-            public $incremented = false;
-            public $locked = false;
-            public $zeroed = false;
+            public static array $badLoginResult = ['count' => 0, 'code' => 1];
+            public static array $userStatusResult = ['code' => 10, 'number' => 1, 'admin' => 0];
+            public bool $incremented = false;
+            public bool $locked = false;
+            public bool $zeroed = false;
 
-            public function __construct($db = null, $appConfig = null, $email = null)
+            public function __construct(mixed $db = null, mixed $appConfig = null, ?string $email = null)
             {
+                unset($db, $appConfig, $email);
             }
 
-            public function getBadLogin()
+            public function getBadLogin(): array
             {
                 return self::$badLoginResult;
             }
 
-            public function getUserStatus()
+            public function getUserStatus(): array
             {
                 return self::$userStatusResult;
             }
 
-            public function incrementBadLogin()
+            public function incrementBadLogin(): void
             {
                 $this->incremented = true;
             }
 
-            public function zeroBadLogin()
+            public function zeroBadLogin(): void
             {
                 $this->zeroed = true;
             }
 
-            public function triggerLocked()
+            public function triggerLocked(): void
             {
                 $this->locked = true;
             }
@@ -108,13 +127,14 @@ namespace MTG\Auth {
     if (!class_exists(TrustedDeviceManager::class, false)) {
         class TrustedDeviceManager
         {
-            public static $result = false;
+            public static bool $result = false;
 
-            public function __construct($db = null, $appConfig = null)
+            public function __construct(mixed $db = null, mixed $appConfig = null)
             {
+                unset($db, $appConfig);
             }
 
-            public function validateTrustedDevice()
+            public function validateTrustedDevice(): bool
             {
                 return self::$result;
             }
@@ -143,9 +163,9 @@ namespace {
 
     class FakeResult
     {
-        public $num_rows;
-        private $rows;
-        private $index = 0;
+        public int $num_rows;
+        private array $rows;
+        private int $index = 0;
 
         public function __construct(array $rows)
         {
@@ -153,7 +173,7 @@ namespace {
             $this->num_rows = count($this->rows);
         }
 
-        public function fetch_assoc()
+        public function fetch_assoc(): ?array
         {
             if (!isset($this->rows[$this->index])) {
                 return null;
@@ -164,9 +184,9 @@ namespace {
 
     class FakeStatement
     {
-        public $num_rows;
-        private $rows;
-        private $boundVars;
+        public int $num_rows;
+        private array $rows;
+        private array $boundVars = [];
 
         public function __construct(array $rows)
         {
@@ -174,28 +194,29 @@ namespace {
             $this->num_rows = count($rows);
         }
 
-        public function bind_param($types, &$param)
+        public function bind_param(string $types, mixed &$param): bool
+        {
+            unset($types, $param);
+            return true;
+        }
+
+        public function execute(): bool
         {
             return true;
         }
 
-        public function execute()
+        public function store_result(): bool
         {
             return true;
         }
 
-        public function store_result()
-        {
-            return true;
-        }
-
-        public function bind_result(&...$vars)
+        public function bind_result(mixed &...$vars): bool
         {
             $this->boundVars = &$vars;
             return true;
         }
 
-        public function fetch()
+        public function fetch(): bool
         {
             if (empty($this->rows)) {
                 return false;
@@ -210,7 +231,7 @@ namespace {
             return true;
         }
 
-        public function close()
+        public function close(): bool
         {
             return true;
         }
@@ -218,23 +239,24 @@ namespace {
 
     class FakeDb
     {
-        public $executeQueue = [];
-        public $lastQueries = [];
-        private $preparedStatement;
+        public array $executeQueue = [];
+        public array $lastQueries = [];
+        private ?FakeStatement $preparedStatement = null;
 
-        public function setPreparedStatement($stmt)
+        public function setPreparedStatement(FakeStatement $stmt): void
         {
             $this->preparedStatement = $stmt;
         }
 
-        public function prepare($query)
+        public function prepare(string $query): ?FakeStatement
         {
             $this->lastQueries[] = $query;
             return $this->preparedStatement;
         }
 
-        public function execute_query($query, $params = [])
+        public function execute_query(string $query, array $params = []): mixed
         {
+            unset($params);
             $this->lastQueries[] = $query;
             return array_shift($this->executeQueue);
         }
@@ -242,7 +264,7 @@ namespace {
 
     class LoginHandlerTest extends TestCase
     {
-        private $obLevel = 0;
+        private int $obLevel = 0;
 
         protected function setUp(): void
         {
@@ -476,12 +498,14 @@ namespace {
             }, 1);
 
             \andkab\Turnstile\Turnstile::$verifyResult = new class {
-                public $errorCodes = ['timeout-or-duplicate'];
-                public function isSuccess()
+                public array $errorCodes = ['timeout-or-duplicate'];
+
+                public function isSuccess(): bool
                 {
                     return false;
                 }
-                public function hasErrors()
+
+                public function hasErrors(): bool
                 {
                     return true;
                 }

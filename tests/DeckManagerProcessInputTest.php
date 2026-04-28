@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        DeckManagerProcessInputTest.php
+Purpose:     Tests deck manager multiline input processing.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Cards\DeckManager;
 use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
@@ -8,6 +19,15 @@ class DeckManagerInputStub extends DeckManager
 {
     public array $calls = [];
 
+    /**
+     * @param int $deckNumber
+     * @param string $getString
+     * @param bool $sideboardTrigger
+     * @param bool $batch
+     * @param string|null $commanderMode
+     * @param int|null $rowNumber
+     * @param string|null $originalLine
+     */
     public function quickAdd(
         $deckNumber,
         $getString,

@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        UserStatusTest.php
+Purpose:     Tests user status lookup and update helpers.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/bootstrap.php';
@@ -20,16 +31,16 @@ function getRealUserStatusClass(): string
 
 class UserStatusResultStub
 {
-    public $num_rows;
-    private $row;
+    public int $num_rows;
+    private array $row;
 
-    public function __construct($numRows, $row)
+    public function __construct(int $numRows, array $row)
     {
         $this->num_rows = $numRows;
         $this->row = $row;
     }
 
-    public function fetch_assoc()
+    public function fetch_assoc(): array
     {
         return $this->row;
     }
@@ -37,17 +48,18 @@ class UserStatusResultStub
 
 class UserStatusDbStub
 {
-    private $results = [];
-    public $error = '';
-    public $info = '';
+    private array $results = [];
+    public string $error = '';
+    public string $info = '';
 
-    public function __construct($results)
+    public function __construct(array $results)
     {
         $this->results = $results;
     }
 
-    public function execute_query($query, $params)
+    public function execute_query(string $query, array $params): UserStatusResultStub|false
     {
+        unset($params);
         if (strpos($query, 'status,usernumber,admin') !== false) :
             return $this->results['status'];
         endif;
@@ -60,12 +72,12 @@ class UserStatusDbStub
 
 class UserStatusExecuteDbStub
 {
-    public $lastQuery;
-    public $lastParams;
-    public $error = '';
-    public $info = 'ok';
+    public string $lastQuery = '';
+    public array $lastParams = [];
+    public string $error = '';
+    public string $info = 'ok';
 
-    public function execute_query($query, $params)
+    public function execute_query(string $query, array $params): bool
     {
         $this->lastQuery = $query;
         $this->lastParams = $params;

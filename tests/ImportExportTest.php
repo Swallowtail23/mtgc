@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        ImportExportTest.php
+Purpose:     Tests import/export CSV formatting and input interpretation.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Cards\ImportExport;
 use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
@@ -76,9 +87,9 @@ class ImportExportTest extends TestCase
 
 class ImportExportDbStub
 {
-    private $fields;
-    private $rows;
-    public $query;
+    private array $fields;
+    private array $rows;
+    public string $query = '';
 
     public function __construct(array $fields, array $rows)
     {
@@ -86,12 +97,12 @@ class ImportExportDbStub
         $this->rows = $rows;
     }
 
-    public function real_escape_string($table)
+    public function real_escape_string(string $table): string
     {
         return $table;
     }
 
-    public function query($sql)
+    public function query(string $sql): ImportExportCsvResult
     {
         $this->query = $sql;
         return new ImportExportCsvResult($this->fields, $this->rows);
@@ -100,10 +111,10 @@ class ImportExportDbStub
 
 class ImportExportCsvResult
 {
-    private $fields;
-    private $rows;
-    private $index = 0;
-    public $field_count;
+    private array $fields;
+    private array $rows;
+    private int $index = 0;
+    public int $field_count;
 
     public function __construct(array $fields, array $rows)
     {
@@ -112,16 +123,16 @@ class ImportExportCsvResult
         $this->field_count = count($fields);
     }
 
-    public function fetch_fields()
+    public function fetch_fields(): array
     {
         $objects = [];
-        foreach ($this->fields as $field) {
+        foreach ($this->fields as $field) :
             $objects[] = (object) ['name' => $field];
-        }
+        endforeach;
         return $objects;
     }
 
-    public function fetch_assoc()
+    public function fetch_assoc(): ?array
     {
         if ($this->index >= count($this->rows)) {
             return null;
@@ -131,7 +142,7 @@ class ImportExportCsvResult
         return $row;
     }
 
-    public function fetch_row()
+    public function fetch_row(): ?array
     {
         if ($this->index >= count($this->rows)) {
             return null;

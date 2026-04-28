@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        SrcClassMapTest.php
+Purpose:     Tests source class names, namespaces, and autoload mappings.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use PHPUnit\Framework\TestCase;
 
 class SrcClassMapTest extends TestCase
@@ -101,7 +112,7 @@ class SrcClassMapTest extends TestCase
         $this->assertSame([], $mismatches, 'Autoload mismatches: ' . implode(', ', $mismatches));
     }
 
-    private function getClassDefinition($path)
+    private function getClassDefinition(string $path): ?array
     {
         $tokens = token_get_all(file_get_contents($path));
         $count = count($tokens);

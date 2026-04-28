@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        PasswordResetTest.php
+Purpose:     Tests password reset token and password update flows.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Core\AppConfig;
 use PHPUnit\Framework\TestCase;
 
@@ -29,10 +40,10 @@ getRealPasswordCheckClass();
 
 class PasswordCheckStub extends PasswordCheckReal
 {
-    public $users = [];
-    public $tokens = [];
-    public $sentLinks = [];
-    public $statusUpdates = [];
+    public array $users = [];
+    public array $tokens = [];
+    public array $sentLinks = [];
+    public array $statusUpdates = [];
 
     protected function findUserByEmail(string $email): ?array
     {
@@ -102,8 +113,8 @@ class PasswordCheckStub extends PasswordCheckReal
 
 class PasswordResetTest extends TestCase
 {
-    private $checker;
-    private $baseUrl = 'http://example.test';
+    private PasswordCheckStub $checker;
+    private string $baseUrl = 'http://example.test';
 
     protected function setUp(): void
     {

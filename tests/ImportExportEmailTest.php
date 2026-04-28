@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        ImportExportEmailTest.php
+Purpose:     Tests import/export email and CSV generation behavior.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use MTG\Cards\ImportExport;
@@ -79,16 +90,17 @@ class ImportExportEmailTest extends TestCase
                 'namespace MTG\Core;
                 class MyPHPMailer
                 {
-                    public static $calls = [];
+                    public static array $calls = [];
 
-                    public function __construct($exceptions, $appConfig)
+                    public function __construct(bool $exceptions, AppConfig $appConfig)
                     {
+                        unset($exceptions);
                         self::$calls[] = [
                             "logfile" => $appConfig ? $appConfig->general("logFile", "") : ""
                         ];
                     }
 
-                    public function sendEmail(...$args)
+                    public function sendEmail(...$args): bool
                     {
                         self::$calls[] = ["sendEmail" => $args];
                         return false;
@@ -98,13 +110,14 @@ class ImportExportEmailTest extends TestCase
         }
 
         $db = new class {
-            public function real_escape_string($table)
+            public function real_escape_string(string $table): string
             {
                 return $table;
             }
 
-            public function query($sql)
+            public function query(string $sql): object
             {
+                unset($sql);
                 $fields = [
                     'setcode',
                     'number_import',
@@ -120,22 +133,22 @@ class ImportExportEmailTest extends TestCase
                 ];
 
                 return new class ($fields, $rows) {
-                    private $fields;
-                    private $rows;
-                    private $index = 0;
-                    public $field_count;
+                    private array $fields;
+                    private array $rows;
+                    private int $index = 0;
+                    public int $field_count;
 
-                    public function __construct($fields, $rows)
+                    public function __construct(array $fields, array $rows)
                     {
                         $this->fields = $fields;
                         $this->rows = $rows;
                         $this->field_count = count($fields);
                     }
 
-                    public function fetch_fields()
+                    public function fetch_fields(): array
                     {
                         return array_map(
-                            function ($name) {
+                            function (string $name): stdClass {
                                 $field = new stdClass();
                                 $field->name = $name;
                                 return $field;
@@ -144,7 +157,7 @@ class ImportExportEmailTest extends TestCase
                         );
                     }
 
-                    public function fetch_row()
+                    public function fetch_row(): ?array
                     {
                         if ($this->index >= count($this->rows)) {
                             return null;
@@ -177,8 +190,10 @@ class ImportExportEmailTest extends TestCase
         );
 
         $this->assertFalse($result);
-        $this->assertNotEmpty(MyPHPMailer::$calls);
-        $lastCall = end(MyPHPMailer::$calls);
+        $callsProperty = new ReflectionProperty(MyPHPMailer::class, 'calls');
+        $calls = $callsProperty->getValue();
+        $this->assertNotEmpty($calls);
+        $lastCall = end($calls);
         $this->assertArrayHasKey('sendEmail', $lastCall);
         $sendArgs = $lastCall['sendEmail'];
         $this->assertSame($extraAttachments, $sendArgs[7] ?? null);
@@ -191,13 +206,14 @@ class ImportExportEmailTest extends TestCase
     public function testBuildCollectionCsvReturnsCsvString()
     {
         $db = new class {
-            public function real_escape_string($table)
+            public function real_escape_string(string $table): string
             {
                 return $table;
             }
 
-            public function query($sql)
+            public function query(string $sql): object
             {
+                unset($sql);
                 $fields = [
                     'setcode',
                     'number_import',
@@ -213,22 +229,22 @@ class ImportExportEmailTest extends TestCase
                 ];
 
                 return new class ($fields, $rows) {
-                    private $fields;
-                    private $rows;
-                    private $index = 0;
-                    public $field_count;
+                    private array $fields;
+                    private array $rows;
+                    private int $index = 0;
+                    public int $field_count;
 
-                    public function __construct($fields, $rows)
+                    public function __construct(array $fields, array $rows)
                     {
                         $this->fields = $fields;
                         $this->rows = $rows;
                         $this->field_count = count($fields);
                     }
 
-                    public function fetch_fields()
+                    public function fetch_fields(): array
                     {
                         return array_map(
-                            function ($name) {
+                            function (string $name): stdClass {
                                 $field = new stdClass();
                                 $field->name = $name;
                                 return $field;
@@ -237,7 +253,7 @@ class ImportExportEmailTest extends TestCase
                         );
                     }
 
-                    public function fetch_row()
+                    public function fetch_row(): ?array
                     {
                         if ($this->index >= count($this->rows)) {
                             return null;

@@ -1,12 +1,23 @@
 <?php
 
+/*
+Version:     1.0
+Date:        28/04/26
+Name:        DeckManagerActionsTest.php
+Purpose:     Tests deck manager action helpers.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Cards\DeckManager;
 use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
 
 class DeckManagerActionsTest extends TestCase
 {
-    private function buildManager($db): DeckManager
+    private function buildManager(mixed $db): DeckManager
     {
         $gameRules = new GameRules([
             'any_quantity' => [],
@@ -40,21 +51,26 @@ class DeckManagerActionsTest extends TestCase
             ['decknumber' => 2, 'cardqty' => 1, 'sideqty' => 1, 'deckname' => 'Test 2'],
         ];
         $db = new class ($rows) {
-            private $rows;
-            public function __construct($rows)
+            private array $rows;
+
+            public function __construct(array $rows)
             {
                 $this->rows = $rows;
             }
-            public function execute_query($sql, $params)
+
+            public function execute_query(string $sql, array $params): object
             {
+                unset($sql, $params);
                 return new class ($this->rows) {
-                    private $rows;
-                    private $index = 0;
-                    public function __construct($rows)
+                    private array $rows;
+                    private int $index = 0;
+
+                    public function __construct(array $rows)
                     {
                         $this->rows = $rows;
                     }
-                    public function fetch_assoc()
+
+                    public function fetch_assoc(): ?array
                     {
                         if ($this->index >= count($this->rows)) {
                             return null;
@@ -82,14 +98,17 @@ class DeckManagerActionsTest extends TestCase
     public function testSubtractDeckCardMainDecrements()
     {
         $db = new class {
-            public $queries = [];
-            public function execute_query($sql, $params)
+            public array $queries = [];
+
+            public function execute_query(string $sql, array $params): object|bool
             {
+                unset($params);
                 $this->queries[] = $sql;
                 if (strpos($sql, 'SELECT cardqty') !== false) {
                     return new class {
-                        public $num_rows = 1;
-                        public function fetch_assoc()
+                        public int $num_rows = 1;
+
+                        public function fetch_assoc(): array
                         {
                             return ['cardqty' => 2];
                         }
@@ -108,9 +127,11 @@ class DeckManagerActionsTest extends TestCase
     public function testSubtractDeckCardAllSideCleansUp()
     {
         $db = new class {
-            public $queries = [];
-            public function execute_query($sql, $params)
+            public array $queries = [];
+
+            public function execute_query(string $sql, array $params): bool
             {
+                unset($params);
                 $this->queries[] = $sql;
                 return true;
             }
@@ -136,11 +157,12 @@ class DeckManagerActionsTest extends TestCase
     public function testAddPartnerReplacesExisting()
     {
         $db = new class {
-            public function execute_query($sql, $params)
+            public function execute_query(string $sql, array $params): object|bool
             {
+                unset($params);
                 if (strpos($sql, 'SELECT commander') !== false) {
                     return new class {
-                        public $num_rows = 1;
+                        public int $num_rows = 1;
                     };
                 }
                 return true;
@@ -166,19 +188,20 @@ class DeckManagerActionsTest extends TestCase
 
 class DeckManagerCommanderDbStub
 {
-    private $existing;
+    private int $existing;
 
-    public function __construct($existingCount)
+    public function __construct(int $existingCount)
     {
         $this->existing = $existingCount;
     }
 
-    public function prepare($query)
+    public function prepare(string $query): DeckManagerCommanderStmtStub
     {
         if (strpos($query, 'SELECT commander') !== false) {
             $result = new class ($this->existing) {
-                public $num_rows;
-                public function __construct($count)
+                public int $num_rows;
+
+                public function __construct(int $count)
                 {
                     $this->num_rows = $count;
                 }
@@ -192,31 +215,32 @@ class DeckManagerCommanderDbStub
 
 class DeckManagerCommanderStmtStub
 {
-    private $result;
-    private $executeResult;
+    private ?object $result;
+    private bool $executeResult;
 
-    public function __construct($result, $executeResult)
+    public function __construct(?object $result, bool $executeResult)
     {
         $this->result = $result;
         $this->executeResult = $executeResult;
     }
 
-    public function bind_param($types, &...$values)
+    public function bind_param(string $types, mixed &...$values): bool
     {
+        unset($types, $values);
         return true;
     }
 
-    public function execute()
+    public function execute(): bool
     {
         return $this->executeResult;
     }
 
-    public function get_result()
+    public function get_result(): ?object
     {
         return $this->result;
     }
 
-    public function close()
+    public function close(): void
     {
     }
 }

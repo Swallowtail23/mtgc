@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.4
-Date:        24/03/26
+Version:     1.5
+Date:        28/04/26
 Name:        ImportCollectionRegexTest.php
 Purpose:     Tests for collection import flow with ManaBox parsing and UUID cross-checking.
 Notes:       -
@@ -276,7 +276,7 @@ class ImportCollectionRegexTest extends TestCase
         $this->assertSame(0, $db->executeQueryCount);
     }
 
-    private function writeTempImportFile(array $lines)
+    private function writeTempImportFile(array $lines): string
     {
         $file = tempnam(sys_get_temp_dir(), 'mtg_import_');
         file_put_contents($file, implode("\n", $lines));
@@ -288,6 +288,13 @@ class ImportExportImportStub extends ImportExport
 {
     public array $capturedBatch = [];
 
+    /**
+     * @param string $mytable
+     * @param string $importType
+     * @param int $count
+     * @param int $total
+     * @param array $batchedCardIds
+     */
     public function addCardsBatch($mytable, $importType, $count, $total, $batchedCardIds)
     {
         $this->capturedBatch = array_values($batchedCardIds);
@@ -297,8 +304,16 @@ class ImportExportImportStub extends ImportExport
 
 class ImportExportBatchFailStub extends ImportExport
 {
+    /**
+     * @param string $mytable
+     * @param string $importType
+     * @param int $count
+     * @param int $total
+     * @param array $batchedCardIds
+     */
     public function addCardsBatch($mytable, $importType, $count, $total, $batchedCardIds)
     {
+        unset($mytable, $importType, $count, $total, $batchedCardIds);
         throw new \Exception('Simulated batch failure');
     }
 }
@@ -317,18 +332,19 @@ class ImportCollectionRegexDbStub
         $this->cardsBySetNumber = $cardsBySetNumber;
     }
 
-    public function prepare($query)
+    public function prepare(string $query): ImportCollectionRegexStmtStub
     {
         return new ImportCollectionRegexStmtStub($query, $this);
     }
 
-    public function execute_query($query)
+    public function execute_query(string $query): bool
     {
+        unset($query);
         $this->executeQueryCount++;
         return true;
     }
 
-    public function findById($id)
+    public function findById(string $id): ?array
     {
         if (isset($this->cardsById[$id])) :
             return $this->cardsById[$id];
@@ -336,7 +352,7 @@ class ImportCollectionRegexDbStub
         return null;
     }
 
-    public function findBySetAndNumber($set, $number)
+    public function findBySetAndNumber(string $set, string $number): ?array
     {
         $key = strtoupper($set) . '|' . $number;
         if (isset($this->cardsBySetNumber[$key])) :
@@ -359,18 +375,19 @@ class ImportCollectionRegexStmtStub
         $this->db = $db;
     }
 
-    public function bind_param($types, &...$params)
+    public function bind_param(string $types, mixed &...$params): bool
     {
+        unset($types);
         $this->params = $params;
         return true;
     }
 
-    public function execute()
+    public function execute(): bool
     {
         return true;
     }
 
-    public function get_result()
+    public function get_result(): ImportCollectionRegexResultStub
     {
         if (stripos($this->query, 'FROM cards_scry WHERE id = ?') !== false) :
             $row = $this->db->findById((string) ($this->params[0] ?? ''));
@@ -385,7 +402,7 @@ class ImportCollectionRegexStmtStub
         return new ImportCollectionRegexResultStub(null);
     }
 
-    public function close()
+    public function close(): bool
     {
         return true;
     }
@@ -402,7 +419,7 @@ class ImportCollectionRegexResultStub
         $this->num_rows = $row === null ? 0 : 1;
     }
 
-    public function fetch_assoc()
+    public function fetch_assoc(): ?array
     {
         return $this->row;
     }
