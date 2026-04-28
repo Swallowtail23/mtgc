@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        22/12/25
+Version:     1.1
+Date:        28/04/26
 Name:        RulingsHasher.php
 Purpose:     Provide stable content hashing for Scryfall rulings imports.
 Notes:       -
@@ -15,7 +15,12 @@ namespace MTG\Bulk;
 
 class RulingsHasher
 {
-    public function buildContentHash($oracleId, $source, $publishedAt, $comment)
+    public function buildContentHash(
+        ?string $oracleId,
+        ?string $source,
+        ?string $publishedAt,
+        ?string $comment
+    ): string
     {
         $payload = json_encode(
             [

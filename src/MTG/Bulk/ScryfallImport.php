@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.10
-Date:        26/02/26
+Version:     1.11
+Date:        28/04/26
 Name:        ScryfallImport.php
 Purpose:     Scryfall bulk import helpers.
 Notes:       -
@@ -25,13 +25,13 @@ use MTG\Core\UserAgent;
 class ScryfallImport
 {
     public static function downloadBulk(
-        $url,
-        $dest,
-        $msg,
+        string $url,
+        string $dest,
+        Message $msg,
         AppConfig $appConfig,
-        $context = 'downloadBulk',
-        $debug = false
-    ) {
+        string $context = 'downloadBulk',
+        bool $debug = false
+    ): bool {
         $dir = dirname($dest);
         if (!is_dir($dir)) :
             if (!mkdir($dir, 0775, true)) :
@@ -94,7 +94,7 @@ class ScryfallImport
         return true;
     }
 
-    public static function fetchJson($url, $msg, $context, AppConfig $appConfig)
+    public static function fetchJson(string $url, Message $msg, string $context, AppConfig $appConfig): array|false
     {
         $userAgent = UserAgent::buildFromConfig($appConfig, null, $msg);
         $ch = curl_init($url);
@@ -137,7 +137,7 @@ class ScryfallImport
         return $data;
     }
 
-    public static function getBulkInfo($type, AppConfig $appConfig, GameRules $gameRules)
+    public static function getBulkInfo(string $type, AppConfig $appConfig, GameRules $gameRules): array|false
     {
         // Function to return the URI for the Scryfall bulk data file, and the file location where it needs to go
         $defaultCardsUrl = (string) $gameRules->get('defaultCardsUrl', '');
@@ -250,7 +250,12 @@ class ScryfallImport
         return $bulkInfo;
     }
 
-    public static function getBulkJson($uri, $file_location, $max_fileage, AppConfig $appConfig)
+    public static function getBulkJson(
+        string $uri,
+        string $file_location,
+        int $max_fileage,
+        AppConfig $appConfig
+    ): string|false
     {
         // Function to download and save bulk Scryfall data files
         $msg = new Message($appConfig);
@@ -319,14 +324,14 @@ class ScryfallImport
     }
 
     public static function scryfallImport(
-        $file_location,
-        $type,
-        $tableName,
-        $db,
+        string $file_location,
+        string $type,
+        string $tableName,
+        mixed $db,
         AppConfig $appConfig,
         GameRules $gameRules,
-        &$stats = null
-    ) {
+        ?array &$stats = null
+    ): string|false {
         // Function to process and import lines within Scryfall bulk data files
         $msg = new Message($appConfig);
         $games_to_include = $gameRules->get('games_to_include', []);
@@ -412,6 +417,9 @@ class ScryfallImport
             // Don't by default download all images for all cards.
             // Images will be obtained on first card detail load or search result inclusion
             $imageDownloads = false;
+        else :
+            $msg->logMessage('[ERROR]', "Invalid import type '$type' for scryfallImport");
+            throw new \Exception('[ERROR] scryfall_bulk.php: Invalid import type supplied');
         endif;
 
         $imageManager = null;

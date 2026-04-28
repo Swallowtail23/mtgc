@@ -14,6 +14,7 @@ To do:       -
 use MTG\Bulk\ScryfallImport;
 use MTG\Core\AppConfig;
 use MTG\Core\GameRules;
+use MTG\Core\Message;
 use PHPUnit\Framework\TestCase;
 
 class ScryfallImportStub extends ScryfallImport
@@ -22,33 +23,20 @@ class ScryfallImportStub extends ScryfallImport
     public static int $downloadCalls = 0;
     public static array $downloadResults = [];
 
-    /**
-     * @param string $url
-     * @param mixed $msg
-     * @param string $context
-     * @return array|false
-     */
-    public static function fetchJson($url, $msg, $context, AppConfig $appConfig)
+    public static function fetchJson(string $url, Message $msg, string $context, AppConfig $appConfig): array|false
     {
         unset($msg, $context, $appConfig);
         return self::$fetchMap[$url] ?? false;
     }
 
-    /**
-     * @param string $url
-     * @param string $dest
-     * @param mixed $msg
-     * @param string $context
-     * @param bool $debug
-     */
     public static function downloadBulk(
-        $url,
-        $dest,
-        $msg,
+        string $url,
+        string $dest,
+        Message $msg,
         AppConfig $appConfig,
-        $context = 'downloadBulk',
-        $debug = false
-    ) {
+        string $context = 'downloadBulk',
+        bool $debug = false
+    ): bool {
         unset($url, $msg, $appConfig, $context, $debug);
         self::$downloadCalls++;
         if (!empty(self::$downloadResults)) :

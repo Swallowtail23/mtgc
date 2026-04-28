@@ -10,11 +10,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
--
+- Scryfall bulk helper contracts now use native parameter and return types where stable, with matching test-double
+  signatures.
 
 ### Fixed
 
--
+- Scryfall bulk import now rejects unsupported import types before using type-dependent state.
 
 ### Security
 
@@ -24,7 +25,8 @@ All notable changes to this project will be documented in this file.
 
 ### Infrastructure
 
--
+- Tightened variable initialization and type declarations across production code and test doubles to reduce
+  static-analysis noise and make runtime contracts clearer.
 
 ## [v0.5.11] - 2026-04-27
 
