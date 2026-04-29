@@ -4,14 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [v0.6.0-dev] - Unreleased
 
-### Added
-
--
-
 ### Changed
 
-- Scryfall bulk helper contracts now use native parameter and return types where stable, with matching test-double
-  signatures.
+- Hardened state-changing workflows to use explicit request methods, CSRF validation, and ownership checks where
+  appropriate.
+- Standardised stable native/PHPDoc type contracts across the main application classes and matching test doubles.
 
 ### Fixed
 
@@ -34,22 +31,11 @@ All notable changes to this project will be documented in this file.
 
 ### Infrastructure
 
-- Tightened variable initialization and type declarations across production code and test doubles to reduce
-  static-analysis noise and make runtime contracts clearer.
-- Added stable `SessionManager` method/property type declarations while leaving the mysqli-compatible database seam
-  documented rather than natively narrowed.
-- Documented coding and testing expectations for variable initialization, stable native types, PHPDoc fallbacks, and
-  matching test-double signatures.
-- Added stable `UserStatus`, `TwoFactorManager`, and `TrustedDeviceManager` type declarations while preserving
-  PHPDoc-only database seams for mysqli-compatible tests and adapters.
-- Added stable type declarations and array-shape PHPDoc across `src/MTG/Cards`, including matching image-manager
-  test-double signatures.
-- Added stable native type declarations to core HTTP response and URL helper contracts.
-- Added a native URL parameter type to the remote file checker helper.
-- Added native type declarations to the core text auto-link helper.
-- Added stable native type declarations across top-level `src/MTG/Core` helpers while preserving documented database
-  seams where tests and adapters require flexibility.
-- Completed a repo-wide native/PHPDoc declaration audit for PHP-owned callbacks, fragments, and test stubs.
+- Completed a repo-wide variable declaration and typing audit across `src/MTG/Auth`, `src/MTG/Cards`,
+  `src/MTG/Core`, selected admin/profile helpers, callbacks, fragments, and test stubs.
+- Preserved documented PHPDoc-only `mysqli` seams where native database types would break existing test doubles or
+  adapters.
+- Added regression coverage for the new security gates and documented future coding standards in `AGENTS.md`.
 
 ## [v0.5.11] - 2026-04-27
 
