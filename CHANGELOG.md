@@ -30,6 +30,7 @@ All notable changes to this project will be documented in this file.
   create/delete actions validate CSRF before mutating state.
 - Header quick-search output now validates card IDs and escapes rendered HTML attributes before inserting results.
 - CSV exports now require CSRF tokens, and CSV email sends require POST instead of GET.
+- AJAX referrer validation now parses URLs and compares normalized paths exactly instead of using substring matching.
 
 ### Infrastructure
 

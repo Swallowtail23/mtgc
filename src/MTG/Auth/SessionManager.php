@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.16
+Version:     1.17
 Date:        29/04/26
 Name:        SessionManager.php
 Purpose:     Check login class, get user details or force session destroy and return to login.php.
@@ -411,18 +411,8 @@ class SessionManager
 
         $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
         $msg->logMessage('[DEBUG]', "{$contextLabel}Referring page is: $referringPage");
-        $normalizedReferringPage = str_replace('www.', '', $referringPage);
 
-        $isValidReferrer = false;
-        foreach ($expectedReferringPages as $page) :
-            $normalizedPage = str_replace('www.', '', $page);
-            if (strpos($normalizedReferringPage, $normalizedPage) !== false) :
-                $isValidReferrer = true;
-                break;
-            endif;
-        endforeach;
-
-        if ($isValidReferrer === false) :
+        if (!self::referrerMatchesExpectedPage($referringPage, $expectedReferringPages, $appConfig)) :
             $msg->logMessage('[DEBUG]', "{$contextLabel}Referrer validation failed");
             return [
                 'valid' => false,
@@ -450,5 +440,98 @@ class SessionManager
             'valid' => true,
             'reason' => ''
         ];
+    }
+
+    /**
+    * @param array<int, string> $expectedReferringPages
+    */
+    private static function referrerMatchesExpectedPage(
+        string $referringPage,
+        array $expectedReferringPages,
+        AppConfig $appConfig
+    ): bool {
+        if ($referringPage === '') :
+            return false;
+        endif;
+
+        $referrerParts = parse_url($referringPage);
+        if (!is_array($referrerParts)) :
+            return false;
+        endif;
+
+        $referrerPath = self::normalizeReferrerPath($referrerParts['path'] ?? '');
+        if ($referrerPath === '') :
+            return false;
+        endif;
+
+        $referrerHost = self::normalizeReferrerHost($referrerParts['host'] ?? '');
+        $referrerScheme = strtolower((string) ($referrerParts['scheme'] ?? ''));
+        $appUrlParts = parse_url((string) $appConfig->general('url', ''));
+        $appHost = is_array($appUrlParts) ? self::normalizeReferrerHost($appUrlParts['host'] ?? '') : '';
+        $appScheme = is_array($appUrlParts) ? strtolower((string) ($appUrlParts['scheme'] ?? '')) : '';
+
+        foreach ($expectedReferringPages as $page) :
+            if (!is_string($page) || $page === '') :
+                continue;
+            endif;
+
+            $expectedParts = parse_url($page);
+            if (!is_array($expectedParts)) :
+                continue;
+            endif;
+
+            $expectedPath = self::normalizeReferrerPath($expectedParts['path'] ?? '');
+            if ($expectedPath === '' || $expectedPath === '/') :
+                if ($appHost === '' || $referrerHost !== $appHost) :
+                    continue;
+                endif;
+                if ($appScheme !== '' && $referrerScheme !== '' && $referrerScheme !== $appScheme) :
+                    continue;
+                endif;
+                return true;
+            endif;
+
+            if ($referrerPath !== $expectedPath) :
+                continue;
+            endif;
+
+            $expectedHost = self::normalizeReferrerHost($expectedParts['host'] ?? '');
+            if ($expectedHost !== '' && $referrerHost !== $expectedHost) :
+                continue;
+            endif;
+
+            $expectedScheme = strtolower((string) ($expectedParts['scheme'] ?? ''));
+            if ($expectedScheme !== '' && $referrerScheme !== '' && $referrerScheme !== $expectedScheme) :
+                continue;
+            endif;
+
+            return true;
+        endforeach;
+
+        return false;
+    }
+
+    private static function normalizeReferrerPath(string $path): string
+    {
+        if ($path === '') :
+            return '';
+        endif;
+
+        $normalizedPath = '/' . ltrim($path, '/');
+        if (strlen($normalizedPath) > 1) :
+            $normalizedPath = rtrim($normalizedPath, '/');
+        endif;
+
+        return $normalizedPath;
+    }
+
+    private static function normalizeReferrerHost(string $host): string
+    {
+        $host = strtolower($host);
+        if (str_starts_with($host, 'www.')) :
+            return substr($host, 4);
+        endif;
+
+        return $host;
     }
 }

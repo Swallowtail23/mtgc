@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.2
 Date:        28/04/26
 Name:        SessionManagerTest.php
 Purpose:     Tests session manager currency rate state.
@@ -218,6 +218,45 @@ class SessionManagerTest extends TestCase
         $result = $class::validateAjaxRequest(['collection.php'], $GLOBALS['appConfig'], 'test');
 
         $this->assertSame(['valid' => false, 'reason' => 'referrer'], $result);
+    }
+
+    public function testValidateAjaxRequestRejectsSubstringPathReferrer()
+    {
+        $this->resetRequestState();
+        $class = getRealSessionManagerClass();
+        $_SESSION['csrf_token'] = 'valid-token';
+        $_POST['csrf_token'] = 'valid-token';
+        $_SERVER['HTTP_REFERER'] = 'https://example.test/not-collection.php';
+
+        $result = $class::validateAjaxRequest(['collection.php'], $GLOBALS['appConfig'], 'test');
+
+        $this->assertSame(['valid' => false, 'reason' => 'referrer'], $result);
+    }
+
+    public function testValidateAjaxRequestRejectsExpectedPathInQueryString()
+    {
+        $this->resetRequestState();
+        $class = getRealSessionManagerClass();
+        $_SESSION['csrf_token'] = 'valid-token';
+        $_POST['csrf_token'] = 'valid-token';
+        $_SERVER['HTTP_REFERER'] = 'https://evil.test/attack.php?next=collection.php';
+
+        $result = $class::validateAjaxRequest(['collection.php'], $GLOBALS['appConfig'], 'test');
+
+        $this->assertSame(['valid' => false, 'reason' => 'referrer'], $result);
+    }
+
+    public function testValidateAjaxRequestAcceptsFullConfiguredAppUrl()
+    {
+        $this->resetRequestState();
+        $class = getRealSessionManagerClass();
+        $_SESSION['csrf_token'] = 'valid-token';
+        $_POST['csrf_token'] = 'valid-token';
+        $_SERVER['HTTP_REFERER'] = 'https://test.example/collection.php';
+
+        $result = $class::validateAjaxRequest(['https://test.example'], $GLOBALS['appConfig'], 'test');
+
+        $this->assertSame(['valid' => true, 'reason' => ''], $result);
     }
 
     public function testValidateAjaxRequestRejectsInvalidCsrf()
