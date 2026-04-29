@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.35
-Date:        28/04/26
+Version:     6.36
+Date:        29/04/26
 Name:        users.php
 Purpose:     User administrative tasks
 Notes:       {none}
@@ -12,6 +12,7 @@ To do:       -
 */
 
 use MTG\Auth\PasswordCheck;
+use MTG\Auth\SessionManager;
 
 // Bootstrap
 $ctx                        = require dirname(__DIR__) . '/bootstrap_secure.php';
@@ -38,6 +39,17 @@ $rulesCurrencies            = $gameRules->getArray('currencies');
 
 // Content
 $msg->logMessage('[DEBUG]', 'users.php loaded; initialising admin user management page');
+$csrfToken = SessionManager::generateCsrfToken();
+
+function requireUsersCsrfToken(): void
+{
+    $posted = (string) filter_input(INPUT_POST, 'csrf_token', FILTER_UNSAFE_RAW);
+    if ($posted === '' || !SessionManager::validateCsrfToken($posted)) :
+        http_response_code(403);
+        die('CSRF check failed');
+    endif;
+}
+
 function shouldRequirePasswordForNewUser(bool $emailEnabled): bool
 {
     return $emailEnabled === false;
@@ -66,6 +78,12 @@ $postemail                  = '';
 $username_raw               = '';
 $updateusers                = '';
 $updatearray                = [];
+$csrfEsc                    = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8');
+$requestMethod              = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+if ($requestMethod === 'POST') :
+    requireUsersCsrfToken();
+endif;
 
 if (isset($_POST['newuser'])) :
     $msg->logMessage('[DEBUG]', 'New user form submission detected');
@@ -348,6 +366,7 @@ require APP_ROOT . '/includes/menu.php';
                 <b>Email is disabled.</b> Enter a temporary password below for new or existing users. They will be
                 forced to change it on next login.<br>
             <?php endif; ?>
+            <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
             <input type='hidden' name="newuser" value="yes">
             <input
                 class="textinput"
@@ -400,6 +419,7 @@ require APP_ROOT . '/includes/menu.php';
             );
             ?>
             <form name="updateusers" action="users.php" method="post">
+                <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
                 <table>
                     <tr>
                         <th style="padding: 5px;">User #</th>
