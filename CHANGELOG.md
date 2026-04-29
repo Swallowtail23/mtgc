@@ -26,6 +26,8 @@ All notable changes to this project will be documented in this file.
 - Admin card deletion and image refresh actions now require POST, CSRF validation, and UUID validation.
 - Admin user-management POST actions now require CSRF validation, with tokens included in the new-user and
   update-users forms.
+- Collection deletion now uses POST with CSRF validation, collection import POSTs are CSRF-guarded, and deck
+  create/delete actions validate CSRF before mutating state.
 
 ### Infrastructure
 

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.41
-Date:        24/03/26
+Version:     1.42
+Date:        29/04/26
 Name:        collection.php
 Purpose:     Collection value tab view.
 Notes:       -
@@ -37,8 +37,25 @@ $mytable                    = $sessionUser->table();
 // Content
 $msg->logMessage('[DEBUG]', "Collection page load");
 $emailEnabled = (bool) $appConfig->email('enabled', false);
+$csrfToken = SessionManager::generateCsrfToken();
+$csrfTokenEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8');
+
+function requireCollectionCsrfToken(): void
+{
+    $posted = (string) filter_input(INPUT_POST, 'csrf_token', FILTER_UNSAFE_RAW);
+    if ($posted === '' || !SessionManager::validateCsrfToken($posted)) :
+        http_response_code(403);
+        die('CSRF check failed');
+    endif;
+}
+
+$requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+if ($requestMethod === 'POST') :
+    requireCollectionCsrfToken();
+endif;
+
 // Has DELETE collection been called?
-$deletecollection = (isset($_GET['deletecollection']) && $_GET['deletecollection'] === 'DELETE') ? 'DELETE' : '';
+$deletecollection = (isset($_POST['deletecollection']) && $_POST['deletecollection'] === 'DELETE') ? 'DELETE' : '';
 $delcollresult = ''; // Variable to hold error message
 
 // CSV export status (set via session after attempt)
@@ -148,7 +165,7 @@ endif;
         <script>
             var csrfToken = (window.mtgAjaxConfig && window.mtgAjaxConfig.csrfToken)
                 ? window.mtgAjaxConfig.csrfToken
-                : <?php echo json_encode(SessionManager::generateCsrfToken()); ?>;
+                : <?php echo json_encode($csrfToken); ?>;
             window.mtgAjaxConfig = window.mtgAjaxConfig || {};
             if (!window.mtgAjaxConfig.csrfToken) {
                 window.mtgAjaxConfig.csrfToken = csrfToken;
@@ -551,15 +568,15 @@ endif;
                                 <?php endif; ?>
                             </td>
                             <td class="options_right">
-                                <form action="?"  method="GET" onsubmit="return confirmDelete()">
+                                <form action="?" method="POST" onsubmit="return confirmDelete()">
+                                    <input type="hidden" name="csrf_token" value="<?php echo $csrfTokenEsc; ?>">
+                                    <input type="hidden" name="deletecollection" value="DELETE">
                                     <input
                                         id='delCollection'
-                                        name='deletecollection'
                                         class='profilebutton'
                                         type="submit"
                                         value="DELETE"
                                     >
-                                    <?php echo "<input type='hidden' name='table' value='$mytable'>"; ?>
                                 </form>
                             </td>
                         </tr>
@@ -575,6 +592,7 @@ endif;
                             </td>
                             <td class="options_right">
                                 <form enctype='multipart/form-data' action='?' method='post'>
+                                    <input type="hidden" name="csrf_token" value="<?php echo $csrfTokenEsc; ?>">
                                     <label class='profilelabel'>
                                         <input
                                             id='importfileProfile'

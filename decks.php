@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.47
-Date:        02/02/26
+Version:     5.48
+Date:        29/04/26
 Name:        decks.php
 Purpose:     Main decks list page.
 Notes:       {none}
@@ -33,6 +33,24 @@ $userEmail                  = $sessionUser->email();
 
 // Content
 // page specific variables
+$requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
+$csrfToken = SessionManager::generateCsrfToken();
+$csrfTokenEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8');
+
+function requireDecksCsrfToken(): void
+{
+    $posted = (string) filter_input(INPUT_POST, 'csrf_token', FILTER_UNSAFE_RAW);
+    if ($posted === '' || !SessionManager::validateCsrfToken($posted)) :
+        http_response_code(403);
+        die('CSRF check failed');
+    endif;
+}
+
+if ($requestMethod === 'POST') :
+    requireDecksCsrfToken();
+endif;
+
 $newdeck = isset($_POST['newdeck']) ? 'yes' : '';
 $deckName = isset($_POST['deckname'])
     ? filter_input(INPUT_POST, 'deckname', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES)
@@ -42,9 +60,6 @@ $decktodeleteRaw = $_POST['decktodelete'] ?? [];
 if (!is_array($decktodeleteRaw)) :
     $decktodeleteRaw = [$decktodeleteRaw];
 endif;
-$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
-$csrfToken = SessionManager::generateCsrfToken();
-$csrfTokenEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8');
 $rulesValidTypes = $gameRules->getArray('validtypes');
 $rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
 if (!is_array($rulesValidTypes)) :
@@ -424,6 +439,13 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     continue;
                 endif;
                 $msg->logMessage('[NOTICE]', "Calling Deckmanager->deleteDeck: '($user) $deckToDelete'");
+                if (!$obj->assertDeckOwner($deckToDelete, $user, 'decks.php delete')) :
+                    $msg->logMessage(
+                        '[ERROR]',
+                        "Deck delete denied: user $user does not own deck $deckToDelete"
+                    );
+                    continue;
+                endif;
                 $obj->delDeck($deckToDelete);
             endforeach;
         endif;
@@ -485,6 +507,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
             <div id='deckoperations'>
             <h3>Add a new deck</h3>
             <form name="newdeck" action="decks.php" method="post">
+                <input type="hidden" name="csrf_token" value="<?php echo $csrfTokenEsc; ?>">
                 <input type='hidden' name="newdeck" value="yes">
                 <input class='textinput' onkeyup='createready()' title="Please enter deck title"
                     placeholder="DECK TITLE" id="newdeckname" name="deckname" type="text" size="24"
@@ -544,6 +567,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                 </div>
                 <div class="deck-selection-block">
                     <form id="deletedecks" action="decks.php" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?php echo $csrfTokenEsc; ?>">
                         <input type='hidden' name="deletedeck" value="yes">
                         <input
                             class='profilebutton'
