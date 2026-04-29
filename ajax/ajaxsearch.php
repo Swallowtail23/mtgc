@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     7.66
-Date:        27/03/26
+Version:     7.67
+Date:        29/04/26
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
 Notes:       -
@@ -16,6 +16,7 @@ use MTG\Core\Http\AjaxResponse;
 use MTG\Core\Text\QuickSearchInputParser;
 use MTG\Core\Text\QuickSearchService;
 use MTG\Core\Text\SearchTextHelper;
+use MTG\Core\Validation;
 
 // Bootstrap
 $ctx                        = require dirname(__DIR__) . '/bootstrap.php';
@@ -87,8 +88,12 @@ else :
                         $lang !== null ? (string) $lang : null,
                         $usedFallbackSearch
                     );
-                    $displaysetcode = strtoupper($setcode);
-                    $ajaxid = $id;
+                    $displaysetcode = strtoupper((string) $setcode);
+                    $ajaxid = Validation::validUUID($id, $appConfig);
+                    if ($ajaxid === false) :
+                        $msg->logMessage('[ERROR]', "Quick search skipped row with invalid card id '$id'");
+                        continue;
+                    endif;
                     $final_name = SearchTextHelper::formatQuickSearchDisplayLabel(
                         $name,
                         $matchPosition,
@@ -96,11 +101,14 @@ else :
                         $lang !== null ? (string) $lang : null,
                         $usedFallbackSearch
                     );
+                    $titleEsc = htmlspecialchars("$displaysetcode - $displayName", ENT_QUOTES, 'UTF-8');
+                    $setcodeEsc = htmlspecialchars($displaysetcode, ENT_QUOTES, 'UTF-8');
+                    $ajaxidEsc = htmlspecialchars($ajaxid, ENT_QUOTES, 'UTF-8');
                     ?>
                             <tr>
-                                <td title='<?php echo "$displaysetcode - $displayName" ?>' class="name">
+                                <td title="<?php echo $titleEsc; ?>" class="name">
                                     <?php
-                                    echo "<a href='carddetail.php?id=$ajaxid'>$displaysetcode - "
+                                    echo "<a href=\"carddetail.php?id=$ajaxidEsc\">$setcodeEsc - "
                                         . "$final_name</a></td>";
                                     ?>
                                 </td>
