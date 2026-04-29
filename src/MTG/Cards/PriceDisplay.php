@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.5
-Date:        04/02/26
+Version:     1.6
+Date:        29/04/26
 Name:        PriceDisplay.php
 Purpose:     Build price values and HTML for card detail pricing displays.
 Notes:       -
@@ -18,8 +18,18 @@ use MTG\Core\Message;
 
 class PriceDisplay
 {
-    public static function computePrices($scryfallResult, $row, $cardtypes, $rate, AppConfig $appConfig): array
-    {
+    /**
+    * @param array<string, mixed> $scryfallResult
+    * @param array<string, mixed> $row
+    * @return array<string, string|false|null>
+    */
+    public static function computePrices(
+        array $scryfallResult,
+        array $row,
+        string $cardtypes,
+        float|int|string $rate,
+        AppConfig $appConfig
+    ): array {
         $msg = new Message($appConfig);
         $msg->logMessage('[DEBUG]', "Building price data for cardtypes '$cardtypes'");
 
@@ -124,10 +134,10 @@ class PriceDisplay
 
     public static function renderTable(
         array $prices,
-        $fx,
-        $targetCurrency,
-        $fxPending = false,
-        $fxMissing = false
+        bool $fx,
+        string $targetCurrency,
+        bool $fxPending = false,
+        bool $fxMissing = false
     ): string {
         ob_start();
         $fxUpdating = ($fxPending === true && $fxMissing === true);
@@ -220,7 +230,10 @@ class PriceDisplay
         return ob_get_clean();
     }
 
-    public static function buildAjaxResponse($priceHtml, $tcgLink): array
+    /**
+    * @return array{success: bool, price_html: string, tcg_link: string}
+    */
+    public static function buildAjaxResponse(string $priceHtml, string $tcgLink): array
     {
         return [
             'success' => true,

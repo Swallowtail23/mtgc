@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.4
-Date:        12/01/26
+Version:     1.5
+Date:        29/04/26
 Name:        AppConfig.php
 Purpose:     App-wide config container built from ini values.
 Notes:       -
@@ -15,12 +15,12 @@ namespace MTG\Core;
 
 class AppConfig
 {
-    private $general = [];
-    private $security = [];
-    private $email = [];
-    private $fx = [];
-    private $comments = [];
-    private $database = [];
+    private array $general = [];
+    private array $security = [];
+    private array $email = [];
+    private array $fx = [];
+    private array $comments = [];
+    private array $database = [];
 
     /**
      * Build AppConfig from ini array with optional overrides.
@@ -107,32 +107,32 @@ class AppConfig
         return $config;
     }
 
-    public function general($key, $default = null)
+    public function general(string $key, mixed $default = null): mixed
     {
         return $this->general[$key] ?? $default;
     }
 
-    public function security($key, $default = null)
+    public function security(string $key, mixed $default = null): mixed
     {
         return $this->security[$key] ?? $default;
     }
 
-    public function email($key, $default = null)
+    public function email(string $key, mixed $default = null): mixed
     {
         return $this->email[$key] ?? $default;
     }
 
-    public function fx($key, $default = null)
+    public function fx(string $key, mixed $default = null): mixed
     {
         return $this->fx[$key] ?? $default;
     }
 
-    public function comments($key, $default = null)
+    public function comments(string $key, mixed $default = null): mixed
     {
         return $this->comments[$key] ?? $default;
     }
 
-    public function database($key, $default = null)
+    public function database(string $key, mixed $default = null): mixed
     {
         return $this->database[$key] ?? $default;
     }
@@ -225,7 +225,7 @@ class AppConfig
         return $tier;
     }
 
-    private static function normalizeInt($value, int $default = 0): int
+    private static function normalizeInt(mixed $value, int $default = 0): int
     {
         if (is_int($value)) :
             return $value;
@@ -236,7 +236,7 @@ class AppConfig
         return $default;
     }
 
-    private static function normalizeBool($value, bool $default = false): bool
+    private static function normalizeBool(mixed $value, bool $default = false): bool
     {
         if (is_bool($value)) :
             return $value;

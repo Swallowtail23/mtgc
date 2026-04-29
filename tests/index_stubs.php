@@ -153,11 +153,11 @@ namespace MTG\Cards {
             }
 
             public function getImage(
-                $setcode = null,
-                $cardId = null,
-                $layout = null,
-                $allowFetch = true
-            ) {
+                ?string $setcode = null,
+                ?string $cardId = null,
+                ?string $layout = null,
+                bool $allowFetch = true
+            ): array {
                 return ['front' => '/cardimg/back.jpg'];
             }
         }

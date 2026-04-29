@@ -16,6 +16,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Scryfall bulk import now rejects unsupported import types before using type-dependent state.
+- Session FX setup now initializes its currency/rate state before optional conversion checks, preventing undefined
+  currency variables when FX is configured without a user or default target currency.
 
 ### Security
 
@@ -27,6 +29,19 @@ All notable changes to this project will be documented in this file.
 
 - Tightened variable initialization and type declarations across production code and test doubles to reduce
   static-analysis noise and make runtime contracts clearer.
+- Added stable `SessionManager` method/property type declarations while leaving the mysqli-compatible database seam
+  documented rather than natively narrowed.
+- Documented coding and testing expectations for variable initialization, stable native types, PHPDoc fallbacks, and
+  matching test-double signatures.
+- Added stable `UserStatus`, `TwoFactorManager`, and `TrustedDeviceManager` type declarations while preserving
+  PHPDoc-only database seams for mysqli-compatible tests and adapters.
+- Added stable type declarations and array-shape PHPDoc across `src/MTG/Cards`, including matching image-manager
+  test-double signatures.
+- Added stable native type declarations to core HTTP response and URL helper contracts.
+- Added a native URL parameter type to the remote file checker helper.
+- Added native type declarations to the core text auto-link helper.
+- Added stable native type declarations across top-level `src/MTG/Core` helpers while preserving documented database
+  seams where tests and adapters require flexibility.
 
 ## [v0.5.11] - 2026-04-27
 

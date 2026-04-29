@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.9
-Date:        05/02/26
+Version:     1.11
+Date:        29/04/26
 Name:        PriceManager.php
 Purpose:     Price management class.
 Notes:       -
@@ -23,12 +23,15 @@ class PriceManager
     * @var \mysqli|object
     */
     private $db;
-    private $appConfig;
-    private $userEmail;
-    private $message;
-    private $maxCardDataAge;
+    private AppConfig $appConfig;
+    private string $userEmail;
+    private Message $message;
+    private int $maxCardDataAge;
 
-    public function __construct($db, AppConfig $appConfig, $userEmail)
+    /**
+    * @param \mysqli|object $db
+    */
+    public function __construct($db, AppConfig $appConfig, string $userEmail)
     {
         $this->db = $db;
         $this->appConfig = $appConfig;
@@ -38,7 +41,10 @@ class PriceManager
     }
 
     // Fetch TCG buy URI and price from scryfall.com JSON data
-    public function scryfall($cardId, $action = '')
+    /**
+    * @return array<string, mixed>
+    */
+    public function scryfall(string $cardId, string $action = ''): array
     {
         //Set up the function
         $this->message->logMessage('[DEBUG]', "Scryfall API by $this->userEmail for $cardId");
@@ -46,6 +52,7 @@ class PriceManager
             $this->message->logMessage('[ERROR]', "Scryfall API by $this->userEmail without required card id");
             exit;
         endif;
+        $returnarray = array("action" => "error");
         $baseurl = "https://api.scryfall.com/";
         $cardId = $this->db->real_escape_string($cardId);
         $time = time();
@@ -546,7 +553,7 @@ class PriceManager
     }
 
 
-    public function updateCollectionValues($collection, $cardId = "")
+    public function updateCollectionValues(string $collection, string $cardId = ""): int
     {
         $i = 0; // Counter for updated rows
 

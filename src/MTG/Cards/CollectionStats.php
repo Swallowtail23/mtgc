@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.11
-Date:        11/01/26
+Version:     1.12
+Date:        29/04/26
 Name:        CollectionStats.php
 Purpose:     Compute collection totals and values for a user.
 Notes:       -
@@ -23,11 +23,14 @@ class CollectionStats
     * @var \mysqli|object
     */
     private $db;
-    private $message;
-    private $fxAPI;
-    private $fxLocal;
-    private $appConfig;
+    private Message $message;
+    private mixed $fxAPI;
+    private mixed $fxLocal;
+    private AppConfig $appConfig;
 
+    /**
+    * @param \mysqli|object $db
+    */
     public function __construct($db, AppConfig $appConfig)
     {
         $this->db = $db;
@@ -37,7 +40,17 @@ class CollectionStats
         $this->message = new Message($this->appConfig);
     }
 
-    public function getStats($tableName, $preferredCurrency = null)
+    /**
+    * @return array{
+    *     value_usd: float,
+    *     value_local: float|null,
+    *     local_currency: string|null,
+    *     rate_used: float|null,
+    *     card_count: int,
+    *     mr_count: int
+    * }
+    */
+    public function getStats(string $tableName, ?string $preferredCurrency = null): array
     {
         $totalCardCount = $this->getTotalCardCount($tableName);
         $mrCardCount = $this->getMrCardCount($tableName);
@@ -73,7 +86,7 @@ class CollectionStats
         ];
     }
 
-    private function getTotalCardCount($tableName)
+    private function getTotalCardCount(string $tableName): int
     {
         $query = "
             SELECT sum(IFNULL(normal, 0)) + sum(IFNULL(foil, 0)) + sum(IFNULL(etched, 0)) AS TOTAL
@@ -91,7 +104,7 @@ class CollectionStats
         return $count;
     }
 
-    private function getMrCardCount($tableName)
+    private function getMrCardCount(string $tableName): int
     {
         $query = "
             SELECT
@@ -118,7 +131,7 @@ class CollectionStats
         return $count;
     }
 
-    private function getUsdValue($tableName)
+    private function getUsdValue(string $tableName): float
     {
         $query = "SELECT (
                 COALESCE(SUM(`$tableName`.normal * price),0)

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.8
-Date:        12/01/26
+Version:     1.9
+Date:        29/04/26
 Name:        Message.php
 Purpose:     Simple message and log writing class with internal logging.
 Notes:       Usage:
@@ -17,10 +17,10 @@ namespace MTG\Core;
 
 class Message
 {
-    private $logfile;
-    private $logLevel;
-    private $appConfig;
-    public $textstring;
+    private mixed $logfile;
+    private int $logLevel;
+    private AppConfig $appConfig;
+    public string $textstring = '';
 
     public function __construct(AppConfig $appConfig)
     {
@@ -29,7 +29,7 @@ class Message
         $this->logLevel = (int) $this->appConfig->general('logLevel', 3);
     }
 
-    public function logMessage($errorlevel, $text, $logfile = '')
+    public function logMessage(string $errorlevel, string $text, string $logfile = ''): void
     {
         $effectiveLogfile = $logfile ?: $this->logfile;
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
@@ -39,7 +39,7 @@ class Message
         $this->writelog($this->textstring, $effectiveLogfile);
     }
 
-    private function writelog($msg, $log = '')
+    private function writelog(string $msg, string $log = ''): void
     {
         $log = $log ?: $this->logfile;
 
@@ -80,7 +80,10 @@ class Message
         endif;
     }
 
-    private function findCallerInfo($backtrace)
+    /**
+    * @param array<int, array<string, mixed>> $backtrace
+    */
+    private function findCallerInfo(array $backtrace): string
     {
         $caller = $backtrace[0] ?? null;
 

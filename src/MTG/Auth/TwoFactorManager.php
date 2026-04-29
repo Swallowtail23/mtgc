@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.7
-Date:        12/01/26
+Version:     1.8
+Date:        29/04/26
 Name:        TwoFactorManager.php
 Purpose:     Handles 2FA setup, verification, and management.
 Notes:       -
@@ -24,18 +24,18 @@ class TwoFactorManager
     * @var \mysqli|object
     */
     private $db;
-    private $appConfig;
-    private $logfile;
-    private $log;
-    private $code_length = 6;
-    private $code_expiry = 600; // 10 minutes in seconds
-    private $max_attempts = 3;
-    private $emailEnabled;
-    private $siteTitle;
+    private AppConfig $appConfig;
+    private string $logfile;
+    private Message $log;
+    private int $code_length = 6;
+    private int $code_expiry = 600; // 10 minutes in seconds
+    private int $max_attempts = 3;
+    private bool $emailEnabled;
+    private string $siteTitle;
 
     /**
-     * Constructor
-     */
+    * @param \mysqli|object $db
+    */
     public function __construct($db, AppConfig $appConfig)
     {
         $this->db = $db;
@@ -46,7 +46,7 @@ class TwoFactorManager
         $this->log = new Message($this->appConfig);
     }
 
-    private function directLog($level, $text)
+    private function directLog(string $level, string $text): void
     {
         if ($this->log !== null) :
             $this->log->logMessage($level, $text);
@@ -68,17 +68,17 @@ class TwoFactorManager
         endif;
     }
 
-    private function generateCode()
+    private function generateCode(): string
     {
-        $min = pow(10, $this->code_length - 1);
-        $max = pow(10, $this->code_length) - 1;
+        $min = (int) pow(10, $this->code_length - 1);
+        $max = (int) pow(10, $this->code_length) - 1;
         return (string) random_int($min, $max);
     }
 
     /**
      * Check if 2FA is enabled for a user.
      */
-    public function isEnabled($user_id)
+    public function isEnabled(int $user_id): bool
     {
         if (!$user_id) :
             $this->directLog('[ERROR]', "Invalid user ID");
@@ -102,7 +102,7 @@ class TwoFactorManager
     /**
      * Enable 2FA for a user. Accepts method 'email' or 'app'.
      */
-    public function enable($user_id, $method = 'email')
+    public function enable(int $user_id, string $method = 'email'): bool
     {
         if (!$user_id) :
             $this->directLog('[ERROR]', "Invalid user ID");
@@ -190,7 +190,7 @@ class TwoFactorManager
     /**
      * Disable 2FA for a user.
      */
-    public function disable($user_id)
+    public function disable(int $user_id): bool
     {
         if (!$user_id) :
             $this->directLog('[ERROR]', "Invalid user ID");
@@ -215,7 +215,7 @@ class TwoFactorManager
     /**
      * Start 2FA verification process.
      */
-    public function startVerification($user_id, $email)
+    public function startVerification(int $user_id, string $email): bool
     {
         if (!$user_id || !$email) :
             $this->directLog('[ERROR]', "Invalid user ID or email");
@@ -268,7 +268,7 @@ class TwoFactorManager
     /**
      * Verify 2FA code.
      */
-    public function verify($user_id, $code)
+    public function verify(int $user_id, string $code): bool
     {
         if (!$user_id || !$code) :
             $this->directLog('[ERROR]', "Invalid user ID or code");
@@ -332,7 +332,7 @@ class TwoFactorManager
     /**
      * Verify app-based (TOTP) code using OTPHP.
      */
-    private function verifyAppCode($user_id, $code)
+    private function verifyAppCode(int $user_id, string $code): bool
     {
         // Retrieve the stored secret from the DB.
         $query = "SELECT tfa_app_secret FROM users WHERE usernumber = ?";
@@ -373,7 +373,7 @@ class TwoFactorManager
      * A simple TOTP calculation.
      * For production use, consider a robust TOTP library.
      */
-    private function calculateTOTP($secret, $timeCounter)
+    private function calculateTOTP(string $secret, int $timeCounter): string
     {
         $key = pack("H*", $secret);
         $data = pack("N*", 0) . pack("N*", $timeCounter);
@@ -381,13 +381,13 @@ class TwoFactorManager
         $offset = ord(substr($hash, -1)) & 0x0F;
         $truncatedHash = unpack("N", substr($hash, $offset, 4))[1] & 0x7FFFFFFF;
         $code = $truncatedHash % pow(10, $this->code_length);
-        return str_pad($code, $this->code_length, "0", STR_PAD_LEFT);
+        return str_pad((string) $code, $this->code_length, "0", STR_PAD_LEFT);
     }
 
     /**
      * Get 2FA method for a user.
      */
-    public function getMethod($user_id)
+    public function getMethod(int $user_id): string
     {
         if (!$user_id) :
             $this->directLog('[ERROR]', "Invalid user ID");
@@ -411,7 +411,7 @@ class TwoFactorManager
     /**
      * Send verification email.
      */
-    private function sendVerificationEmail($email, $code)
+    private function sendVerificationEmail(string $email, string $code): bool
     {
         if (!$email || !$code) :
             $this->directLog('[ERROR]', "Invalid email or code");
@@ -448,7 +448,10 @@ class TwoFactorManager
     /**
      * Generate backup codes.
      */
-    private function generateBackupCodes($count = 8)
+    /**
+    * @return array<int, array{code: string, used: bool}>
+    */
+    private function generateBackupCodes(int $count = 8): array
     {
         $codes = [];
         for ($i = 0; $i < $count; $i++) :
@@ -463,7 +466,7 @@ class TwoFactorManager
     /**
      * Verify backup code.
      */
-    private function verifyBackupCode($user_id, $code)
+    private function verifyBackupCode(int $user_id, string $code): bool
     {
         if (!$user_id || !$code) :
             return false;
@@ -504,7 +507,10 @@ class TwoFactorManager
     /**
      * Get remaining backup codes for a user.
      */
-    public function getBackupCodes($user_id)
+    /**
+    * @return array<int, string>
+    */
+    public function getBackupCodes(int $user_id): array
     {
         if (!$user_id) :
             return [];
@@ -540,7 +546,10 @@ class TwoFactorManager
     /**
      * Generate new backup codes for a user.
      */
-    public function regenerateBackupCodes($user_id)
+    /**
+    * @return array<int, string>
+    */
+    public function regenerateBackupCodes(int $user_id): array
     {
         if (!$user_id) :
             return [];

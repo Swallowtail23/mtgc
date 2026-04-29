@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.21
-Date:        23/02/26
+Version:     1.24
+Date:        29/04/26
 Name:        ImageManager.php
 Purpose:     Local image management class.
 Notes:       -
@@ -35,23 +35,14 @@ class ImageManager
     * @var \mysqli|object
     */
     private $db;
-    /**
-    * @var string
-    */
-    private $adminEmail;
-    /**
-    * @var Message
-    */
-    private $message;
-    /**
-    * @var AppConfig
-    */
-    private $appConfig;
-    /**
-    * @var GameRules
-    */
-    private $gameRules;
+    private string $adminEmail;
+    private Message $message;
+    private AppConfig $appConfig;
+    private GameRules $gameRules;
 
+    /**
+    * @param \mysqli|object $db
+    */
     public function __construct($db, AppConfig $appConfig, GameRules $gameRules)
     {
         $this->db = $db;
@@ -61,7 +52,10 @@ class ImageManager
         $this->message = new Message($this->appConfig);
     }
 
-    public function getImage($setcode, $cardId, $layout, $allowFetch = true)
+    /**
+    * @return array{front: string, back: string}
+    */
+    public function getImage(string $setcode, string $cardId, string $layout, bool $allowFetch = true): array
     {
         $allowFetchLabel = ($allowFetch) ? 'true' : 'false';
         $imgLocation = (string) $this->appConfig->general('imageBaseDir', '');
@@ -76,6 +70,7 @@ class ImageManager
 
         $cardImages = $this->getCardImageUris($cardId);
         $localfile = $imgLocation . $setcode . '/' . $cardId . '.jpg';
+        $backImg = '';
         $this->message->logMessage('[DEBUG]', "File should be at $localfile");
 
         if (in_array($layout, $twoCardDetailSections)) :
@@ -131,7 +126,7 @@ class ImageManager
         return $imageUrl;
     }
 
-    public function diffImage($remoteUrl, $localFilePath)
+    public function diffImage(string $remoteUrl, string $localFilePath): bool
     {
         $this->message->logMessage('[DEBUG]', "Comparing $remoteUrl with $localFilePath");
 
@@ -163,7 +158,10 @@ class ImageManager
         return false;
     }
 
-    public function refreshImage($cardId)
+    /**
+    * @return array{success: bool, front: string, back: string}
+    */
+    public function refreshImage(string $cardId): array
     {
         $imgLocation = (string) $this->appConfig->general('imageBaseDir', '');
         $twoCardDetailSections = $this->gameRules->get('twoCardDetailSections', []);
@@ -187,6 +185,7 @@ class ImageManager
             );
         else :
             $imagebackdelete = $imagedelete = '';
+            $imageUrl = '';
             $row = $result->fetch_assoc();
             // $imgLocation is set in ini
             $imageFunction = $this->getImage(
@@ -270,7 +269,10 @@ class ImageManager
     }
 
 
-    public function checkAndRefreshImage($cardId)
+    /**
+    * @return array{front: string, front_changed: bool, back: string, back_changed: bool}
+    */
+    public function checkAndRefreshImage(string $cardId): array
     {
         $imgLocation = (string) $this->appConfig->general('imageBaseDir', '');
         $twoCardDetailSections = $this->gameRules->get('twoCardDetailSections', []);
@@ -299,7 +301,10 @@ class ImageManager
         );
     }
 
-    private function getCardImageUris($cardId)
+    /**
+    * @return array{front: string, back: string, setcode: string, layout: string}
+    */
+    private function getCardImageUris(string $cardId): array
     {
         $sql = "SELECT image_uri, f1_image_uri, f2_image_uri, setcode, layout FROM cards_scry WHERE id like ? LIMIT 1";
         $result = $this->db->execute_query($sql, [$cardId]);
@@ -337,7 +342,7 @@ class ImageManager
         );
     }
 
-    private function normaliseImageUrl($url)
+    private function normaliseImageUrl(string $url): string
     {
         if ($url === '') :
             return '';
@@ -348,8 +353,12 @@ class ImageManager
         return $url;
     }
 
-    private function fetchAndStoreImage($remoteUrl, $imgLocation, $setcode, $destination)
-    {
+    private function fetchAndStoreImage(
+        string $remoteUrl,
+        string $imgLocation,
+        string $setcode,
+        string $destination
+    ): string {
         if ($remoteUrl === '') :
             return 'empty';
         endif;
@@ -385,8 +394,12 @@ class ImageManager
         return substr($destination, $relativePath);
     }
 
-    private function processImageFace($remoteUrl, $localPath, $imgLocation, $setcode)
-    {
+    private function processImageFace(
+        string $remoteUrl,
+        string $localPath,
+        string $imgLocation,
+        string $setcode
+    ): string {
         $relativePath = strpos($localPath, 'cardimg');
         $currentPath = substr($localPath, $relativePath);
 
@@ -407,8 +420,15 @@ class ImageManager
         return $currentPath;
     }
 
-    private function processImageFaceRefresh($remoteUrl, $localPath, $imgLocation, $setcode)
-    {
+    /**
+    * @return array{path: string, changed: bool}
+    */
+    private function processImageFaceRefresh(
+        string $remoteUrl,
+        string $localPath,
+        string $imgLocation,
+        string $setcode
+    ): array {
         $relativePath = strpos($localPath, 'cardimg');
         $currentPath = substr($localPath, $relativePath);
 
@@ -434,12 +454,12 @@ class ImageManager
         return array('path' => $currentPath, 'changed' => false);
     }
 
-    protected function isReadable($path)
+    protected function isReadable(string $path): bool
     {
         return is_readable($path);
     }
 
-    protected function fileExists($path)
+    protected function fileExists(string $path): bool
     {
         return file_exists($path);
     }

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.8
-Date:        12/01/26
+Version:     1.9
+Date:        29/04/26
 Name:        TrustedDeviceManager.php
 Purpose:     Manage trusted device tokens for extended session handling.
 Notes:       -
@@ -22,13 +22,16 @@ class TrustedDeviceManager
     * @var \mysqli|object
     */
     private $db;
-    private $appConfig;
-    private $logfile;
-    private $msg;
-    private $tokenLength = 64;
-    private $cookieName = 'mtgc_trusted_device';
-    private $hmacSecret;
+    private AppConfig $appConfig;
+    private string $logfile;
+    private ?Message $msg;
+    private int $tokenLength = 64;
+    private string $cookieName = 'mtgc_trusted_device';
+    private string $hmacSecret;
 
+    /**
+    * @param \mysqli|object $db
+    */
     public function __construct($db, AppConfig $appConfig)
     {
         $this->db = $db;
@@ -36,7 +39,7 @@ class TrustedDeviceManager
         $this->logfile = (string) $this->appConfig->general('logFile', '');
 
         // Load HMAC secret from environment variable
-        $this->hmacSecret = getenv('HMAC_SECRET');
+        $this->hmacSecret = (string) getenv('HMAC_SECRET');
 
         try {
             $this->msg = new Message($this->appConfig);
@@ -46,7 +49,7 @@ class TrustedDeviceManager
         }
     }
 
-    private function log($level, $text)
+    private function log(string $level, string $text): void
     {
         if ($this->msg !== null) :
             $this->msg->logMessage($level, $text);
@@ -70,38 +73,38 @@ class TrustedDeviceManager
         endif;
     }
 
-    public function getCookieName()
+    public function getCookieName(): string
     {
         return $this->cookieName;
     }
 
-    private function generateToken()
+    private function generateToken(): string
     {
         return bin2hex(random_bytes($this->tokenLength));
     }
 
-    private function hashToken($token)
+    private function hashToken(string $token): string
     {
         return hash_hmac('sha256', $token, $this->hmacSecret);
     }
 
-    public function getTokenHash($token)
+    public function getTokenHash(string $token): string
     {
         return $this->hashToken($token);
     }
 
-    private function getClientIP()
+    private function getClientIP(): string
     {
         if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) :
-            return $_SERVER['HTTP_CF_CONNECTING_IP'];
+            return (string) $_SERVER['HTTP_CF_CONNECTING_IP'];
         elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) :
-            return explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
+            return explode(',', (string) $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
         else :
-            return $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+            return (string) ($_SERVER['REMOTE_ADDR'] ?? 'Unknown');
         endif;
     }
 
-    public function createTrustedDevice($userId, $daysValid = 7)
+    public function createTrustedDevice(int $userId, int $daysValid = 7): bool
     {
         $token = $this->generateToken();
         $tokenHash = $this->hashToken($token);
@@ -159,7 +162,7 @@ class TrustedDeviceManager
         return true;
     }
 
-    public function validateTrustedDevice()
+    public function validateTrustedDevice(): int|false
     {
         if (!isset($_COOKIE[$this->cookieName])) :
             $this->log('[DEBUG]', "Cookie not set");
@@ -167,6 +170,10 @@ class TrustedDeviceManager
         endif;
 
         $token = $_COOKIE[$this->cookieName];
+        if (!is_string($token)) :
+            $this->log('[DEBUG]', "Cookie token is invalid");
+            return false;
+        endif;
         $hashedToken = $this->hashToken($token);
 
         $query = "SELECT id, user_id FROM trusted_devices WHERE token_hash = ? AND expires > NOW()";
@@ -208,13 +215,16 @@ class TrustedDeviceManager
         return false;
     }
 
-    public function removeTrustedDevice()
+    public function removeTrustedDevice(): bool
     {
         if (!isset($_COOKIE[$this->cookieName])) :
             return false;
         endif;
 
         $token = $_COOKIE[$this->cookieName];
+        if (!is_string($token)) :
+            return false;
+        endif;
         $hashedToken = $this->hashToken($token);
 
         $query = "DELETE FROM trusted_devices WHERE token_hash = ?";
@@ -233,7 +243,7 @@ class TrustedDeviceManager
         return true;
     }
 
-    public function removeAllUserDevices($userId)
+    public function removeAllUserDevices(int $userId): bool
     {
         $query = "DELETE FROM trusted_devices WHERE user_id = ?";
         $stmt = $this->db->prepare($query);
@@ -256,7 +266,7 @@ class TrustedDeviceManager
         endif;
     }
 
-    public function cleanupExpiredTokens()
+    public function cleanupExpiredTokens(): int
     {
         $query = "DELETE FROM trusted_devices WHERE expires < NOW()";
         $result = $this->db->query($query);
@@ -275,9 +285,9 @@ class TrustedDeviceManager
      * Get all trusted devices for a user
      *
      * @param int $userId The user's ID
-     * @return array Array of device information
+     * @return array<int, array<string, mixed>>
      */
-    public function getUserDevices($userId)
+    public function getUserDevices(int $userId): array
     {
         $query = "SELECT id, device_name, token_hash, ip_address, user_agent, last_used, created, expires 
                  FROM trusted_devices 
@@ -317,7 +327,7 @@ class TrustedDeviceManager
      * @param int $userId The user ID (for security verification)
      * @return bool Success of operation
      */
-    public function removeDeviceById($deviceId, $userId)
+    public function removeDeviceById(int $deviceId, int $userId): bool
     {
         $query = "DELETE FROM trusted_devices WHERE id = ? AND user_id = ?";
         $stmt = $this->db->prepare($query);

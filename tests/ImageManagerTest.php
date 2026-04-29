@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        28/04/26
+Version:     1.1
+Date:        29/04/26
 Name:        ImageManagerTest.php
 Purpose:     Tests image manager refresh and placeholder behavior.
 Notes:       -
@@ -37,7 +37,7 @@ class TestImageManager extends ImageManager
      * @param string $remoteUrl
      * @param string $localFilePath
      */
-    public function diffImage($remoteUrl, $localFilePath)
+    public function diffImage(string $remoteUrl, string $localFilePath): bool
     {
         $this->diffCalled++;
         return $this->diffReturn;
@@ -46,7 +46,7 @@ class TestImageManager extends ImageManager
     /**
      * @param string $path
      */
-    protected function isReadable($path)
+    protected function isReadable(string $path): bool
     {
         if (isset($this->unreadablePaths[$path]) && $this->unreadablePaths[$path]) {
             return false;
@@ -60,7 +60,7 @@ class TestImageManager extends ImageManager
     /**
      * @param string $path
      */
-    protected function fileExists($path)
+    protected function fileExists(string $path): bool
     {
         if (isset($this->unreadablePaths[$path]) && $this->unreadablePaths[$path]) {
             return $this->forceExists;
@@ -83,7 +83,7 @@ class TestRefreshImageManager extends ImageManager
      * @param string $layout
      * @param bool $allowFetch
      */
-    public function getImage($setcode, $cardId, $layout, $allowFetch = true)
+    public function getImage(string $setcode, string $cardId, string $layout, bool $allowFetch = true): array
     {
         $index = $this->callCount;
         $this->callCount++;
@@ -272,7 +272,7 @@ class ImageManagerTest extends TestCase
              * @param string $remoteUrl
              * @param string $localFilePath
              */
-            public function diffImage($remoteUrl, $localFilePath)
+            public function diffImage(string $remoteUrl, string $localFilePath): bool
             {
                 unset($remoteUrl);
                 clearstatcache(true, $localFilePath);

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.30
-Date:        15/01/26
+Version:     2.31
+Date:        29/04/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
 Notes:       ProcessInput() called with deck number and input string; quickAdd() interprets and adds cards.
@@ -25,40 +25,28 @@ class DeckManager
     * @var \mysqli|object
     */
     private $db;
-    /**
-    * @var AppConfig
-    */
-    private $appConfig;
-    /**
-    * @var GameRules
-    */
-    private $gameRules;
+    private AppConfig $appConfig;
+    private GameRules $gameRules;
     /**
     * @var array<int,array<string,mixed>>
     */
-    private $batchedCardIds = []; // Array to store batched cards to add
-    /**
-    * @var Message
-    */
-    private $message;
-    /**
-    * @var string
-    */
-    private $userEmail;
-    /**
-    * @var bool
-    */
-    private $emailEnabled;
+    private array $batchedCardIds = []; // Array to store batched cards to add
+    private Message $message;
+    private string $userEmail;
+    private bool $emailEnabled;
     /**
     * @var array<int,string>
     */
-    private $limitWarnings = [];
+    private array $limitWarnings = [];
 
+    /**
+    * @param \mysqli|object $db
+    */
     public function __construct(
         $db,
         AppConfig $appConfig,
         GameRules $gameRules,
-        $userEmail
+        string $userEmail
     ) {
         $this->db = $db;
         $this->appConfig = $appConfig;
@@ -68,7 +56,7 @@ class DeckManager
         $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
     }
 
-    public function processInput($deckNumber, $input)
+    public function processInput(int $deckNumber, string $input): mixed
     {
         // processInput can handle either single-line or multi-line 'add card' inputs using quickadd.
         // Multi-line inputs are batched for combined data write by addDeckCardsBatch; called from deckdetail.php.
@@ -228,9 +216,13 @@ class DeckManager
         if (isset($quickAddResult)) :
             return $quickAddResult;
         endif;
+        return null;
     }
 
-    public function extractDeckHeader($input)
+    /**
+    * @return array{name: string, type: string}
+    */
+    public function extractDeckHeader(string $input): array
     {
         $header = [
             'name' => '',
@@ -296,14 +288,14 @@ class DeckManager
      * Called from processInput().
      */
     public function quickAdd(
-        $deckNumber,
-        $getString,
-        $sideboardTrigger = false,
-        $batch = false,
-        $commanderMode = null,
-        $rowNumber = null,
-        $originalLine = null
-    ) {
+        int $deckNumber,
+        string $getString,
+        bool $sideboardTrigger = false,
+        bool $batch = false,
+        ?string $commanderMode = null,
+        ?int $rowNumber = null,
+        ?string $originalLine = null
+    ): mixed {
         $noQuickAddLayouts = $this->gameRules->get('noQuickAddLayouts', []);
         if (!is_array($noQuickAddLayouts)) :
             $noQuickAddLayouts = [];
@@ -525,9 +517,13 @@ class DeckManager
             $this->message->logMessage('[ERROR]', "Quick add interpreter failed");
             return false;
         endif;
+        return null;
     }
 
-    public function addDeckCardsBatch($deckNumber, $batchedCardIds)
+    /**
+    * @param array<int, array<string, mixed>> $batchedCardIds
+    */
+    public function addDeckCardsBatch(int $deckNumber, array $batchedCardIds): void
     {
         $this->message->logMessage('[DEBUG]', "deckManager batch process called");
         $commanderDecktypes = $this->gameRules->get('commander_decktypes', []);
@@ -745,7 +741,7 @@ class DeckManager
         endif;
     }
 
-    public function bumpDeckUpdatedAt($deckNumber)
+    public function bumpDeckUpdatedAt(int $deckNumber): void
     {
         $query = "UPDATE decks SET deck_updated_at = NOW(6) WHERE decknumber = ? LIMIT 1";
         if (method_exists($this->db, 'execute_query')) :
@@ -767,7 +763,7 @@ class DeckManager
         endif;
     }
 
-    public function assertDeckOwner($deck, $user, $context = '')
+    public function assertDeckOwner(int $deck, int $user, string $context = ''): bool
     {
         $contextLabel = $context !== '' ? $context . ': ' : '';
         $this->message->logMessage(
@@ -813,7 +809,10 @@ class DeckManager
         return true;
     }
 
-    public function deckCardCheck($card, $user)
+    /**
+    * @return array<int, array{decknumber: mixed, qty: mixed, sideqty: mixed, deckname: mixed}>
+    */
+    public function deckCardCheck(string $card, int $user): array
     {
         $this->message->logMessage('[DEBUG]', "Checking to see what decks this card is in for user $user...");
 
@@ -846,7 +845,7 @@ class DeckManager
         endif;
     }
 
-    public function addDeckCard($deck, $card, $section, $quantity)
+    public function addDeckCard(int $deck, string $card, string $section, int|string $quantity): string
     {
         $commanderDecktypes = $this->gameRules->get('commander_decktypes', []);
         if (!is_array($commanderDecktypes)) :
@@ -864,6 +863,9 @@ class DeckManager
             '[NOTICE]',
             "Add card called: '$quantity' x '$card' to '$deck' ($section)"
         );
+        $cardquery = '';
+        $params = [];
+        $status = 'cardnotadded';
 
         // Get card name and other key details of card to add
         $cardnamequery = "SELECT name,type,f1_type,f2_type,ability,f1_ability,f2_ability FROM cards_scry "
@@ -1134,9 +1136,12 @@ class DeckManager
         endif;
     }
 
-    public function subtractDeckCard($deck, $card, $section, $quantity)
+    public function subtractDeckCard(int $deck, string $card, string $section, int|string $quantity): string
     {
         $didUpdate = false;
+        $cardquery = '';
+        $params = [];
+        $status = '-error';
         if ($quantity == "all") :
             if ($section == "side") :
                 $cardquery = "UPDATE deckcards SET sideqty = NULL WHERE decknumber = ? AND cardnumber = ?";
@@ -1255,7 +1260,7 @@ class DeckManager
         return $status;
     }
 
-    public function addCommander($deck, $card)
+    public function addCommander(int $deck, string $card): string
     {
         // Check if commander already exists in the deck
         $check = $this->db->prepare('SELECT commander FROM deckcards WHERE decknumber = ? AND commander = 1');
@@ -1296,7 +1301,7 @@ class DeckManager
         $addCommanderStmt->close();
     }
 
-    public function addPartner($deck, $card)
+    public function addPartner(int $deck, string $card): string
     {
         $check = $this->db->execute_query(
             'SELECT commander FROM deckcards WHERE decknumber = ? AND commander = 2',
@@ -1335,7 +1340,7 @@ class DeckManager
         endif;
     }
 
-    public function delCommander($deck, $card)
+    public function delCommander(int $deck, string $card): ?string
     {
         $check = $this->db->execute_query(
             "SELECT commander FROM deckcards WHERE decknumber = ? AND cardnumber = ? AND commander > 0",
@@ -1361,9 +1366,10 @@ class DeckManager
         else :
             $status = "notcdr";
         endif;
+        return $status;
     }
 
-    public function delDeck($decktodelete)
+    public function delDeck(int $decktodelete): void
     {
         $this->message->logMessage('[NOTICE]', "Delete deck called: deck $decktodelete");
         $stmt = $this->db->prepare("DELETE FROM decks WHERE decknumber = ?");
@@ -1438,7 +1444,10 @@ class DeckManager
         endif;
     }
 
-    public function addDeck($user, $newdeckname)
+    /**
+    * @return array{flag: int, decknumber: mixed}
+    */
+    public function addDeck(int $user, string $newdeckname): array
     {
         $this->message->logMessage('[NOTICE]', "Add deck called: deck $newdeckname");
         $decksuccess = [];
@@ -1509,7 +1518,7 @@ class DeckManager
         return $decksuccess;
     }
 
-    public function renameDeck($deck, $newname, $user)
+    public function renameDeck(int $deck, string $newname, int $user): int
     {
         $this->message->logMessage('[NOTICE]', "Rename deck called: deck $deck to '$newname'");
 
@@ -1555,7 +1564,7 @@ class DeckManager
         return($newnamereturn);
     }
 
-    public function setDeckType($deck, $decktype)
+    public function setDeckType(int $deck, string $decktype): int
     {
         $this->message->logMessage('[NOTICE]', "Set deck type called: deck $deck to '$decktype'");
 
@@ -1603,7 +1612,7 @@ class DeckManager
         return($decktypereturn);
     }
 
-    public function exportDeck($deckNumber, $format, $zipFilePath = null)
+    public function exportDeck(int $deckNumber, string $format, ?string $zipFilePath = null): bool|string|null
     {
         //Format options:
         //
@@ -1643,6 +1652,10 @@ class DeckManager
             endif;
             return $cardType;
         };
+        $deckName = '';
+        $textfile = '';
+        $filename = '';
+        $tmpName = false;
 
         $query = 'SELECT * FROM decks WHERE decknumber=?';
         $stmt = $this->db->execute_query($query, [$deckNumber]);
@@ -1810,6 +1823,10 @@ class DeckManager
                 endif;
                 $filename = $deckNumber . '-' . $sanitizedDeckName . '.txt';
                 $tmpName = tempnam(sys_get_temp_dir(), 'deck_' . $deckNumber);
+                if ($tmpName === false) :
+                    $this->message->logMessage('[ERROR]', "Failed to create deck export temp file for $deckNumber");
+                    return false;
+                endif;
                 file_put_contents($tmpName, $textfile);
             endif;
 
@@ -1899,9 +1916,10 @@ class DeckManager
             endif;
         else :
         endif;
+        return null;
     }
 
-    public function exportMissing($textdata, $filename)
+    public function exportMissing(string $textdata, string $filename): bool
     {
 
         // Create a temporary file
@@ -1939,8 +1957,13 @@ class DeckManager
     }
 
 
-    public function mtgCardCopyLimit($card_type, $ability, $f1_ability = null, $f2_ability = null, $decktype = null)
-    {
+    public function mtgCardCopyLimit(
+        ?string $card_type,
+        ?string $ability,
+        ?string $f1_ability = null,
+        ?string $f2_ability = null,
+        ?string $decktype = null
+    ): ?int {
         $anyQuantity = $this->gameRules->get('any_quantity', []);
         if (!is_array($anyQuantity)) :
             $anyQuantity = [];
@@ -2005,7 +2028,7 @@ class DeckManager
         return 4;
     }
 
-    public function cardLegalDBField($decktype)
+    public function cardLegalDBField(string $decktype): string
     {
         $deckLegalityMap = $this->gameRules->get('deck_legality_map', []);
         if (!is_array($deckLegalityMap)) :
@@ -2013,6 +2036,7 @@ class DeckManager
         endif;
 
         $this->message->logMessage('[DEBUG]', "Looking up db_field for legality for deck type '$decktype'");
+        $db_field = '';
         $index = array_search("$decktype", array_column($deckLegalityMap, 'decktype'));
         if ($index !== false) :
             $db_field = $deckLegalityMap[$index]['db_field'];
@@ -2021,7 +2045,10 @@ class DeckManager
         return $db_field;
     }
 
-    public function deckLegalList($deckNumber, $deck_type, $db_field)
+    /**
+    * @return array<int, array{id: mixed, legality: mixed}>
+    */
+    public function deckLegalList(int $deckNumber, string $deck_type, string $db_field): array
     {
         $this->message->logMessage(
             '[DEBUG]',

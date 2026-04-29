@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        13/01/26
+Version:     1.1
+Date:        29/04/26
 Name:        ProfilePreferences.php
 Purpose:     Profile preference helpers for update flows.
 Notes:       -
@@ -35,6 +35,9 @@ class ProfilePreferences
         return $currency;
     }
 
+    /**
+    * @param \mysqli|object $db
+    */
     public static function updateCurrency(
         $db,
         array $rulesCurrencies,

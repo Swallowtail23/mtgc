@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        11/01/26
+Version:     1.1
+Date:        29/04/26
 Name:        Filesystem.php
 Purpose:     Filesystem helper utilities.
 Notes:       -
@@ -15,7 +15,7 @@ namespace MTG\Core;
 
 class Filesystem
 {
-    public static function ensureDirectoryExists($path, AppConfig $appConfig, ?Message $msg = null): void
+    public static function ensureDirectoryExists(string $path, AppConfig $appConfig, ?Message $msg = null): void
     {
         if (is_dir($path)) :
             return;

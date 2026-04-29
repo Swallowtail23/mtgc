@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.10
-Date:        26/02/26
+Version:     3.11
+Date:        29/04/26
 Name:        CardUtils.php
 Purpose:     Card utility helpers.
 Notes:       -
@@ -172,7 +172,7 @@ class CardUtils
         return $cardtypes;
     }
 
-    public static function colourIdentity($colourIdentity, ?Message $msg = null): string
+    public static function colourIdentity(mixed $colourIdentity, ?Message $msg = null): string
     {
         if ($msg !== null) :
             $msg->logMessage('[DEBUG]', 'colourIdentity called');
@@ -277,7 +277,7 @@ class CardUtils
     }
 
     // Normalise colour identity JSON/strings into a compact raw letter sequence (e.g., WUBRG).
-    public static function normaliseColourIdentityRaw($colourIdentity, ?Message $msg = null): string
+    public static function normaliseColourIdentityRaw(mixed $colourIdentity, ?Message $msg = null): string
     {
         if ($msg !== null) :
             $msg->logMessage('[DEBUG]', 'normaliseColourIdentityRaw called');
@@ -300,7 +300,10 @@ class CardUtils
     }
 
     // Return colour identity icon + human-friendly name + raw abbreviation for display and logic.
-    public static function colourIdentityMeta($colourIdentity, ?Message $msg = null): array
+    /**
+    * @return array{icon: string, name: string, abbr: string}
+    */
+    public static function colourIdentityMeta(mixed $colourIdentity, ?Message $msg = null): array
     {
         if ($msg !== null) :
             $msg->logMessage('[DEBUG]', 'colourIdentityMeta called');
@@ -413,7 +416,7 @@ class CardUtils
         return $output;
     }
 
-    public static function colourFunction($colourcode, ?Message $msg = null): string
+    public static function colourFunction(mixed $colourcode, ?Message $msg = null): string
     {
         $originalColourcode = $colourcode;
         if ($msg !== null) :
@@ -660,7 +663,7 @@ class CardUtils
         return $promo_description;
     }
 
-    public static function escapeCardNotesForTextarea($notes): string
+    public static function escapeCardNotesForTextarea(mixed $notes): string
     {
         return htmlspecialchars((string) $notes, ENT_QUOTES, 'UTF-8');
     }

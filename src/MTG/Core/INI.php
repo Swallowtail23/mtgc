@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.6
-Date:        21/12/25
+Version:     1.8
+Date:        29/04/26
 Name:        INI.php
 Purpose:     Simple PHP class to manage INI files (read/write).
 Notes:       Third-party code from IT-radionica.com.
@@ -65,13 +65,13 @@ namespace MTG\Core;
 class INI
 {
     /** INI file path @var string */
-    public $file = null;
+    public ?string $file = null;
 
     /** INI data @var array */
-    public $data = array();
+    public array|false $data = array();
 
     /** Process sections @var bool */
-    public $sections = true;
+    public bool $sections = true;
 
     /**
      * Parse INI file.
@@ -79,7 +79,7 @@ class INI
      * @param string|null $file     INI file path
      * @param bool        $sections Process sections
      */
-    public function __construct($file = null, $sections = true)
+    public function __construct(?string $file = null, bool $sections = true)
     {
         if ($file !== null) {
             $this->read($file, $sections);
@@ -92,7 +92,7 @@ class INI
      * @param string|null $file     INI file path
      * @param bool        $sections Process sections
      */
-    public function read($file = null, $sections = true)
+    public function read(?string $file = null, bool $sections = true): array|false
     {
         $this->file = ($file) ? $file : $this->file;
         $this->sections = $sections;
@@ -107,7 +107,7 @@ class INI
      * @param array       $data     Data (associative array)
      * @param bool        $sections Process sections
      */
-    public function write($file = null, $data = array(), $sections = true)
+    public function write(?string $file = null, array $data = array(), bool $sections = true): bool
     {
         $this->data = (!empty($data)) ? $data : $this->data;
         $this->file = ($file) ? $file : $this->file;
@@ -115,9 +115,9 @@ class INI
         $content = null;
 
         if ($this->sections) {
-            foreach ($this->data as $section => $data) {
+            foreach ($this->data as $section => $sectionData) {
                 $content .= '[' . $section . ']' . PHP_EOL;
-                foreach ($data as $key => $val) {
+                foreach ($sectionData as $key => $val) {
                     if (is_array($val)) {
                         foreach ($val as $v) {
                             $content .= $key . '[] = ' . (is_numeric($v) ? $v : '"' . $v . '"') . PHP_EOL;

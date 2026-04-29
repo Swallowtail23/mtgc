@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.6
-Date:        11/01/26
+Version:     1.7
+Date:        29/04/26
 Name:        CollectionHistory.php
 Purpose:     Collection value history retrieval and export helpers.
 Notes:       -
@@ -23,11 +23,14 @@ class CollectionHistory
     * @var \mysqli|object
     */
     private $db;
-    private $appConfig;
-    private $message;
-    private $siteTitle;
-    private $emailEnabled;
+    private AppConfig $appConfig;
+    private Message $message;
+    private string $siteTitle;
+    private bool $emailEnabled;
 
+    /**
+    * @param \mysqli|object $db
+    */
     public function __construct($db, AppConfig $appConfig)
     {
         $this->db = $db;
@@ -37,7 +40,10 @@ class CollectionHistory
         $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
     }
 
-    public function getHistoryData($userId, $range)
+    /**
+    * @return array<int, array{t: string, usd: float, local: float|null, rate: float|null, cards: int}>|false
+    */
+    public function getHistoryData(int $userId, string $range): array|false
     {
         $range = $this->normaliseRange($range);
         $this->message->logMessage(
@@ -101,7 +107,10 @@ class CollectionHistory
         return $data;
     }
 
-    public function buildCsv(array $data)
+    /**
+    * @param array<int, array{t: string, usd: float, local: float|null, rate: float|null, cards: int}> $data
+    */
+    public function buildCsv(array $data): string
     {
         $this->message->logMessage(
             '[DEBUG]',
@@ -139,13 +148,13 @@ class CollectionHistory
     }
 
     public function emailHistoryCsv(
-        $userId,
-        $myURL,
-        $range,
-        $filename,
-        $userName,
-        $userEmail
-    ) {
+        int $userId,
+        string $myURL,
+        string $range,
+        string $filename,
+        string $userName,
+        string $userEmail
+    ): bool|string {
         $this->message->logMessage('[DEBUG]', "CollectionHistory: preparing history export for $userEmail");
 
         $data = $this->getHistoryData($userId, $range);
@@ -205,7 +214,7 @@ class CollectionHistory
         endif;
     }
 
-    private function normaliseRange($range)
+    private function normaliseRange(string $range): string
     {
         $range = strtolower(trim((string) $range));
         $validRanges = ['30d', '90d', '1y', 'all'];
@@ -220,7 +229,7 @@ class CollectionHistory
         return $range;
     }
 
-    private function rangeToStartDate($range)
+    private function rangeToStartDate(string $range): ?string
     {
         if ($range === 'all') :
             return null;

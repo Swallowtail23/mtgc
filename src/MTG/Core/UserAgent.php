@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.51
-Date:        11/01/26
+Version:     1.52
+Date:        29/04/26
 Name:        UserAgent.php
 Purpose:     Build consistent HTTP user agent strings from config and version data.
 Notes:       -
@@ -15,7 +15,7 @@ namespace MTG\Core;
 
 class UserAgent
 {
-    public static function buildFromConfig(AppConfig $config, $versionPath = null, $msg = null): string
+    public static function buildFromConfig(AppConfig $config, ?string $versionPath = null, ?Message $msg = null): string
     {
         static $cache = array();
 
@@ -58,7 +58,7 @@ class UserAgent
         return $userAgent;
     }
 
-    public static function buildFromParts($version, $url, $adminEmail): string
+    public static function buildFromParts(mixed $version, mixed $url, mixed $adminEmail): string
     {
         $version = trim((string) $version);
         $url = trim((string) $url);
@@ -67,7 +67,7 @@ class UserAgent
         return "MtGCollection/{$version} ({$url}; {$adminEmail})";
     }
 
-    private static function resolveVersion(string $versionPath, $msg = null): string
+    private static function resolveVersion(string $versionPath, ?Message $msg = null): string
     {
         $version = 'unknown';
         if (is_file($versionPath)) :

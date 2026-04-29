@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.55
-Date:        13/01/26
+Version:     1.56
+Date:        29/04/26
 Name:        AppContext.php
 Purpose:     Bootstrap context container for app-wide dependencies.
 Notes:       -
@@ -20,34 +20,22 @@ class AppContext
     /**
     * @var \mysqli
     */
-    private $db;
-    /**
-    * @var AppConfig
-    */
-    private $config;
-    /**
-    * @var GameRules
-    */
-    private $rules;
+    private \mysqli $db;
+    private AppConfig $config;
+    private GameRules $rules;
     /**
     * @var array<string,mixed>
     */
-    private $iniArray = [];
-    /**
-    * @var Message
-    */
-    private $message;
+    private array $iniArray = [];
+    private Message $message;
     /**
     * @var array<string,mixed>
     */
-    private $meta = [];
-    /**
-    * @var SessionUser|null
-    */
-    private $sessionUser;
+    private array $meta = [];
+    private ?SessionUser $sessionUser;
 
     public function __construct(
-        $db,
+        \mysqli $db,
         AppConfig $config,
         GameRules $rules,
         array $iniArray,
@@ -185,7 +173,7 @@ class AppContext
         return $this->sessionUser;
     }
 
-    public function meta(string $key, $default = null)
+    public function meta(string $key, mixed $default = null): mixed
     {
         return $this->meta[$key] ?? $default;
     }

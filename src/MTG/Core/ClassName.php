@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.12
-Date:        11/01/26
+Version:     1.13
+Date:        29/04/26
 Name:        ClassName.php
 Purpose:     {Short description of what this class does}.
 Notes:       -
@@ -21,28 +21,28 @@ class ClassName
      * @var \mysqli|object
      */
     private $db;
-    private $appConfig;
+    private AppConfig $appConfig;
 
     /**
      * Message logger instance.
      *
      * @var Message
      */
-    private $message;
+    private Message $message;
 
     /**
      * Any per-instance identifier, e.g. email/ID/usernumber.
      *
      * @var string|null
      */
-    private $identifier = null;
+    private ?string $identifier = null;
 
     /**
      * Example public state storage (adjust/remove as needed).
      *
      * @var array<string,mixed>
      */
-    public $state = [];
+    public array $state = [];
 
     /**
      * Constructor.
@@ -51,7 +51,7 @@ class ClassName
      * @param AppConfig   $appConfig  App configuration container.
      * @param string|null $identifier Optional per-instance identifier (e.g. user email).
      */
-    public function __construct($db, AppConfig $appConfig, $identifier = null)
+    public function __construct($db, AppConfig $appConfig, ?string $identifier = null)
     {
         $this->db         = $db;
         $this->appConfig  = $appConfig;

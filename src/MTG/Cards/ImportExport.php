@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.24
-Date:        24/03/26
+Version:     1.26
+Date:        29/04/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
 Notes:       -
@@ -25,37 +25,20 @@ class ImportExport
     * @var \mysqli|object
     */
     private $db;
-    /**
-    * @var AppConfig
-    */
-    private $appConfig;
-    /**
-    * @var GameRules
-    */
-    private $gameRules;
-    /**
-    * @var string
-    */
-    private $userEmail;
-    /**
-    * @var string
-    */
-    private $serverEmail;
-    /**
-    * @var Message
-    */
-    private $message;
-    /**
-    * @var string
-    */
-    private $siteTitle;
-    /**
-    * @var bool
-    */
-    private $emailEnabled;
-    private $batchedCardIds = []; // Array to store batched cards to add
+    private AppConfig $appConfig;
+    private GameRules $gameRules;
+    private string $userEmail;
+    private string $serverEmail;
+    private Message $message;
+    private string $siteTitle;
+    private bool $emailEnabled;
+    /** @var array<int, array<string, mixed>> */
+    private array $batchedCardIds = []; // Array to store batched cards to add
 
-    public function __construct($db, AppConfig $appConfig, GameRules $gameRules, $userEmail)
+    /**
+    * @param \mysqli|object $db
+    */
+    public function __construct($db, AppConfig $appConfig, GameRules $gameRules, string $userEmail)
     {
         $this->db = $db;
         $this->appConfig = $appConfig;
@@ -68,14 +51,14 @@ class ImportExport
     }
 
     public function exportCollectionToCsv(
-        $table,
-        $myURL,
-        $format = 'echo',
-        $filename = 'export.csv',
-        $userName = '',
-        $userEmail = '',
-        $extraAttachments = []
-    ) {
+        string $table,
+        string $myURL,
+        string $format = 'echo',
+        string $filename = 'export.csv',
+        string $userName = '',
+        string $userEmail = '',
+        array $extraAttachments = []
+    ): bool|string {
         $out = $this->buildCollectionCsv($table);
         if ($out === false) :
             return false;
@@ -181,9 +164,12 @@ class ImportExport
                 return false;
             endif;
         endif;
+
+        $this->message->logMessage('[ERROR]', "Unsupported collection export format '$format'");
+        return false;
     }
 
-    public function buildCollectionCsv($table)
+    public function buildCollectionCsv(string $table): string|false
     {
         $csv_terminated = "\n";
         $csv_separator = ",";
@@ -257,8 +243,14 @@ class ImportExport
         return $out;
     }
 
-    public static function inputInterpreter($input_string, AppConfig $appConfig, GameRules $gameRules)
-    {
+    /**
+    * @return array<string, mixed>|string|false
+    */
+    public static function inputInterpreter(
+        string $input_string,
+        AppConfig $appConfig,
+        GameRules $gameRules
+    ): array|string|false {
         // Called by quickAdd in deckmanager class, index.php search inputs and collection imports
         // This function takes an input string, either from deck quick add or search strings,
         // and strips it into components:
@@ -748,8 +740,12 @@ class ImportExport
         endif;
     }
 
-    public function importCollectionRegex($filename, $mytable, $importType, $userEmail)
-    {
+    public function importCollectionRegex(
+        string $filename,
+        string $mytable,
+        string $importType,
+        string $userEmail
+    ) {
         // Import type = add, replace or remove
         // Import format = 'regex'
         // 'regex' may have no header row, and content like '1 All Is Dust [M3C 152]'
@@ -1159,8 +1155,17 @@ class ImportExport
         endif;
     }
 
-    public function addCardsBatch($mytable, $importType, $count, $total, $batchedCardIds)
-    {
+    /**
+    * @param array<int, array<string, mixed>> $batchedCardIds
+    * @return array{warnings: string, total: int, batchRows: int}
+    */
+    public function addCardsBatch(
+        string $mytable,
+        string $importType,
+        int $count,
+        int $total,
+        array $batchedCardIds
+    ): array {
         $this->message->logMessage(
             '[DEBUG]',
             "Batch import process called with '$importType' ($count unique cards, $total total cards)"
@@ -1355,7 +1360,7 @@ class ImportExport
         endif;
     }
 
-    private function deleteOrphans($mytable)
+    private function deleteOrphans(string $mytable): void
     {
         $queryString = "DELETE FROM $mytable WHERE COALESCE(normal,0) + COALESCE(foil,0) + COALESCE(etched,0) = 0";
         if ($query = $this->db->execute_query($queryString)) :
@@ -1368,7 +1373,7 @@ class ImportExport
         endif;
     }
 
-    private function normalizeImportedCardName($cardName)
+    private function normalizeImportedCardName(mixed $cardName): string
     {
         if (!is_string($cardName)) :
             return '';

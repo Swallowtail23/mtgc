@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.16
-Date:        11/01/26
+Version:     1.17
+Date:        29/04/26
 Name:        MyPHPMailer.php
 Purpose:     Extends PHPMailer with standard options.
 Notes:       Usage:
@@ -29,11 +29,11 @@ class MyPHPMailer extends PHPMailer
      * @param bool|null $exceptions
      * @param AppConfig $appConfig
      */
-    private $message;
-    private $emailEnabled;
-    private $appConfig;
+    private Message $message;
+    private bool $emailEnabled;
+    private AppConfig $appConfig;
 
-    public function __construct($exceptions, AppConfig $appConfig)
+    public function __construct(?bool $exceptions, AppConfig $appConfig)
     {
         //Don't forget to do this or other things may not be set correctly!
         parent::__construct($exceptions);
@@ -85,15 +85,15 @@ class MyPHPMailer extends PHPMailer
     }
 
     public function sendEmail(
-        $recipient,
-        $html,
-        $subject,
-        $body,
-        $altbody = '',
-        $attachment = '',
-        $attachmentname = '',
-        $attachments = []
-    ) {
+        string $recipient,
+        bool $html,
+        string $subject,
+        string $body,
+        string $altbody = '',
+        string $attachment = '',
+        string $attachmentname = '',
+        array $attachments = []
+    ): bool {
         if ($this->emailEnabled !== true) :
             $this->message->logMessage(
                 '[NOTICE]',

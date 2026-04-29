@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        11/01/26
+Version:     1.1
+Date:        29/04/26
 Name:        ErrorHandler.php
 Purpose:     Centralised error and exception handling.
 Notes:       -
@@ -15,10 +15,7 @@ namespace MTG\Core;
 
 class ErrorHandler
 {
-    /**
-    * @var AppConfig
-    */
-    private $appConfig;
+    private AppConfig $appConfig;
 
     public function __construct(AppConfig $appConfig)
     {
@@ -31,7 +28,7 @@ class ErrorHandler
         set_exception_handler([$this, 'handleException']);
     }
 
-    public function handleError($number, $string, $file, $line): void
+    public function handleError(int $number, string $string, string $file, int $line): void
     {
         $msg = new Message($this->appConfig);
         $adminEmail = (string) $this->appConfig->email('adminEmail', '');
@@ -39,7 +36,7 @@ class ErrorHandler
         $emailEnabled = (bool) $this->appConfig->email('enabled', false);
 
         if (isset($_SESSION['useremail']) && !empty($_SESSION['useremail'])) :
-            $userEmail = $_SESSION['useremail'];
+            $userEmail = (string) $_SESSION['useremail'];
         else :
             $userEmail = $serverEmail;
         endif;
@@ -116,7 +113,7 @@ class ErrorHandler
         endswitch;
     }
 
-    public function handleException($err): void
+    public function handleException(\Throwable $err): void
     {
         $logfile = (string) $this->appConfig->general('logFile', '');
         $adminEmail = (string) $this->appConfig->email('adminEmail', '');

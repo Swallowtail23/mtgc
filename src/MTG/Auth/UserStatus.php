@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.6
-Date:        11/01/26
+Version:     1.7
+Date:        29/04/26
 Name:        UserStatus.php
 Purpose:     Get user status, bad login counts, and lock users on threshold.
 Notes:       -
@@ -22,13 +22,18 @@ class UserStatus
     * @var \mysqli|object
     */
     private $db;
-    private $appConfig;
-    private $message;
-    private $email;
-    public $status;
-    public $badlogincount;
+    private AppConfig $appConfig;
+    private Message $message;
+    private string $email;
+    /** @var array<string, int|string|null> */
+    public array $status = [];
+    /** @var array<string, int|null> */
+    public array $badlogincount = [];
 
-    public function __construct($db, AppConfig $appConfig, $email)
+    /**
+    * @param \mysqli|object $db
+    */
+    public function __construct($db, AppConfig $appConfig, string $email)
     {
         $this->db = $db;
         $this->appConfig = $appConfig;
@@ -36,7 +41,10 @@ class UserStatus
         $this->message = new Message($this->appConfig);
     }
 
-    public function getUserStatus()
+    /**
+    * @return array<string, int|string|null>
+    */
+    public function getUserStatus(): array
     {
         /**
          * Returns:
@@ -48,7 +56,8 @@ class UserStatus
          */
         if (!isset($this->email)) :
             $this->message->logMessage("[ERROR]", "Called without correct parameters");
-            return $this->status['code'] = 0;
+            $this->status['code'] = 0;
+            return $this->status;
         else :
             $query = "SELECT status,usernumber,admin FROM users WHERE email = ? LIMIT 1";
             if ($row = $this->db->execute_query($query, [$this->email])) :
@@ -88,7 +97,7 @@ class UserStatus
                     );
                 endif;
             else :
-                $this->status = 0;
+                $this->status['code'] = 0;
                 throw new \Exception(
                     "[ERROR] Class " . __METHOD__ . " " . __LINE__,
                     " - SQL failure: Error: " . $this->db->error
@@ -98,11 +107,15 @@ class UserStatus
         return $this->status;
     }
 
-    public function getBadLogin()
+    /**
+    * @return array<string, int|null>
+    */
+    public function getBadLogin(): array
     {
         if (!isset($this->email)) :
             $this->message->logMessage("[ERROR]", "Called without correct parameters");
-            return $this->badlogincount['code'] = 0;
+            $this->badlogincount['code'] = 0;
+            return $this->badlogincount;
         else :
             $query = "SELECT badlogins FROM users WHERE email = ? LIMIT 1";
             if ($row = $this->db->execute_query($query, [$this->email])) :
@@ -128,7 +141,7 @@ class UserStatus
                     );
                 endif;
             else :
-                $this->status = 0;
+                $this->status['code'] = 0;
                 throw new \Exception(
                     "[ERROR] Class " . __METHOD__ . " " . __LINE__,
                     "- SQL failure: Error: " . $this->db->error
@@ -139,7 +152,7 @@ class UserStatus
         return $this->badlogincount;
     }
 
-    public function incrementBadLogin()
+    public function incrementBadLogin(): void
     {
         $this->message->logMessage('[ERROR]', "Incrementing bad login count for $this->email...");
         $query = "UPDATE users 
@@ -158,7 +171,7 @@ class UserStatus
         endif;
     }
 
-    public function zeroBadLogin()
+    public function zeroBadLogin(): void
     {
         $query = "UPDATE users SET  badlogins = 0 WHERE email=?";
         if ($this->db->execute_query($query, [$this->email]) !== true) :
@@ -168,7 +181,7 @@ class UserStatus
         endif;
     }
 
-    public function triggerLocked()
+    public function triggerLocked(): void
     {
         $status = 'locked';
         $query = "UPDATE users SET status=? WHERE email=?";

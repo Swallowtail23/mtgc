@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.15
-Date:        04/02/26
+Version:     1.16
+Date:        29/04/26
 Name:        SessionManager.php
 Purpose:     Check login class, get user details or force session destroy and return to login.php.
 Notes:       -
@@ -22,21 +22,30 @@ class SessionManager
     * @var \mysqli|object
     */
     private $db;
+    /** @var string|int|null */
     private $adminip;
-    private $session;
+    /** @var array<string, mixed> */
+    private array $session;
+    /** @var string|null */
     private $fxAPI;
+    /** @var string|null */
     private $fxLocal;
-    private $fxPending = false;
-    private $fxMissing = false;
-    private $sessionArray = [];
-    private $message;
-    private $appConfig;
+    private bool $fxPending = false;
+    private bool $fxMissing = false;
+    /** @var array<string, mixed> */
+    private array $sessionArray = [];
+    private Message $message;
+    private AppConfig $appConfig;
 
     private const ADMIN_OK = 1;
     private const ADMIN_WRONG_LOCATION = 2;
     private const ADMIN_NONE = 3;
 
-    public function __construct($db, $session, AppConfig $appConfig)
+    /**
+    * @param \mysqli|object $db
+    * @param array<string, mixed> $session
+    */
+    public function __construct($db, array $session, AppConfig $appConfig)
     {
         $this->db = $db;
         $this->session = $session;
@@ -56,12 +65,18 @@ class SessionManager
         ];
     }
 
-    private function addToSessionArray($data)
+    /**
+    * @param array<string, mixed> $data
+    */
+    private function addToSessionArray(array $data): void
     {
         $this->sessionArray = array_merge($this->sessionArray, $data);
     }
 
-    public function getUserInfo()
+    /**
+    * @return array<string, mixed>|false
+    */
+    public function getUserInfo(): array|false
     {
         // Get user status and info for logged-in user, and currency fx rate if set
         $userNumber = $this->session['user'];
@@ -141,6 +156,9 @@ class SessionManager
                 $adminArray = self::ADMIN_NONE;
             endif;
             $mytable = $userNumber . "collection";
+            $currencies = '';
+            $targetCurrency = "usd";
+            $rate = false;
 
             if (isset($this->fxAPI) and $this->fxAPI !== null and $this->fxAPI !== "" and $this->fxAPI !== "disabled") :
                 $fx = true;
@@ -164,18 +182,21 @@ class SessionManager
                     $this->message->logMessage('[DEBUG]', "FX conversion disabled, no local currency required");
                     $fx = false;
                 endif;
-                list($baseCurrency, $targetCurrency) = array_map('strtoupper', explode('_', $currencies));
-                if ($baseCurrency === $targetCurrency) :
-                    $this->message->logMessage('[DEBUG]', "Base currency same as target, disabling conversion");
-                    $fx = false;
-                else :
-                    $this->message->logMessage('[DEBUG]', "Currency conversion from $baseCurrency to $targetCurrency");
+                if ($currencies !== '') :
+                    list($baseCurrency, $targetCurrency) = array_map('strtoupper', explode('_', $currencies));
+                    if ($baseCurrency === $targetCurrency) :
+                        $this->message->logMessage('[DEBUG]', "Base currency same as target, disabling conversion");
+                        $fx = false;
+                    else :
+                        $this->message->logMessage(
+                            '[DEBUG]',
+                            "Currency conversion from $baseCurrency to $targetCurrency"
+                        );
+                    endif;
                 endif;
             else :
                 $fx = false;
                 $this->message->logMessage('[DEBUG]', "FX conversion disabled (1)");
-                $targetCurrency = "usd";
-                $rate = false;
             endif;
             if (isset($fx) and $fx === true) :
                 $rate = $this->getRateForCurrencyPair($currencies);
@@ -207,7 +228,7 @@ class SessionManager
         return $this->sessionArray;
     }
 
-    private function checkAdmin($adminDb)
+    private function checkAdmin(int $adminDb): int
     {
         // Check for Session variable for admin access. Every page load rechecks this
         if ($adminDb) :
@@ -224,7 +245,7 @@ class SessionManager
         return self::ADMIN_NONE;
     }
 
-    public function getRateForCurrencyPair($currencies)
+    public function getRateForCurrencyPair(string $currencies): float|string|null
     {
         $this->message->logMessage('[DEBUG]', "Called for $currencies");
         // Ensure $currencies is safe to use in the query (sanitize if necessary)
@@ -247,7 +268,7 @@ class SessionManager
             $stmt->bind_result($existingRate, $lastUpdateTime);
             $stmt->fetch();
             // If the timestamp is more than an hour old, proceed with the update
-            $age = time() - $lastUpdateTime;
+            $age = $lastUpdateTime === null ? null : time() - $lastUpdateTime;
             $this->message->logMessage('[DEBUG]', "Existing rate age is $age");
             if ($lastUpdateTime === null or $age > 3600) :
                 $this->fxPending = true;
@@ -278,7 +299,7 @@ class SessionManager
         return $rate;
     }
 
-    public function refreshFxRate($currencies)
+    public function refreshFxRate(string $currencies): float|string|null
     {
         if ($this->fxAPI === null || $this->fxAPI === '' || $this->fxAPI === 'disabled') :
             $this->message->logMessage('[ERROR]', 'FX refresh requested without API key');
@@ -288,7 +309,7 @@ class SessionManager
         return $this->updateFxRate($currencies);
     }
 
-    private function updateFxRate($currencies, $existingRate = null)
+    private function updateFxRate(string $currencies, float|string|null $existingRate = null): float|string|null
     {
         $freecurrencyapi = new \FreeCurrencyApi\FreeCurrencyApi\FreeCurrencyApiClient($this->fxAPI);
         list($baseCurrency, $targetCurrency) = array_map('strtoupper', explode('_', $currencies));
@@ -339,9 +360,9 @@ class SessionManager
     */
     public static function forcePasswordChange(
         AppConfig $appConfig,
-        $redirectHandler = null,
-        $terminateHandler = null
-    ) {
+        ?callable $redirectHandler = null,
+        ?callable $terminateHandler = null
+    ): void {
         if ((isset($_SESSION["chgpwd"])) and ($_SESSION["chgpwd"] == true)) :
             $msg = new Message($appConfig);
             $msg->logMessage('[DEBUG]', 'forcePasswordChange: redirecting to profile.php');
@@ -360,7 +381,7 @@ class SessionManager
         endif;
     }
 
-    public static function generateCsrfToken()
+    public static function generateCsrfToken(): string
     {
         if (!isset($_SESSION['csrf_token'])) :
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -369,7 +390,7 @@ class SessionManager
         return $_SESSION['csrf_token'];
     }
 
-    public static function validateCsrfToken($submittedToken)
+    public static function validateCsrfToken(mixed $submittedToken): bool
     {
         if (!isset($_SESSION['csrf_token']) || !is_string($submittedToken)) :
             return false;
@@ -379,11 +400,11 @@ class SessionManager
     }
 
     public static function validateAjaxRequest(
-        $expectedReferringPages,
+        array $expectedReferringPages,
         AppConfig $appConfig,
-        $context = '',
-        $requireCsrf = true
-    ) {
+        string $context = '',
+        bool $requireCsrf = true
+    ): array {
         $msg = new Message($appConfig);
         $contextLabel = $context !== '' ? $context . ': ' : '';
         $msg->logMessage('[DEBUG]', "{$contextLabel}Ajax validation started");

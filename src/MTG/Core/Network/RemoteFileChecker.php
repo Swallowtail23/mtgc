@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        11/01/26
+Version:     1.1
+Date:        29/04/26
 Name:        RemoteFileChecker.php
 Purpose:     Remote file validation helpers.
 Notes:       -
@@ -19,7 +19,7 @@ use MTG\Core\UserAgent;
 
 class RemoteFileChecker
 {
-    public static function exists($url, AppConfig $appConfig, ?Message $msg = null): bool
+    public static function exists(string $url, AppConfig $appConfig, ?Message $msg = null): bool
     {
         if ($msg === null) :
             $msg = new Message($appConfig);

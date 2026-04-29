@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.5
-Date:        28/04/26
+Version:     1.6
+Date:        29/04/26
 Name:        ImportCollectionRegexTest.php
 Purpose:     Tests for collection import flow with ManaBox parsing and UUID cross-checking.
 Notes:       -
@@ -295,8 +295,13 @@ class ImportExportImportStub extends ImportExport
      * @param int $total
      * @param array $batchedCardIds
      */
-    public function addCardsBatch($mytable, $importType, $count, $total, $batchedCardIds)
-    {
+    public function addCardsBatch(
+        string $mytable,
+        string $importType,
+        int $count,
+        int $total,
+        array $batchedCardIds
+    ): array {
         $this->capturedBatch = array_values($batchedCardIds);
         return ['warnings' => 'none', 'total' => $total, 'batchRows' => count($batchedCardIds)];
     }
@@ -311,8 +316,13 @@ class ImportExportBatchFailStub extends ImportExport
      * @param int $total
      * @param array $batchedCardIds
      */
-    public function addCardsBatch($mytable, $importType, $count, $total, $batchedCardIds)
-    {
+    public function addCardsBatch(
+        string $mytable,
+        string $importType,
+        int $count,
+        int $total,
+        array $batchedCardIds
+    ): array {
         unset($mytable, $importType, $count, $total, $batchedCardIds);
         throw new \Exception('Simulated batch failure');
     }

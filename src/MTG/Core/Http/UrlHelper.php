@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        11/01/26
+Version:     1.1
+Date:        29/04/26
 Name:        UrlHelper.php
 Purpose:     URL helper utilities.
 Notes:       -
@@ -15,7 +15,7 @@ namespace MTG\Core\Http;
 
 class UrlHelper
 {
-    public static function normalizeRedirectUrl($url)
+    public static function normalizeRedirectUrl(mixed $url): ?string
     {
         if (!is_string($url) || $url === '') :
             return null;
@@ -52,7 +52,10 @@ class UrlHelper
         return $final;
     }
 
-    public static function getStringParameters($input, $ignore1, $ignore2 = '')
+    /**
+    * @param array<string, mixed> $input
+    */
+    public static function getStringParameters(array $input, string $ignore1, string $ignore2 = ''): string
     {
         $params = array();
 
@@ -82,7 +85,7 @@ class UrlHelper
         return '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
     }
 
-    public static function getFullUrl()
+    public static function getFullUrl(): string
     {
         // Get HTTP/HTTPS (the possible values for this vary from server to server)
         $myUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']
@@ -90,9 +93,9 @@ class UrlHelper
             ? 'https'
             : 'http';
         // Get domain portion
-        $myUrl .= '://' . $_SERVER['HTTP_HOST'];
+        $myUrl .= '://' . ($_SERVER['HTTP_HOST'] ?? '');
         // Get path to script
-        $myUrl .= $_SERVER['REQUEST_URI'];
+        $myUrl .= $_SERVER['REQUEST_URI'] ?? '';
         // Add path info, if any
         if (!empty($_SERVER['PATH_INFO'])) :
             $myUrl .= $_SERVER['PATH_INFO'];

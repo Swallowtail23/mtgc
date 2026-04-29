@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.33
-Date:        12/01/26
+Version:     1.34
+Date:        29/04/26
 Name:        GameRules.php
 Purpose:     Container for game-specific rules and constants.
 Notes:       -
@@ -18,7 +18,7 @@ class GameRules
     /**
     * @var array<string,mixed>
     */
-    private $rules = [];
+    private array $rules = [];
 
     public function __construct(array $rules)
     {
@@ -44,7 +44,7 @@ class GameRules
         return self::fromFile($path);
     }
 
-    public function get(string $key, $default = null)
+    public function get(string $key, mixed $default = null): mixed
     {
         return $this->rules[$key] ?? $default;
     }

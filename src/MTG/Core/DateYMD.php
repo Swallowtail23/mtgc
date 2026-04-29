@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.2
-Date:        25/11/25
+Version:     1.3
+Date:        29/04/26
 Name:        DateYMD.php
 Purpose:     Simple date class for date format as required by admin pages.
 Notes:       -
@@ -15,9 +15,9 @@ namespace MTG\Core;
 
 class DateYMD
 {
-    public $datetoday;
+    public string $datetoday = '';
 
-    public function getToday()
+    public function getToday(): string
     {
         $datearray = getdate();
         $datearray['mon'] = str_pad($datearray['mon'], 2, "0", STR_PAD_LEFT);
@@ -26,7 +26,7 @@ class DateYMD
         return $this->datetoday;
     }
 
-    public function __toString()
+    public function __toString(): string
     {
         return $this->getToday();
     }

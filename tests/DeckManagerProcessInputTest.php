@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        28/04/26
+Version:     1.1
+Date:        29/04/26
 Name:        DeckManagerProcessInputTest.php
 Purpose:     Tests deck manager multiline input processing.
 Notes:       -
@@ -27,16 +27,16 @@ class DeckManagerInputStub extends DeckManager
      * @param string|null $commanderMode
      * @param int|null $rowNumber
      * @param string|null $originalLine
-     */
+    */
     public function quickAdd(
-        $deckNumber,
-        $getString,
-        $sideboardTrigger = false,
-        $batch = false,
-        $commanderMode = null,
-        $rowNumber = null,
-        $originalLine = null
-    ) {
+        int $deckNumber,
+        string $getString,
+        bool $sideboardTrigger = false,
+        bool $batch = false,
+        ?string $commanderMode = null,
+        ?int $rowNumber = null,
+        ?string $originalLine = null
+    ): mixed {
         $this->calls[] = [
             'deckNumber' => $deckNumber,
             'line' => $getString,
