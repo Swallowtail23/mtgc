@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.0
+Version:     1.1
 Date:        28/04/26
 Name:        index_stubs.php
 Purpose:     Provides stub classes for index tests.
@@ -76,7 +76,7 @@ namespace MTG\Auth {
     if (!class_exists(SessionManager::class, false)) {
         class SessionManager
         {
-            public function __construct(...$args)
+            public function __construct(mixed ...$args)
             {
             }
 
@@ -96,7 +96,7 @@ namespace MTG\Auth {
                 ];
             }
 
-            public static function forcePasswordChange($appConfig = null)
+            public static function forcePasswordChange(mixed $appConfig = null): void
             {
                 return;
             }
@@ -117,11 +117,11 @@ namespace MTG\Auth {
             }
 
             public static function validateAjaxRequest(
-                $expectedReferringPages,
-                $appConfig,
-                $context = '',
-                $requireCsrf = true
-            ) {
+                mixed $expectedReferringPages,
+                mixed $appConfig,
+                mixed $context = '',
+                bool $requireCsrf = true
+            ): array {
                 return [
                     'valid' => true,
                     'reason' => ''
@@ -135,7 +135,7 @@ namespace MTG\Cards {
     if (!class_exists(PriceManager::class, false)) {
         class PriceManager
         {
-            public function __construct(...$args)
+            public function __construct(mixed ...$args)
             {
             }
 
@@ -148,7 +148,7 @@ namespace MTG\Cards {
     if (!class_exists(ImageManager::class, false)) {
         class ImageManager
         {
-            public function __construct(...$args)
+            public function __construct(mixed ...$args)
             {
             }
 

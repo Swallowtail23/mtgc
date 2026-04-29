@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.0
+Version:     1.1
 Date:        28/04/26
 Name:        SessionManagerTest.php
 Purpose:     Tests session manager currency rate state.
@@ -257,7 +257,7 @@ class SessionManagerTest extends TestCase
         $class::forcePasswordChange($GLOBALS['appConfig']);
 
         $headers = headers_list();
-        $locationHeaders = array_filter($headers, function ($header) {
+        $locationHeaders = array_filter($headers, function (string $header): bool {
             return stripos($header, 'Location:') === 0;
         });
 
@@ -274,7 +274,7 @@ class SessionManagerTest extends TestCase
             'terminated' => false
         ];
 
-        $redirectHandler = function ($location) use (&$captured) {
+        $redirectHandler = function (string $location) use (&$captured): void {
             $captured['location'] = $location;
         };
         $terminateHandler = function () use (&$captured) {

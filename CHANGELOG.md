@@ -42,6 +42,7 @@ All notable changes to this project will be documented in this file.
 - Added native type declarations to the core text auto-link helper.
 - Added stable native type declarations across top-level `src/MTG/Core` helpers while preserving documented database
   seams where tests and adapters require flexibility.
+- Completed a repo-wide native/PHPDoc declaration audit for PHP-owned callbacks, fragments, and test stubs.
 
 ## [v0.5.11] - 2026-04-27
 

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.13
-Date:        28/04/26
+Version:     2.14
+Date:        29/04/26
 Name:        deckdetail_data.php
 Purpose:     Deck detail data calculations for fragments and page rendering.
 Notes:       -
@@ -195,8 +195,8 @@ if ($uniquecardscount > 0) :
         $shortqty = array_fill(0, $uniquecardscount, '0'); //create an array the right size, all '0'
         $placeholderCount = count($resultnames) * 2; // 2 placeholders per card in the result list
         // Extract names from the subarrays
-        $names = array_map(function ($entry) {
-                return $entry['name'];
+        $names = array_map(function (array $entry): string {
+                return (string) $entry['name'];
         }, $resultnames);
         $msg->logMessage('[DEBUG]', "Missing check on " . count($resultnames) . " cards");
         $placeholders = implode(',', array_fill(0, count($resultnames), '?'));

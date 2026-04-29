@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.46
-Date:        28/04/26
+Version:     6.47
+Date:        29/04/26
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       -
@@ -214,10 +214,10 @@ function minifyCssFile(string $sourcePath, string $targetPath, Message $msg): ar
 
     $minified = preg_replace('/\\s+/', ' ', $minified);
     $minified = preg_replace('/\\s*([{}:;,\\[\\]])\\s*/', '$1', $minified);
-    $minified = preg_replace_callback('/calc\\(([^)]*)\\)/', function ($matches) {
+    $minified = preg_replace_callback('/calc\\(([^)]*)\\)/', function (array $matches): string {
         $expr = $matches[1];
         $placeholders = [];
-        $expr = preg_replace_callback('/--[a-zA-Z0-9-]+/', function ($nameMatches) use (&$placeholders) {
+        $expr = preg_replace_callback('/--[a-zA-Z0-9-]+/', function (array $nameMatches) use (&$placeholders): string {
             $token = '__CSSVAR' . count($placeholders) . '__';
             $placeholders[$token] = $nameMatches[0];
             return $token;
@@ -849,7 +849,7 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
             $configEditMessageType = 'error';
         endif;
     else :
-        $messages = array_map(function ($err) {
+        $messages = array_map(function (array $err): string {
             return $err['message'];
         }, $pathErrors);
         $configEditError = "<div class='alert-box error'><span>error: </span>"

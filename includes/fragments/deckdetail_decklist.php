@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.20
-Date:        28/04/26
+Version:     2.21
+Date:        29/04/26
 Name:        deckdetail_decklist.php
 Purpose:     Deck detail main/sideboard list fragment.
 Notes:       -
@@ -71,7 +71,7 @@ $rulesValidCommanderText = $gameRules->getArray('valid_commander_text');
 <?php
 $planeTypeRegex = '/\\bPlane\\b/i';
 $phenomenonTypeRegex = '/\\bPhenomenon\\b/i';
-$detectPlanePhenomenon = function ($cardType) use ($planeTypeRegex, $phenomenonTypeRegex) {
+$detectPlanePhenomenon = function (mixed $cardType) use ($planeTypeRegex, $phenomenonTypeRegex): bool {
     $cardType = (string) $cardType;
 
     return (

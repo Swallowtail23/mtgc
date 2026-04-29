@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.24
+Version:     1.25
 Date:        29/04/26
 Name:        ImageManager.php
 Purpose:     Local image management class.
@@ -170,7 +170,7 @@ class ImageManager
         endif;
         $this->message->logMessage('[DEBUG]', "Refresh image called for $cardId");
 
-        set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+        set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline): void {
             throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
         });
 

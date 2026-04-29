@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.31
+Version:     2.32
 Date:        29/04/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
@@ -576,8 +576,8 @@ class DeckManager
 
                 $nameList = array_values(
                     array_unique(
-                        array_map(function ($info) {
-                            return $info['name'];
+                        array_map(function (array $info): string {
+                            return (string) $info['name'];
                         }, $cardInfoById)
                     )
                 );
@@ -1627,21 +1627,21 @@ class DeckManager
         endif;
         $this->message->logMessage('[NOTICE]', "Deck export called for deck $deckNumber");
 
-        $detectPlanePhenomenon = function ($cardType) {
+        $detectPlanePhenomenon = function (mixed $cardType): bool {
             if ($cardType === null || $cardType === '') :
                 return false;
             endif;
             return preg_match('/\bPlane\b/i', $cardType) === 1
                 || preg_match('/\bPhenomenon\b/i', $cardType) === 1;
         };
-        $detectTokenLike = function ($cardType) {
+        $detectTokenLike = function (mixed $cardType): bool {
             if ($cardType === null || $cardType === '') :
                 return false;
             endif;
             return preg_match('/\bToken\b/i', $cardType) === 1
                 || preg_match('/\bEmblem\b/i', $cardType) === 1;
         };
-        $normalizeType = function ($row) {
+        $normalizeType = function (array $row): string {
             $cardType = $row['type'] ?? '';
             if ($cardType === '' && isset($row['f1_type'])) :
                 $cardType = $row['f1_type'];
@@ -1694,7 +1694,7 @@ class DeckManager
                 while ($detailrow = $detailstmt->fetch_assoc()) :
                     $allRows[] = $detailrow;
                 endwhile;
-                usort($allRows, function ($a, $b) {
+                usort($allRows, function (array $a, array $b): int {
                     // Handle NULL values in 'type'
                     $typeA = $a['type'] ?? '';  // If NULL, use an empty string
                     $typeB = $b['type'] ?? '';  // If NULL, use an empty string

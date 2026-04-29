@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.26
+Version:     1.27
 Date:        29/04/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
@@ -278,7 +278,7 @@ class ImportExport
         $sanitised_string = htmlspecialchars($raw_string, ENT_NOQUOTES, 'UTF-8');
 
         // Define is_csv as a closure
-        $is_csv = function ($string) use ($appConfig) {
+        $is_csv = function (string $string) use ($appConfig): bool {
             $msg = new Message($appConfig);
             // Check if the string contains at least 4 commas
             $comma_count = substr_count($string, ',');
@@ -297,7 +297,7 @@ class ImportExport
         };
 
         // Define extract_and_process_csv as a closure
-        $extract_and_process_csv = function ($line) use ($appConfig) {
+        $extract_and_process_csv = function (string $line) use ($appConfig): array|string|false {
             $msg = new Message($appConfig);
 
             // Parse the CSV row, with basic sanity checking on where things should be and what they should look like
@@ -766,7 +766,7 @@ class ImportExport
         $lines = explode("\n", $fileContent);
         $qtyLines = count($lines);
         $this->message->logMessage('[DEBUG]', "Regex deck import has $qtyLines lines");
-        $manaboxWarningDetail = function ($line) {
+        $manaboxWarningDetail = function (string $line): string {
             $fields = str_getcsv($line, ',', '"', '\\');
             if (count($fields) < 15) :
                 return '';

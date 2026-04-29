@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     22.72
-Date:        28/04/26
+Version:     22.73
+Date:        29/04/26
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -403,15 +403,15 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
             $ability_font_open = ($ability_font_class !== '') ? "<span class='{$ability_font_class}'>" : '';
             $ability_font_close = ($ability_font_class !== '') ? '</span>' : '';
             $renderAbilityWithToggle = static function (
-                $englishText,
-                $printedText,
-                $typeText,
-                $toggleId
+                ?string $englishText,
+                ?string $printedText,
+                ?string $typeText,
+                string $toggleId
             ) use (
                 $msg,
                 $ability_font_open,
                 $ability_font_close
-            ) {
+            ): string {
                 if (!isset($englishText) or $englishText === '') :
                     return '';
                 endif;
@@ -441,13 +441,13 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     . "</span><br>";
             };
             $renderTypeWithToggle = static function (
-                $oracleType,
-                $printedType,
-                $toggleId
+                ?string $oracleType,
+                ?string $printedType,
+                string $toggleId
             ) use (
                 $ability_font_open,
                 $ability_font_close
-            ) {
+            ): string {
                 if (!isset($oracleType) or $oracleType === '') :
                     return '';
                 endif;

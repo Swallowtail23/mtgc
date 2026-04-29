@@ -26,7 +26,7 @@ function getRealPasswordCheckNewUserClass(): string
 
 class PasswordCheckNewUserDbStub
 {
-    public function prepare($query)
+    public function prepare(string $query): never
     {
         throw new RuntimeException('Unexpected DB access for invalid email');
     }
