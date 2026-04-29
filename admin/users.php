@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.36
+Version:     6.37
 Date:        29/04/26
 Name:        users.php
 Purpose:     User administrative tasks
@@ -584,8 +584,6 @@ require APP_ROOT . '/includes/menu.php';
                 <br>
                 <input class="profilebutton" type="submit" value="UPDATE" />
             </form>
-            <form id='exportcsv' action="/csv.php"  method="GET">
-            </form>
             <h4>Export</h4>
             Export specific user's collection to a .csv file.
             <form action="/csv.php"  method="GET">
@@ -600,6 +598,7 @@ require APP_ROOT . '/includes/menu.php';
                 ?>
                 </select>
                 <br><br>
+                <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
                 <input type='hidden' name='type' value='echo'>
                 <input class="profilebutton" type="submit" value="EXPORT">
             </form>

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.42
+Version:     1.43
 Date:        29/04/26
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -675,6 +675,7 @@ endif;
                             <td class="options_right">
                                 <form action="csv.php"  method="GET">
                                     <input id='exportsubmit' class='profilebutton' type="submit" value="EXPORT">
+                                    <input type="hidden" name="csrf_token" value="<?php echo $csrfTokenEsc; ?>">
                                     <input type='hidden' name='type' value='echo'>
                                     <?php echo "<input type='hidden' name='table' value='$mytable'>"; ?>
                                 </form>
@@ -689,8 +690,9 @@ endif;
                             </td>
                             <td class="options_right">
                                 <?php if ($emailEnabled) : ?>
-                                    <form action="csv.php"  method="GET">
+                                    <form action="csv.php" method="POST">
                                         <input id='emailsubmit' class='profilebutton' type="submit" value="EMAIL">
+                                        <input type="hidden" name="csrf_token" value="<?php echo $csrfTokenEsc; ?>">
                                         <input type='hidden' name='type' value='email'>
                                         <?php echo "<input type='hidden' name='table' value='$mytable'>"; ?>
                                     </form>

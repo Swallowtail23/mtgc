@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 - Collection deletion now uses POST with CSRF validation, collection import POSTs are CSRF-guarded, and deck
   create/delete actions validate CSRF before mutating state.
 - Header quick-search output now validates card IDs and escapes rendered HTML attributes before inserting results.
+- CSV exports now require CSRF tokens, and CSV email sends require POST instead of GET.
 
 ### Infrastructure
 

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.23
-Date:        13/01/26
+Version:     4.24
+Date:        29/04/26
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
 Notes:       Redirects to profile.php if not in SMTP debug, with flag on success/fail.
@@ -11,6 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Auth\SessionManager;
 use MTG\Cards\ImportExport;
 use MTG\Core\Http\UrlHelper;
 use MTG\Core\Validation;
@@ -32,7 +33,33 @@ $myURL                      = (string) $appConfig->general('url', '');
 $smtpParameters             = $appConfig->getSmtpParameters();
 
 // Content
-$requestedTable = filter_input(INPUT_GET, 'table', FILTER_UNSAFE_RAW);
+$requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$requestInput = ($requestMethod === 'POST') ? INPUT_POST : INPUT_GET;
+$requestType = filter_input($requestInput, 'type', FILTER_UNSAFE_RAW);
+$requestType = is_string($requestType) ? trim($requestType) : '';
+
+function requireCsvCsrfToken(int $requestInput): void
+{
+    $submittedToken = (string) filter_input($requestInput, 'csrf_token', FILTER_UNSAFE_RAW);
+    if ($submittedToken === '' || !SessionManager::validateCsrfToken($submittedToken)) :
+        http_response_code(403);
+        die('CSRF check failed');
+    endif;
+}
+
+if (
+    !(
+        ($requestMethod === 'GET' && $requestType === 'echo')
+        || ($requestMethod === 'POST' && $requestType === 'email')
+    )
+) :
+    $msg->logMessage('[DEBUG]', "csv.php called with invalid method/type '$requestMethod/$requestType'");
+    throw new Exception("[ERROR] csv.php: Called with incorrect parameters");
+endif;
+
+requireCsvCsrfToken($requestInput);
+
+$requestedTable = filter_input($requestInput, 'table', FILTER_UNSAFE_RAW);
 if ($requestedTable !== null) :
     $requestedTable = trim($requestedTable);
 endif;
@@ -69,11 +96,11 @@ if ($requestedTable !== null && $requestedTable !== '') :
     // Difference is that 'echo' outputs to browser for download, 'email' triggers email output
     // In email mode, if SMTP is set to debug and site is in Debug log level, the SMTP output
     // will also be output to screen
-    if (isset($_GET['type']) && $_GET['type'] === 'echo') :
-        $msg->logMessage('[DEBUG]', "csv.php running for '$table', output ('{$_GET['type']}')");
+    if ($requestType === 'echo') :
+        $msg->logMessage('[DEBUG]', "csv.php running for '$table', output ('$requestType')");
         $obj->exportCollectionToCsv($table, $myURL, 'echo');
-    elseif (isset($_GET['type']) && $_GET['type'] === 'email') :
-        $msg->logMessage('[DEBUG]', "csv.php running for '$table', output ('{$_GET['type']}')");
+    elseif ($requestType === 'email') :
+        $msg->logMessage('[DEBUG]', "csv.php running for '$table', output ('$requestType')");
         $mailexport = $obj->exportCollectionToCsv($table, $myURL, 'email');
         if ($smtpParameters['SMTPDebug'] !== 'SMTP::DEBUG_OFF' && $smtpParameters['globalDebug'] == 3) :
             $msg->logMessage('[DEBUG]', 'In debug, not redirecting');
@@ -126,7 +153,7 @@ if ($requestedTable !== null && $requestedTable !== '') :
             exit;
         endif;
     else :
-        $msg->logMessage('[DEBUG]', "csv.php called for '$table', output type unclear ('{$_GET['type']}')");
+        $msg->logMessage('[DEBUG]', "csv.php called for '$table', output type unclear ('$requestType')");
         throw new Exception("[ERROR] csv.php: Called with incorrect parameters");
     endif;
 else :
