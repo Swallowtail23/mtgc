@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <ruleset name="MTG Collection PHPCS">
     <description>
-        PSR-12 baseline for a non-namespaced legacy app,
-        with PHP 8.3 compatibility checks and global exclusions.
+        PSR-12-ish baseline for the MTG Collection app,
+        with PHP 8.2-8.4 compatibility checks and project exclusions.
     </description>
 
     <!-- Scan the whole project -->
@@ -10,6 +10,8 @@
 
     <!-- File extensions -->
     <arg name="extensions" value="php,inc,phtml"/>
+    <arg name="colors"/>
+    <arg name="parallel" value="4"/>
 
     <!-- Global excludes -->
     <exclude-pattern>*/vendor/*</exclude-pattern>
@@ -24,7 +26,12 @@
     <exclude-pattern>*/scripts/*</exclude-pattern>
     <exclude-pattern>*/console/*</exclude-pattern>
 
-    <!-- Base coding standard -->
+    <!--
+        Base coding standard.
+        The project intentionally uses alternative control-structure syntax in PHP templates and legacy entrypoints.
+        App classes are namespaced, but procedural entrypoints and test fixtures are allowed to define functions and
+        side effects.
+    -->
     <rule ref="PSR12">
         <exclude name="Generic.ControlStructures.AlternativeControlStructure.NotAllowed"/>
         <exclude name="Generic.ControlStructures.InlineControlStructure.NotAllowed"/>
