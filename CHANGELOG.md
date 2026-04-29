@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.5.12-dev] - Unreleased
+## [v0.6.0-dev] - Unreleased
 
 ### Added
 
