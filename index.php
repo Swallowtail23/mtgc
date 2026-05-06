@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.80
-Date:        10/03/26
+Version:     14.81
+Date:        06/05/26
 Name:        index.php
 Purpose:     Main site page
 Notes:       -
@@ -222,11 +222,16 @@ endif;
 
 $selectedSets = [];
 if (isset($_GET['set']) && is_array($_GET['set'])) :
-    $selectedSets = filter_var_array(
-        $_GET['set'],
-        FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-        FILTER_FLAG_NO_ENCODE_QUOTES
-    );
+    foreach ($_GET['set'] as $setCode) :
+        if (!is_string($setCode)) :
+            continue;
+        endif;
+
+        $setCode = strtolower(trim($setCode));
+        if (preg_match('/^[a-z0-9]{1,16}$/', $setCode) === 1) :
+            $selectedSets[] = $setCode;
+        endif;
+    endforeach;
 endif;
 
 $cmcvalue = isset($_GET['cmcvalue'])

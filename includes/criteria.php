@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     8.10
-Date:        28/04/26
+Version:     8.11
+Date:        06/05/26
 Name:        criteria.php
 Purpose:     PHP script to build search criteria
 Notes:       {none}
@@ -583,7 +583,8 @@ else :
                 if (!empty($criteriaSets)) :
                     $criteriaSets .= "OR ";
                 endif;
-                $criteriaSets .= "cards_scry.setcode LIKE '$values' ";
+                $criteriaSets .= "cards_scry.setcode LIKE ? ";
+                $params[] = $values;
             endforeach;
             if (!empty($criteriaSets)) :
                 $criteria .= "AND (" . $criteriaSets . ") ";
