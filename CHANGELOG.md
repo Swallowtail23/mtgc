@@ -24,6 +24,8 @@ All notable changes to this project will be documented in this file.
   correct user, preventing stale reusable codes when code row IDs differ from user IDs.
 - Profile two-factor authentication actions now require CSRF tokens, and setup cancellation is limited to unverified
   app provisioning so cross-site posts cannot disable active 2FA.
+- Deck duplication now uses the authenticated session user as the destination owner and verifies ownership of the
+  source deck before exporting or copying it.
 - Login Turnstile verification now fails closed for login submissions that omit the
   `cf-turnstile-response` field, preventing direct POST bypass of the server-side challenge.
 - Admin card deletion and image refresh actions now require POST, CSRF validation, and UUID validation.

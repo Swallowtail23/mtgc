@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.28
-Date:        28/04/26
+Version:     1.29
+Date:        06/05/26
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
 Notes:       -
@@ -60,15 +60,36 @@ else :
     $userEmail                  = $ctx->sessionUser()->email();
 
     if (
-        isset($_POST['user'])
-        && isset($_POST['deckname'])
+        isset($_POST['deckname'])
         && isset($_POST['decknumber'])
         && isset($_POST['decktype'])
     ) :
-        $user = filter_input(INPUT_POST, 'user', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $deckName = filter_input(INPUT_POST, 'deckname', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $deckNumber = filter_input(INPUT_POST, 'decknumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $deckNumber = filter_input(INPUT_POST, 'decknumber', FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1]
+        ]);
         $decktype = filter_input(INPUT_POST, 'decktype', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (!is_string($deckName) || $deckNumber === false || $deckNumber === null || !is_string($decktype)) :
+            $response['success'] = false;
+            $response['error'] = 'Invalid input';
+            returnResponse($response);
+        endif;
+
+        // Instantiate the DeckManager
+        $obj = new DeckManager(
+            $db,
+            $appConfig,
+            $gameRules,
+            $userEmail
+        );
+
+        if ($obj->assertDeckOwner($deckNumber, $user, 'ajaxduplicatedeck.php') === false) :
+            http_response_code(403);
+            $response['success'] = false;
+            $response['error'] = 'Deck access denied';
+            returnResponse($response);
+        endif;
+
         $msg->logMessage(
             '[ERROR]',
             "Call to duplicate user $user's deck number $deckNumber, $deckName ($decktype)"
@@ -88,14 +109,6 @@ else :
                 $newdeckname = $deckName . "_$counter";  // Ensure that only one counter is appended
             endif;
         } while ($result !== false && $result->num_rows > 0);
-
-            // Instantiate the DeckManager
-            $obj = new DeckManager(
-                $db,
-                $appConfig,
-                $gameRules,
-                $userEmail
-            );
 
             //Create the new deck shell
             $decksuccess = $obj->addDeck($user, $newdeckname);
