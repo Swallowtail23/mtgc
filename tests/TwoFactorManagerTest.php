@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        28/04/26
+Version:     1.1
+Date:        06/05/26
 Name:        TwoFactorManagerTest.php
 Purpose:     Tests two-factor manager lookup behavior.
 Notes:       -
@@ -49,15 +49,20 @@ class TwoFactorResultStub
 class TwoFactorStmtStub
 {
     private TwoFactorResultStub $result;
+    public string $query;
+    public string $boundTypes = '';
+    public array $boundParams = [];
 
-    public function __construct(TwoFactorResultStub $result)
+    public function __construct(TwoFactorResultStub $result, string $query = '')
     {
         $this->result = $result;
+        $this->query = $query;
     }
 
     public function bind_param(string $types, mixed &...$params): bool
     {
-        unset($types, $params);
+        $this->boundTypes = $types;
+        $this->boundParams = $params;
         return true;
     }
 
@@ -74,17 +79,30 @@ class TwoFactorStmtStub
 
 class TwoFactorDbStub
 {
-    private TwoFactorStmtStub $stmt;
+    /**
+     * @var list<TwoFactorResultStub>
+     */
+    private array $results;
+    /**
+     * @var list<TwoFactorStmtStub>
+     */
+    public array $statements = [];
 
-    public function __construct(TwoFactorStmtStub $stmt)
+    public function __construct(TwoFactorStmtStub|array $stmtOrResults)
     {
-        $this->stmt = $stmt;
+        if ($stmtOrResults instanceof TwoFactorStmtStub) :
+            $this->results = [$stmtOrResults->get_result()];
+        else :
+            $this->results = $stmtOrResults;
+        endif;
     }
 
     public function prepare(string $query): TwoFactorStmtStub
     {
-        unset($query);
-        return $this->stmt;
+        $result = array_shift($this->results) ?? new TwoFactorResultStub(0, []);
+        $stmt = new TwoFactorStmtStub($result, $query);
+        $this->statements[] = $stmt;
+        return $stmt;
     }
 }
 
@@ -110,5 +128,49 @@ class TwoFactorManagerTest extends TestCase
         $manager = new $class($db, $GLOBALS['appConfig']);
 
         $this->assertSame('email', $manager->getMethod(10));
+    }
+
+    public function testVerifyEmailCodeUpdatesAttemptsAndDeletesByUserId(): void
+    {
+        $class = getRealTwoFactorManagerClass();
+        $db = new TwoFactorDbStub([
+            new TwoFactorResultStub(1, ['tfa_method' => 'email']),
+            new TwoFactorResultStub(1, ['tfa_backup_codes' => '[]']),
+            new TwoFactorResultStub(1, [
+                'id' => 999,
+                'code' => '123456',
+                'expiry' => time() + 300,
+                'attempts' => 0,
+            ]),
+        ]);
+        $manager = new $class($db, $GLOBALS['appConfig']);
+
+        $this->assertTrue($manager->verify(10, '123456'));
+        $this->assertCount(5, $db->statements);
+        $this->assertStringContainsString('UPDATE tfa_codes SET attempts = ?', $db->statements[3]->query);
+        $this->assertSame([1, 10], $db->statements[3]->boundParams);
+        $this->assertStringContainsString('DELETE FROM tfa_codes WHERE user_id = ?', $db->statements[4]->query);
+        $this->assertSame([10], $db->statements[4]->boundParams);
+    }
+
+    public function testVerifyInvalidEmailCodeUpdatesAttemptsByUserId(): void
+    {
+        $class = getRealTwoFactorManagerClass();
+        $db = new TwoFactorDbStub([
+            new TwoFactorResultStub(1, ['tfa_method' => 'email']),
+            new TwoFactorResultStub(1, ['tfa_backup_codes' => '[]']),
+            new TwoFactorResultStub(1, [
+                'id' => 999,
+                'code' => '123456',
+                'expiry' => time() + 300,
+                'attempts' => 1,
+            ]),
+        ]);
+        $manager = new $class($db, $GLOBALS['appConfig']);
+
+        $this->assertFalse($manager->verify(10, '654321'));
+        $this->assertCount(4, $db->statements);
+        $this->assertStringContainsString('UPDATE tfa_codes SET attempts = ?', $db->statements[3]->query);
+        $this->assertSame([2, 10], $db->statements[3]->boundParams);
     }
 }

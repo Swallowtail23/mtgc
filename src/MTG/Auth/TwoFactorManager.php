@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.8
-Date:        29/04/26
+Version:     1.9
+Date:        06/05/26
 Name:        TwoFactorManager.php
 Purpose:     Handles 2FA setup, verification, and management.
 Notes:       -
@@ -308,7 +308,7 @@ class TwoFactorManager
         $new_attempts = $row['attempts'] + 1;
         $query = "UPDATE tfa_codes SET attempts = ? WHERE user_id = ?";
         $stmt = $this->db->prepare($query);
-        $stmt->bind_param("ii", $new_attempts, $row['id']);
+        $stmt->bind_param("ii", $new_attempts, $user_id);
         $stmt->execute();
 
         if (time() > $row['expiry']) :
@@ -319,7 +319,7 @@ class TwoFactorManager
         if ($code === $row['code']) :
             $query = "DELETE FROM tfa_codes WHERE user_id = ?";
             $stmt = $this->db->prepare($query);
-            $stmt->bind_param("i", $row['id']);
+            $stmt->bind_param("i", $user_id);
             $stmt->execute();
             $this->directLog('[NOTICE]', "Code verified for user ID: $user_id");
             return true;
