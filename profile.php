@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.41
-Date:        02/02/26
+Version:     14.42
+Date:        06/05/26
 Name:        profile.php
 Purpose:     User profile page.
 Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
@@ -19,6 +19,7 @@ use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\PngWriter;
 use OTPHP\TOTP;
 use MTG\Auth\PasswordCheck;
+use MTG\Auth\SessionManager;
 use MTG\Auth\TrustedDeviceManager;
 use MTG\Auth\TwoFactorManager;
 
@@ -49,6 +50,34 @@ $rulesCurrencies            = $gameRules->getArray('currencies');
 $msg->logMessage('[DEBUG]', "Page load");
 $emailEnabled = (bool) $appConfig->email('enabled', false);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
+$csrfToken = SessionManager::generateCsrfToken();
+$csrfTokenEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8');
+
+function profileHasTwoFactorPostAction(): bool
+{
+    $actions = [
+        'send_twofa_code',
+        'send_disable_twofa_code',
+        'enable_2fa',
+        'verify_2fa',
+        'disable_2fa',
+        'regenerate_backup_codes',
+    ];
+
+    foreach ($actions as $action) :
+        if (isset($_POST[$action])) :
+            return true;
+        endif;
+    endforeach;
+
+    return false;
+}
+
+function profileHasValidCsrfToken(): bool
+{
+    $posted = (string) filter_input(INPUT_POST, 'csrf_token', FILTER_UNSAFE_RAW);
+    return $posted !== '' && SessionManager::validateCsrfToken($posted);
+}
 ?>
 
 <!DOCTYPE html>
@@ -148,8 +177,18 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
             <div class='staticpagecontent'>
                 <?php
                 $disableTwofaNotice = '';
+                $profileTwoFactorCsrfValid = true;
+                if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && profileHasTwoFactorPostAction()) :
+                    $profileTwoFactorCsrfValid = profileHasValidCsrfToken();
+                    if (!$profileTwoFactorCsrfValid) :
+                        http_response_code(403);
+                        echo "<div class='alert-box error' id='tfa_message'><span>error: </span>"
+                            . "Security check failed. Reload the page and try again.</div>";
+                    endif;
+                endif;
                 if (
                     isset($_POST['send_twofa_code'])
+                    && $profileTwoFactorCsrfValid
                     && !empty($userHas2fa)
                     && $userTwofaMethod === 'email'
                 ) :
@@ -161,6 +200,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                 endif;
                 if (
                     isset($_POST['send_disable_twofa_code'])
+                    && $profileTwoFactorCsrfValid
                     && !empty($tfa_enabled)
                     && $tfaManager->getMethod($userId) === 'email'
                 ) :
@@ -324,7 +364,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                 $tfa_enabled = $tfaManager->isEnabled($userId);
 
                 // Check if we should enable or disable 2FA
-                if (isset($_POST['enable_2fa'])) :
+                if (isset($_POST['enable_2fa']) && $profileTwoFactorCsrfValid) :
                     $tfa_method = $_POST['tfa_method'] ?? 'email';
                     $enabled = $tfaManager->enable($userId, $tfa_method);
                     if ($enabled) :
@@ -393,6 +433,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                         >
                                         <h3>Verify your 6-digit code:</h3>
                                         <form id='verify2FAForm' method='post' action='profile.php'>
+                                            <input type='hidden' name='csrf_token' value='{$csrfTokenEsc}'>
                                             <input
                                                 type='text'
                                                 name='tfa_code'
@@ -416,6 +457,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                         " . $backupHtml . "
                                         <br>
                                         <form method='post' action='profile.php' onsubmit='return'>
+                                            <input type='hidden' name='csrf_token' value='{$csrfTokenEsc}'>
                                             <input type='hidden' name='disable_2fa' value='1'>
                                             <input type='hidden' name='setup_cancel' value='1'>
                                             <button type='submit' class='ok-button profilebutton'>CANCEL</button>
@@ -451,12 +493,18 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         echo "<div class='alert-box error' id='tfa_message'><span>error: </span>"
                             . "Failed to enable two-factor authentication.</div>";
                     endif;
-                elseif (isset($_POST['disable_2fa'])) :
+                elseif (isset($_POST['disable_2fa']) && $profileTwoFactorCsrfValid) :
                     $setupCancel = isset($_POST['setup_cancel']) && $_POST['setup_cancel'] === '1';
                     $twofaDisableCode = trim($_POST['twofa_code_disable'] ?? '');
                     $tfa_method = $tfaManager->getMethod($userId);
                     $verifiedForDisable = false;
-                    if ($setupCancel || isset($_POST['cancel_disable_2fa'])) :
+                    $canCancelSetup = (
+                        $setupCancel
+                        && $tfa_method === 'app'
+                        && isset($_SESSION['tfa_provisioning_uri'])
+                        && empty($_SESSION['2fa_verified'])
+                    );
+                    if ($canCancelSetup || isset($_POST['cancel_disable_2fa'])) :
                         $verifiedForDisable = true; // allow immediate rollback of in-progress setup
                     elseif ($tfa_method === 'email' && $twofaDisableCode === '') :
                         $tfaManager->startVerification($userId, $userEmail);
@@ -501,7 +549,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                 . "Failed to disable two-factor authentication.</div>";
                         endif;
                     endif;
-                elseif (isset($_POST['regenerate_backup_codes'])) :
+                elseif (isset($_POST['regenerate_backup_codes']) && $profileTwoFactorCsrfValid) :
                     $new_codes = $tfaManager->regenerateBackupCodes($userId);
                     $newCodesHtml = "<span style='font-family: monospace; margin-left: 20px;'><br>";
                     if (!empty($new_codes)) :
@@ -534,7 +582,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         echo "<div class='alert-box error' id='tfa_message'><span>error: </span>"
                             . "Failed to regenerate backup codes.</div>";
                     endif;
-                elseif (isset($_POST['verify_2fa'])) :
+                elseif (isset($_POST['verify_2fa']) && $profileTwoFactorCsrfValid) :
                     $userCode = $_POST['tfa_code'] ?? '';
                     $userSecret = $_POST['tfa_secret'] ?? '';
 
@@ -543,11 +591,13 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                     if ($totp->verify($userCode)) :
                         // Store that 2FA is fully verified
                         $_SESSION['2fa_verified'] = true;
+                        unset($_SESSION['tfa_provisioning_uri']);
                         echo "<div class='alert-box success'><span>success: </span>"
                             . "Two-factor authentication successfully enabled and verified.</div>";
                     else :
                         // Disable 2FA since the verification failed
                         $tfaManager->disable($userId);
+                        unset($_SESSION['tfa_provisioning_uri'], $_SESSION['2fa_verified']);
                         echo "<div class='alert-box error'><span>error: </span>"
                             . "Invalid 6-digit code. Two-factor authentication was not enabled.</div>";
                     endif;
@@ -572,6 +622,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         </h2>
 
                         <form action="/profile.php" method="POST">
+                            <input type="hidden" name="csrf_token" value="<?php echo $csrfTokenEsc; ?>">
                             <table>
                                 <tbody>
                                     <tr>
@@ -853,6 +904,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                         <?php if (!isset($_POST['disable_2fa'])) : ?>
                                             <form action="profile.php" method="post">
                                                 <input
+                                                    type="hidden"
+                                                    name="csrf_token"
+                                                    value="<?php echo $csrfTokenEsc; ?>"
+                                                >
+                                                <input
                                                     type="submit"
                                                     name="disable_2fa"
                                                     class="profilebutton"
@@ -866,6 +922,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                             </form>
                                         <?php else : ?>
                                             <form action="profile.php" method="post" style="margin-top: 8px;">
+                                                <input
+                                                    type="hidden"
+                                                    name="csrf_token"
+                                                    value="<?php echo $csrfTokenEsc; ?>"
+                                                >
                                                 <input
                                                     style="font-size: 16px; width: 150px; margin-bottom: 6px;"
                                                     class="profilepassword textinput"
@@ -899,6 +960,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                     <br>
                                         <form action="profile.php" method="post">
                                             <input
+                                                type="hidden"
+                                                name="csrf_token"
+                                                value="<?php echo $csrfTokenEsc; ?>"
+                                            >
+                                            <input
                                                 type="submit"
                                                 name="regenerate_backup_codes"
                                                 class="profilebutton"
@@ -912,6 +978,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                         </form> <?php
                                 else : ?>
                                         <form method="post" action="profile.php">
+                                            <input
+                                                type="hidden"
+                                                name="csrf_token"
+                                                value="<?php echo $csrfTokenEsc; ?>"
+                                            >
                                             <select
                                                 class="dropdown"
                                                 name="tfa_method"

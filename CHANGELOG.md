@@ -22,6 +22,8 @@ All notable changes to this project will be documented in this file.
   preventing query manipulation through `set[]` values.
 - Email 2FA and password-reset code verification now increments attempts and deletes successful codes for the
   correct user, preventing stale reusable codes when code row IDs differ from user IDs.
+- Profile two-factor authentication actions now require CSRF tokens, and setup cancellation is limited to unverified
+  app provisioning so cross-site posts cannot disable active 2FA.
 - Login Turnstile verification now fails closed for login submissions that omit the
   `cf-turnstile-response` field, preventing direct POST bypass of the server-side challenge.
 - Admin card deletion and image refresh actions now require POST, CSRF validation, and UUID validation.
