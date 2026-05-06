@@ -30,6 +30,8 @@ All notable changes to this project will be documented in this file.
 - Set image reload AJAX requests now require server-side admin authorization before starting the background reload job.
 - Card detail deck membership output now escapes deck names and group usernames before rendering, preventing stored
   HTML/script injection through renamed decks.
+- Collection value refresh now uses the authenticated user's session collection table and rejects mismatched requested
+  table names before recomputing values.
 - Login Turnstile verification now fails closed for login submissions that omit the
   `cf-turnstile-response` field, preventing direct POST bypass of the server-side challenge.
 - Admin card deletion and image refresh actions now require POST, CSRF validation, and UUID validation.
