@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.22
-Date:        13/01/26
+Version:     1.23
+Date:        06/05/26
 Name:        ajaxsetimg.php
 Purpose:     Trigger reload all images for a set
 Notes:       -
@@ -51,6 +51,12 @@ else :
     $user                       = $ctx->sessionUser()->id();
     $mytable                    = $ctx->sessionUser()->table();
     $userEmail                  = $ctx->sessionUser()->email();
+    $admin                      = $ctx->sessionUser()->adminLevel();
+
+    if ($admin !== 1) :
+        $msg->logMessage('[ERROR]', "Non-admin user $userEmail attempted set image reload");
+        AjaxResponse::json(["status" => "error", "message" => "Admin access required"], 403);
+    endif;
 
     if (isset($_POST['setcode'])) :
         $setcode = $_POST['setcode'];
