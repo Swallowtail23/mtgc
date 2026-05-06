@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     22.73
-Date:        29/04/26
+Version:     22.74
+Date:        06/05/26
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -2221,13 +2221,25 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                             echo "<b>Decks</b><br>";
                             if (!empty($inmydecks)) :
                                 foreach ($inmydecks as $decksrow) :
+                                    $deckNumberEsc = htmlspecialchars(
+                                        (string) $decksrow['decknumber'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    );
+                                    $deckNameEsc = htmlspecialchars(
+                                        (string) $decksrow['deckname'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    );
+                                    $mainQtyEsc = htmlspecialchars((string) $decksrow['qty'], ENT_QUOTES, 'UTF-8');
+                                    $sideQtyEsc = htmlspecialchars((string) $decksrow['sideqty'], ENT_QUOTES, 'UTF-8');
                                     if ($decksrow['qty'] != '') :
-                                        echo "<a href='/deckdetail.php?deck={$decksrow['decknumber']}'>"
-                                            . "{$decksrow['deckname']}</a> (main x{$decksrow['qty']}) <br>";
+                                        echo "<a href='/deckdetail.php?deck=$deckNumberEsc'>"
+                                            . "$deckNameEsc</a> (main x$mainQtyEsc) <br>";
                                     else :
-                                            echo "<a href='/deckdetail.php?deck={$decksrow['decknumber']}'>"
-                                                . "{$decksrow['deckname']}</a> "
-                                                . "(sideboard x{$decksrow['sideqty']}) <br>";
+                                            echo "<a href='/deckdetail.php?deck=$deckNumberEsc'>"
+                                                . "$deckNameEsc</a> "
+                                                . "(sideboard x$sideQtyEsc) <br>";
                                     endif;
                                 endforeach;
                             endif;
@@ -2236,6 +2248,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                 foreach ($grpuser as $grpuserrow) :
                                     $grpuserid = $grpuserrow['id'];
                                     $grpusername = ucfirst($grpuserrow['name']);
+                                    $grpusernameEsc = htmlspecialchars($grpusername, ENT_QUOTES, 'UTF-8');
                                     $msg->logMessage('[DEBUG]', "Checking user $grpusername for $cardId");
                                     $obj = new DeckManager(
                                         $db,
@@ -2246,12 +2259,27 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     $ingrpdecks = $obj->deckCardCheck($cardId, $grpuserid);
                                     if (!empty($ingrpdecks)) :
                                         foreach ($ingrpdecks as $decksgrprow) :
+                                            $groupDeckNameEsc = htmlspecialchars(
+                                                (string) $decksgrprow['deckname'],
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            );
+                                            $groupMainQtyEsc = htmlspecialchars(
+                                                (string) $decksgrprow['qty'],
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            );
+                                            $groupSideQtyEsc = htmlspecialchars(
+                                                (string) $decksgrprow['sideqty'],
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            );
                                             if ($decksgrprow['qty'] != '') :
-                                                echo "<i>Group:</i> $grpusername: {$decksgrprow['deckname']} "
-                                                    . "(main x{$decksgrprow['qty']}) <br>";
+                                                echo "<i>Group:</i> $grpusernameEsc: $groupDeckNameEsc "
+                                                    . "(main x$groupMainQtyEsc) <br>";
                                             else :
-                                                    echo "<i>Group:</i> $grpusername: {$decksgrprow['deckname']} "
-                                                        . "(sideboard x{$decksgrprow['sideqty']}) <br>";
+                                                    echo "<i>Group:</i> $grpusernameEsc: $groupDeckNameEsc "
+                                                        . "(sideboard x$groupSideQtyEsc) <br>";
                                             endif;
                                         endforeach;
                                     endif;

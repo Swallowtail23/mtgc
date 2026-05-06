@@ -28,6 +28,8 @@ All notable changes to this project will be documented in this file.
   source deck before exporting or copying it.
 - Deck text exports now validate the requested deck id and require ownership before downloading a deck list.
 - Set image reload AJAX requests now require server-side admin authorization before starting the background reload job.
+- Card detail deck membership output now escapes deck names and group usernames before rendering, preventing stored
+  HTML/script injection through renamed decks.
 - Login Turnstile verification now fails closed for login submissions that omit the
   `cf-turnstile-response` field, preventing direct POST bypass of the server-side challenge.
 - Admin card deletion and image refresh actions now require POST, CSRF validation, and UUID validation.
