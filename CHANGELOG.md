@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
   app provisioning so cross-site posts cannot disable active 2FA.
 - Deck duplication now uses the authenticated session user as the destination owner and verifies ownership of the
   source deck before exporting or copying it.
+- Deck text exports now validate the requested deck id and require ownership before downloading a deck list.
 - Login Turnstile verification now fails closed for login submissions that omit the
   `cf-turnstile-response` field, preventing direct POST bypass of the server-side challenge.
 - Admin card deletion and image refresh actions now require POST, CSRF validation, and UUID validation.

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.18
-Date:        13/01/26
+Version:     4.19
+Date:        06/05/26
 Name:        dltext.php
 Purpose:     Text file export page.
 Notes:       Call with Post 'text' and optionally 'filename'.
@@ -23,6 +23,7 @@ $msg                        = $ctx->message();
 $gameRules                  = $ctx->rules();
 $sessionUser                = $ctx->sessionUser();
 
+$user                       = $sessionUser->id();
 $userEmail                  = $sessionUser->email();
 
 // Content
@@ -30,16 +31,26 @@ if (isset($_POST['decknumber'])) :
     $deckNumber = filter_input(
         INPUT_POST,
         'decknumber',
-        FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-        FILTER_FLAG_NO_ENCODE_QUOTES
+        FILTER_VALIDATE_INT,
+        ['options' => ['min_range' => 1]]
     );
-    $deckNumber = htmlspecialchars_decode($deckNumber, ENT_QUOTES);
     $obj = new DeckManager(
         $db,
         $appConfig,
         $gameRules,
         $userEmail
     );
+    if ($deckNumber === false || $deckNumber === null) :
+        $msg->logMessage('[ERROR]', 'dltext.php: invalid deck export id');
+        header('Location: decks.php');
+        exit;
+    endif;
+    if ($obj->assertDeckOwner($deckNumber, $user, 'dltext.php') === false) :
+        $msg->logMessage('[ERROR]', "dltext.php: deck export ownership failed for deck $deckNumber");
+        http_response_code(403);
+        header('Location: decks.php');
+        exit;
+    endif;
     $obj->exportDeck($deckNumber, "download");
 elseif (isset($_POST['text'])) :
     $textdata = filter_input(
