@@ -23,7 +23,7 @@ All notable changes to this project will be documented in this file.
 
 ### Infrastructure
 
--
+- Updated `phpmailer/phpmailer` to 7.1.1.
 
 ## [v0.6.0] - 2026-07-04
 
