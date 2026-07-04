@@ -2,31 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.6.2-dev] - Unreleased
+## [v0.6.2] - 2026-07-04 (release 3)
 
-### Added
-
--
-
-### Changed
+### Changed - 2026-07-04 (release 3)
 
 - Scryfall card and rulings bulk imports now prefer JSONL bulk files and stream `.jsonl.gz` records directly.
 
-### Fixed
+## [v0.6.1] - 2026-07-04 (release 2)
 
--
-
-### Security
-
--
-
-### Infrastructure
-
--
-
-## [v0.6.1] - 2026-07-04
-
-### Security - 2026-07-04
+### Security - 2026-07-04 (release 2)
 
 - Updated vulnerable Composer dependencies flagged by Dependabot: `spomky-labs/otphp`, `guzzlehttp/guzzle`, and
   `guzzlehttp/psr7`.
