@@ -506,9 +506,14 @@ if (!function_exists('mtg_game_rules')) :
         // Which type of cards to include
         $games_to_include = ['paper','arena'];
 
-        // Where to get URL of latest bulk downloads
-        $defaultCardsUrl = "https://api.scryfall.com/bulk-data/default-cards";
-        $allCardsUrl = "https://api.scryfall.com/bulk-data/all-cards";
+        // Scryfall API endpoints
+        $scryfallApiBaseUrl = "https://api.scryfall.com";
+        $defaultCardsUrl    = $scryfallApiBaseUrl . "/bulk-data/default-cards";
+        $allCardsUrl        = $scryfallApiBaseUrl . "/bulk-data/all-cards";
+        $setsUrl            = $scryfallApiBaseUrl . "/sets";
+        $rulingsUrl         = $scryfallApiBaseUrl . "/bulk-data/rulings";
+        $migrationsUrl      = $scryfallApiBaseUrl . "/migrations";
+        $manifestUrl        = $scryfallApiBaseUrl . "/cards/manifest";
 
         $rules = get_defined_vars();
         unset($rules['rules']);

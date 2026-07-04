@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.23
+Version:     3.24
 Date:        04/07/26
 Name:        scryfall_rulings.php
 Purpose:     Import/update Scryfall rulings data
@@ -23,6 +23,7 @@ $ctx = require __DIR__ . '/bulk_ini.php';
 $appConfig = $ctx->config();
 $db = $ctx->db();
 $msg = $ctx->message();
+$gameRules = $ctx->rules();
 
 $adminEmail = (string) $appConfig->email('adminEmail', '');
 $emailEnabled = (bool) $appConfig->email('enabled', false);
@@ -33,8 +34,13 @@ Filesystem::ensureDirectoryExists($imgLocation . 'json', $appConfig, $msg);
 // How old to overwrite
 $max_fileage = 23 * 3600;
 
-// Scryfall rulings cards URL
-$url = "https://api.scryfall.com/bulk-data/rulings";
+// Scryfall rulings bulk metadata URL
+$url = $gameRules->get('rulingsUrl');
+if (!is_string($url) || trim($url) === '') :
+    throw new Exception("[ERROR] scryfall_rulings.php: Missing Scryfall game rule 'rulingsUrl'. "
+        . "Define it in includes/game_rules.php.");
+endif;
+$url = trim($url);
 
 // Bulk file store point
 $file_location = $imgLocation . 'json/rulings.jsonl.gz';

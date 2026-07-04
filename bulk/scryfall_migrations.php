@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.32
-Date:        28/04/26
+Version:     2.33
+Date:        04/07/26
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
 Notes:       {none}
@@ -24,6 +24,7 @@ $ctx = require __DIR__ . '/bulk_ini.php';
 $appConfig = $ctx->config();
 $db = $ctx->db();
 $msg = $ctx->message();
+$gameRules = $ctx->rules();
 
 $adminEmail = (string) $appConfig->email('adminEmail', '');
 $imgLocation = (string) $appConfig->general('imageBaseDir', '');
@@ -31,7 +32,12 @@ $imgLocation = (string) $appConfig->general('imageBaseDir', '');
 Filesystem::ensureDirectoryExists($imgLocation . 'json', $appConfig, $msg);
 
 // URLs
-$starturl = "https://api.scryfall.com/migrations";
+$starturl = $gameRules->get('migrationsUrl');
+if (!is_string($starturl) || trim($starturl) === '') :
+    throw new Exception("[ERROR] scryfall_migrations.php: Missing Scryfall game rule 'migrationsUrl'. "
+        . "Define it in includes/game_rules.php.");
+endif;
+$starturl = trim($starturl);
 $myURL = (string) $appConfig->general('url', '');
 $emailEnabled = (bool) $appConfig->email('enabled', false);
 

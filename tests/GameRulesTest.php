@@ -33,4 +33,17 @@ class GameRulesTest extends TestCase
         $this->assertIsArray($rules->all());
         $this->assertArrayHasKey('search_langs', $rules->all());
     }
+
+    public function testScryfallEndpointRulesUseBaseUrl()
+    {
+        $rules = GameRules::fromDefaults();
+
+        $this->assertSame('https://api.scryfall.com', $rules->get('scryfallApiBaseUrl'));
+        $this->assertSame(
+            'https://api.scryfall.com/bulk-data/default-cards',
+            $rules->get('defaultCardsUrl')
+        );
+        $this->assertSame('https://api.scryfall.com/sets', $rules->get('setsUrl'));
+        $this->assertSame('https://api.scryfall.com/cards/manifest', $rules->get('manifestUrl'));
+    }
 }

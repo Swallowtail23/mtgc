@@ -257,7 +257,7 @@ class ScryfallImportTest extends TestCase
         ]);
         $gameRules = new GameRules([
             'defaultCardsUrl' => $defaultUrl,
-            'allCardsUrl' => ''
+            'allCardsUrl' => 'https://api.example/all'
         ]);
         ScryfallImportStub::$fetchMap = [
             $defaultUrl => [
@@ -278,7 +278,7 @@ class ScryfallImportTest extends TestCase
         ]);
         $gameRules = new GameRules([
             'defaultCardsUrl' => $defaultUrl,
-            'allCardsUrl' => ''
+            'allCardsUrl' => 'https://api.example/all'
         ]);
         ScryfallImportStub::$fetchMap = [
             $defaultUrl => [
@@ -297,10 +297,25 @@ class ScryfallImportTest extends TestCase
         ]);
         $gameRules = new GameRules([
             'defaultCardsUrl' => $defaultUrl,
-            'allCardsUrl' => ''
+            'allCardsUrl' => 'https://api.example/all'
         ]);
 
         $this->assertFalse(ScryfallImportStub::getBulkInfo('default', $appConfig, $gameRules));
+    }
+
+    public function testGetBulkInfoRejectsMissingConfiguredUrl()
+    {
+        $appConfig = $this->buildAppConfig([
+            'general' => ['imageBaseDir' => sys_get_temp_dir() . '/mtg/'],
+        ]);
+        $gameRules = new GameRules([
+            'defaultCardsUrl' => 'https://api.example/default',
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage("Missing Scryfall game rule 'allCardsUrl'");
+
+        ScryfallImportStub::getBulkInfo('default', $appConfig, $gameRules);
     }
 
     public function testGetBulkDataFileDownloadsWhenStale()

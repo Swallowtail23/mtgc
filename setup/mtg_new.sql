@@ -247,6 +247,13 @@ CREATE TABLE `scryfalljson` (
   `tcg_buy_uri` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE `scryfall_manifest` (
+  `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `data_updated_at` datetime DEFAULT NULL,
+  `image_updated_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 CREATE TABLE `sets` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `code` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
@@ -408,6 +415,11 @@ ALTER TABLE `rulings_scry`
 
 ALTER TABLE `scryfalljson`
   ADD UNIQUE KEY `id` (`id`);
+
+ALTER TABLE `scryfall_manifest`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_manifest_data_updated` (`data_updated_at`),
+  ADD KEY `idx_manifest_image_updated` (`image_updated_at`);
 
 ALTER TABLE `sets`
   ADD UNIQUE KEY `id` (`id`),

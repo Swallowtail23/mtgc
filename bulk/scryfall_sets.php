@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.26
-Date:        13/01/26
+Version:     2.27
+Date:        04/07/26
 Name:        scryfall_sets.php
 Purpose:     Import/update Scryfall sets data
 Notes:       {none}
@@ -23,6 +23,7 @@ $ctx = require __DIR__ . '/bulk_ini.php';
 $appConfig = $ctx->config();
 $db = $ctx->db();
 $msg = $ctx->message();
+$gameRules = $ctx->rules();
 
 $adminEmail = (string) $appConfig->email('adminEmail', '');
 $emailEnabled = (bool) $appConfig->email('enabled', false);
@@ -34,8 +35,13 @@ Filesystem::ensureDirectoryExists($imgLocation . 'json', $appConfig, $msg);
 $max_fileage = 23 * 3600;
 $time = time();
 
-// Scryfall rulings cards URL
-$url = "https://api.scryfall.com/sets";
+// Scryfall sets URL
+$url = $gameRules->get('setsUrl');
+if (!is_string($url) || trim($url) === '') :
+    throw new Exception("[ERROR] scryfall_sets.php: Missing Scryfall game rule 'setsUrl'. "
+        . "Define it in includes/game_rules.php.");
+endif;
+$url = trim($url);
 
 // Bulk file store point
 $file_location = $imgLocation . 'json/sets.json';

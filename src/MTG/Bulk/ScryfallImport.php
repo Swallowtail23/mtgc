@@ -141,8 +141,8 @@ class ScryfallImport
     public static function getBulkInfo(string $type, AppConfig $appConfig, GameRules $gameRules): array|false
     {
         // Function to return the URI for the Scryfall bulk data file, and the file location where it needs to go
-        $defaultCardsUrl = (string) $gameRules->get('defaultCardsUrl', '');
-        $allCardsUrl = (string) $gameRules->get('allCardsUrl', '');
+        $defaultCardsUrl = static::requireGameRuleUrl($gameRules, 'defaultCardsUrl');
+        $allCardsUrl = static::requireGameRuleUrl($gameRules, 'allCardsUrl');
         $imgLocation = (string) $appConfig->general('imageBaseDir', '');
         $msg = new Message($appConfig);
         $bulkInfo = false;
@@ -249,6 +249,18 @@ class ScryfallImport
         endif;
 
         return $bulkInfo;
+    }
+
+    private static function requireGameRuleUrl(GameRules $gameRules, string $key): string
+    {
+        $value = $gameRules->get($key);
+        if (!is_string($value) || trim($value) === '') :
+            throw new \InvalidArgumentException(
+                "Missing Scryfall game rule '$key'. Define it in includes/game_rules.php."
+            );
+        endif;
+
+        return trim($value);
     }
 
     public static function getBulkDataFile(
