@@ -2,21 +2,43 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.6.0] - 2026-07-04
+## [v0.6.1-dev] - Unreleased
+
+### Added
+
+-
 
 ### Changed
+
+-
+
+### Fixed
+
+-
+
+### Security
+
+-
+
+### Infrastructure
+
+-
+
+## [v0.6.0] - 2026-07-04
+
+### Changed - 2026-07-04
 
 - Hardened state-changing workflows to use explicit request methods, CSRF validation, and ownership checks where
   appropriate.
 - Standardised stable native/PHPDoc type contracts across the main application classes and matching test doubles.
 
-### Fixed
+### Fixed - 2026-07-04
 
 - Scryfall bulk import now rejects unsupported import types before using type-dependent state.
 - Session FX setup now initializes its currency/rate state before optional conversion checks, preventing undefined
   currency variables when FX is configured without a user or default target currency.
 
-### Security
+### Security - 2026-07-04
 
 - Advanced search set filters now validate set codes at the entrypoint and bind selected sets as SQL parameters,
   preventing query manipulation through `set[]` values.
@@ -43,7 +65,7 @@ All notable changes to this project will be documented in this file.
 - CSV exports now require CSRF tokens, and CSV email sends require POST instead of GET.
 - AJAX referrer validation now parses URLs and compares normalized paths exactly instead of using substring matching.
 
-### Infrastructure
+### Infrastructure - 2026-07-04
 
 - Completed a repo-wide variable declaration and typing audit across `src/MTG/Auth`, `src/MTG/Cards`,
   `src/MTG/Core`, selected admin/profile helpers, callbacks, fragments, and test stubs.
