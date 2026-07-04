@@ -2,9 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.6.3-dev] - Unreleased
+## [v0.6.3] - 2026-07-04 (release 4)
 
-### Added
+### Added - 2026-07-04 (release 4)
 
 - Added schema support for caching Scryfall card manifest update timestamps.
 - Added a Scryfall manifest import script that caches paginated `/cards/manifest` update data for each language
@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 - Added a Scryfall sync-state data backfill entrypoint.
 - Added a manual-only Scryfall data reset entrypoint for destructive full refreshes.
 
-### Changed
+### Changed - 2026-07-04 (release 4)
 
 - Scryfall sets, rulings, migrations, and manifest endpoint URLs are now defined in game rules.
 - Scryfall manifest imports now commit rows in transaction batches instead of one row at a time.
@@ -23,21 +23,9 @@ All notable changes to this project will be documented in this file.
 - `setup/data_updates.sh` now orchestrates Scryfall data updates for new installs, manual destructive refreshes,
   nightly runs, weekly full refreshes, collection snapshots, and trusted-device cleanup.
 
-### Removed
+### Removed - 2026-07-04 (release 4)
 
 - Removed per-job setup wrappers for Scryfall data updates in favour of `setup/data_updates.sh`.
-
-### Fixed
-
--
-
-### Security
-
--
-
-### Infrastructure
-
--
 
 ## [v0.6.2] - 2026-07-04 (release 3)
 
