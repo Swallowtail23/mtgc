@@ -92,6 +92,7 @@ it (root crontab):
   php scryfall_sets.php
   php scryfall_rulings.php
   php scryfall_migrations.php
+  php scryfall_manifest.php
   ```
   The 'refresh' run of scryfall_bulk.php is required for initial setup;
   Its first `all` pass writes every card record; the second `default` pass
@@ -111,9 +112,9 @@ Install the required packages as the web user (example assumes Apache):
 sudo -Hu apache composer install
 ```
 
-This pulls in JSONMachine (still used for Scryfall sets/migrations and legacy
-JSON reads), PHPMailer, Turnstile, FX API, OTPHP, QR code libs, and PHPUnit
-(dev).
+This pulls in JSONMachine (still used for Scryfall sets/migrations/manifest and
+legacy JSON reads), PHPMailer, Turnstile, FX API, OTPHP, QR code libs, and
+PHPUnit (dev).
 
 ## Email / Disqus / Turnstile / FX setup
 
@@ -145,6 +146,9 @@ Recommended frequencies:
   downloading images.
 - `sets.sh` (daily): syncs set metadata so new releases appear promptly.
 - `migrations.sh` (daily): applies incremental data fixes or extra inserts.
+- `manifest.sh` (daily): syncs Scryfall card manifest update timestamps for
+  each language present in `cards_scry`, used to detect card data and image
+  freshness.
 - `rulings.sh` (3× weekly): updates oracle rulings from Scryfall.
 - `bulk.sh` (nightly): reprocesses the default-language subset and downloads
   any new images.

@@ -18,6 +18,9 @@ LOG_ROOT=/var/log/mtg
 # Daily migrations (backfill/emergency data fixes)
 0 2 * * * "$SCRIPT_ROOT"/migrations.sh >> "$LOG_ROOT"/cron_migrations.log 2>&1
 
+# Daily Scryfall manifest timestamps
+30 2 * * * "$SCRIPT_ROOT"/manifest.sh >> "$LOG_ROOT"/cron_manifest.log 2>&1
+
 # Rulings from Scryfall (Mon/Wed/Fri)
 0 3 * * 1,3,5 "$SCRIPT_ROOT"/rulings.sh >> "$LOG_ROOT"/cron_rulings.log 2>&1
 

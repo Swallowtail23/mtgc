@@ -7,12 +7,14 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Added schema support for caching Scryfall card manifest update timestamps.
-- Added a Scryfall manifest import script that caches paginated `/cards/manifest` update data in
-  `scryfall_manifest`.
+- Added a Scryfall manifest import script that caches paginated `/cards/manifest` update data for each language
+  present in `cards_scry`.
 
 ### Changed
 
 - Scryfall sets, rulings, migrations, and manifest endpoint URLs are now defined in game rules.
+- Scryfall manifest imports now commit rows in transaction batches instead of one row at a time.
+- Scryfall manifest downloads now enforce a 10-second pause between API requests.
 
 ### Fixed
 

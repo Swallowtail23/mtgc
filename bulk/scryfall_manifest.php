@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.00
+Version:     1.03
 Date:        04/07/26
 Name:        scryfall_manifest.php
 Purpose:     Import/update Scryfall card manifest metadata
@@ -40,22 +40,48 @@ $emailEnabled = (bool) $appConfig->email('enabled', false);
 
 $file_folder = $imgLocation . 'json/';
 $max_fileage = 23 * 3600;
+$manifest_request_interval = 10.0;
+$manifest_last_request_at = null;
+$batch_size = 5000;
+$log_interval = 10000;
+$timeslice_start = microtime(true);
 $total_count = 0;
+
+function throttleManifestRequest(float $minimumIntervalSeconds): void
+{
+    global $manifest_last_request_at, $msg;
+
+    if ($manifest_last_request_at !== null) :
+        $elapsed = microtime(true) - $manifest_last_request_at;
+        if ($elapsed < $minimumIntervalSeconds) :
+            $sleepSeconds = $minimumIntervalSeconds - $elapsed;
+            $msg->logMessage(
+                '[DEBUG]',
+                'Scryfall manifest API: rate-limit pause for ' . sprintf('%.2f', $sleepSeconds) . ' seconds'
+            );
+            usleep((int) ceil($sleepSeconds * 1000000));
+        endif;
+    endif;
+
+    $manifest_last_request_at = microtime(true);
+}
 
 function getManifestData(
     string $url,
     string $file_location,
     int $max_fileage,
+    float $minimumIntervalSeconds,
     int $pageNumber,
+    string $language,
     AppConfig $appConfig
 ): string {
     global $msg;
 
-    $msg->logMessage('[DEBUG]', "Scryfall manifest API: fetching $url");
+    $msg->logMessage('[DEBUG]', "Scryfall manifest API: fetching $url for language $language");
     if ($pageNumber === 0) :
-        $page = $file_location . 'manifest.json';
+        $page = $file_location . 'manifest_' . $language . '.json';
     else :
-        $page = $file_location . 'manifest' . $pageNumber . '.json';
+        $page = $file_location . 'manifest_' . $language . '_' . $pageNumber . '.json';
     endif;
 
     if (file_exists($page)) :
@@ -74,6 +100,7 @@ function getManifestData(
     endif;
 
     if ($download > 0) :
+        throttleManifestRequest($minimumIntervalSeconds);
         ScryfallImport::downloadBulk(
             $url,
             $page,
@@ -85,6 +112,50 @@ function getManifestData(
     endif;
 
     return $page;
+}
+
+function getManifestLanguages(\mysqli $db): array
+{
+    global $msg;
+
+    $result = $db->execute_query(
+        "SELECT DISTINCT lang
+        FROM cards_scry
+        WHERE lang IS NOT NULL AND lang <> ''
+        ORDER BY lang"
+    );
+    if ($result === false) :
+        throw new Exception('[ERROR] scryfall_manifest.php: Fetching manifest languages: ' . $db->error);
+    endif;
+
+    $languages = [];
+    while ($row = $result->fetch_assoc()) :
+        $language = isset($row['lang']) && is_string($row['lang']) ? trim($row['lang']) : '';
+        if ($language === '') :
+            continue;
+        endif;
+        if (!preg_match('/^[a-z0-9]{2,3}$/i', $language)) :
+            throw new Exception("[ERROR] scryfall_manifest.php: Invalid card language '$language'");
+        endif;
+        $languages[] = strtolower($language);
+    endwhile;
+
+    if ($languages === []) :
+        throw new Exception('[ERROR] scryfall_manifest.php: No card languages found in cards_scry.');
+    endif;
+
+    $msg->logMessage(
+        '[NOTICE]',
+        'Scryfall manifest API: fetching manifest languages: ' . implode(', ', $languages)
+    );
+
+    return $languages;
+}
+
+function buildManifestLanguageUrl(string $baseUrl, string $language): string
+{
+    $separator = str_contains($baseUrl, '?') ? '&' : '?';
+    return $baseUrl . $separator . 'lang=' . rawurlencode($language);
 }
 
 function checkManifestDataForMore(string $file): string
@@ -150,17 +221,38 @@ function manifestDateTime(?string $value): ?string
     }
 }
 
-$page = 0;
-$file = getManifestData($starturl, $file_folder, $max_fileage, $page, $appConfig);
+$manifest_languages = getManifestLanguages($db);
 $result_files = [];
-$result_files[$page] = $file;
-$moreurl = checkManifestDataForMore($file);
-while ($moreurl !== 'none') :
-    $page = $page + 1;
-    $file = getManifestData($moreurl, $file_folder, $max_fileage, $page, $appConfig);
-    $result_files[$page] = $file;
+
+foreach ($manifest_languages as $language) :
+    $page = 0;
+    $manifestUrl = buildManifestLanguageUrl($starturl, $language);
+    $file = getManifestData(
+        $manifestUrl,
+        $file_folder,
+        $max_fileage,
+        $manifest_request_interval,
+        $page,
+        $language,
+        $appConfig
+    );
+    $result_files[] = $file;
     $moreurl = checkManifestDataForMore($file);
-endwhile;
+    while ($moreurl !== 'none') :
+        $page = $page + 1;
+        $file = getManifestData(
+            $moreurl,
+            $file_folder,
+            $max_fileage,
+            $manifest_request_interval,
+            $page,
+            $language,
+            $appConfig
+        );
+        $result_files[] = $file;
+        $moreurl = checkManifestDataForMore($file);
+    endwhile;
+endforeach;
 
 $total_rows = 0;
 foreach ($result_files as $data) :
@@ -178,57 +270,111 @@ $stmt = $db->prepare(
         `scryfall_manifest`
             (id, created_at, data_updated_at, image_updated_at)
         VALUES
-            (?, ?, ?, ?)"
+            (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            created_at = VALUES(created_at),
+            data_updated_at = VALUES(data_updated_at),
+            image_updated_at = VALUES(image_updated_at)"
 );
 if ($stmt === false) :
     throw new Exception('[ERROR] scryfall_manifest.php: Preparing SQL: ' . $db->error);
 endif;
 
-foreach ($result_files as $data) :
-    $decodedjson = Items::fromFile($data, ['decoder' => new ExtJsonDecoder(true)]);
-    foreach ($decodedjson as $key => $value) :
-        if ($key === 'data') :
-            foreach ($value as $manifest) :
-                if (!is_array($manifest) || !isset($manifest['id']) || !is_string($manifest['id'])) :
-                    throw new Exception('[ERROR] scryfall_manifest.php: Manifest row missing id.');
-                endif;
+$id = null;
+$created_at = null;
+$data_updated_at = null;
+$image_updated_at = null;
+$bind = $stmt->bind_param('ssss', $id, $created_at, $data_updated_at, $image_updated_at);
+if ($bind === false) :
+    throw new Exception('[ERROR] scryfall_manifest.php: Binding parameters: ' . $db->error);
+endif;
 
-                $id = $manifest['id'];
-                $created_at = manifestDateTime(
-                    isset($manifest['created_at']) && is_string($manifest['created_at'])
-                        ? $manifest['created_at']
-                        : null
-                );
-                $data_updated_at = manifestDateTime(
-                    isset($manifest['data_updated_at']) && is_string($manifest['data_updated_at'])
-                        ? $manifest['data_updated_at']
-                        : null
-                );
-                $image_updated_at = manifestDateTime(
-                    isset($manifest['image_updated_at']) && is_string($manifest['image_updated_at'])
-                        ? $manifest['image_updated_at']
-                        : null
-                );
+$msg->logMessage('[DEBUG]', 'Scryfall manifest API: Starting manifest import transaction batch');
+$batchStart = $db->begin_transaction();
+if ($batchStart === false) :
+    throw new Exception('[ERROR] scryfall_manifest.php: Starting transaction batch: ' . $db->error);
+endif;
 
-                $stmt->bind_param(
-                    'ssss',
-                    $id,
-                    $created_at,
-                    $data_updated_at,
-                    $image_updated_at
-                );
-                if (!$stmt->execute()) :
-                    throw new Exception('[ERROR] scryfall_manifest.php: Writing manifest row: ' . $db->error);
-                endif;
+try {
+    foreach ($result_files as $data) :
+        $decodedjson = Items::fromFile($data, ['decoder' => new ExtJsonDecoder(true)]);
+        foreach ($decodedjson as $key => $value) :
+            if ($key === 'data') :
+                foreach ($value as $manifest) :
+                    if (!is_array($manifest) || !isset($manifest['id']) || !is_string($manifest['id'])) :
+                        throw new Exception('[ERROR] scryfall_manifest.php: Manifest row missing id.');
+                    endif;
 
-                $total_count = $total_count + 1;
-                if ($total_count % 10000 === 0) :
-                    $msg->logMessage('[DEBUG]', "Scryfall manifest API: imported $total_count rows");
-                endif;
-            endforeach;
-        endif;
+                    $id = $manifest['id'];
+                    $created_at = manifestDateTime(
+                        isset($manifest['created_at']) && is_string($manifest['created_at'])
+                            ? $manifest['created_at']
+                            : null
+                    );
+                    $data_updated_at = manifestDateTime(
+                        isset($manifest['data_updated_at']) && is_string($manifest['data_updated_at'])
+                            ? $manifest['data_updated_at']
+                            : null
+                    );
+                    $image_updated_at = manifestDateTime(
+                        isset($manifest['image_updated_at']) && is_string($manifest['image_updated_at'])
+                            ? $manifest['image_updated_at']
+                            : null
+                    );
+
+                    if (!$stmt->execute()) :
+                        throw new Exception('[ERROR] scryfall_manifest.php: Writing manifest row: ' . $db->error);
+                    endif;
+
+                    $total_count = $total_count + 1;
+                    $commit_due = ($total_count % $batch_size === 0);
+                    $log_due = ($total_count % $log_interval === 0);
+
+                    if ($commit_due) :
+                        $commitResult = $db->commit();
+                        if ($commitResult === false) :
+                            throw new Exception(
+                                '[ERROR] scryfall_manifest.php: Committing transaction batch: ' . $db->error
+                            );
+                        endif;
+                        $msg->logMessage('[DEBUG]', "Scryfall manifest API: committed batch at row $total_count");
+                        if ($total_count < $total_rows) :
+                            $batchStart = $db->begin_transaction();
+                            if ($batchStart === false) :
+                                throw new Exception(
+                                    '[ERROR] scryfall_manifest.php: Starting transaction batch: ' . $db->error
+                                );
+                            endif;
+                        endif;
+                    endif;
+
+                    if ($log_due) :
+                        $timeslice = microtime(true) - $timeslice_start;
+                        $commit_note = $commit_due ? '; batch committed' : '';
+                        $msg->logMessage(
+                            '[NOTICE]',
+                            "Scryfall manifest progress: $total_count records imported; timeslice: "
+                            . sprintf('%.2f', $timeslice) . "s{$commit_note}"
+                        );
+                        $timeslice_start = microtime(true);
+                    endif;
+                endforeach;
+            endif;
+        endforeach;
     endforeach;
-endforeach;
+
+    if ($total_count % $batch_size !== 0) :
+        $commitResult = $db->commit();
+        if ($commitResult === false) :
+            throw new Exception('[ERROR] scryfall_manifest.php: Final commit failed: ' . $db->error);
+        endif;
+    endif;
+} catch (Throwable $e) {
+    $msg->logMessage('[ERROR]', 'Scryfall manifest import aborted: ' . $e->getMessage());
+    $db->rollback();
+    $stmt->close();
+    throw $e;
+}
 $stmt->close();
 
 $msg->logMessage('[NOTICE]', "$total_count card manifest rows completed");

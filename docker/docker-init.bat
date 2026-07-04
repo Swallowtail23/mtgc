@@ -206,6 +206,7 @@ docker exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php
 docker exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
 docker exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
 docker exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
+docker exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_manifest.php"
 docker exec mtgc_web_1 bash -c "printf 'done\n' > /var/log/mtg/scryfall_import_done"
 exit /b 0
 

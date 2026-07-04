@@ -191,6 +191,7 @@ When `docker/docker-init.sh` runs on a fresh database it executes:
 2. `php bulk/scryfall_sets.php`
 3. `php bulk/scryfall_rulings.php`
 4. `php bulk/scryfall_migrations.php`
+5. `php bulk/scryfall_manifest.php`
 
 The 'refresh'' bulk run deliberately avoids downloading ~100k card images.
 A first `all` pass writes every card record but skips image downloads;
@@ -204,7 +205,9 @@ Sets page.
 The bulk `default` run is designed to be a nightly card data maintenance task -
 getting new cards with their images and any data changes released by Scryfall.
 Card and rulings bulk imports use Scryfall's JSONL bulk files and cache them as
-`.jsonl.gz` files under the configured image data directory.
+`.jsonl.gz` files under the configured image data directory. The manifest import
+caches Scryfall card data/image update timestamps in `scryfall_manifest` for
+each language present in `cards_scry`.
 
 Bare-metal installs should follow the same command order (see `INSTALL.md`) to avoid
 pulling the full image set unnecessarily.
@@ -291,6 +294,8 @@ the schedule. Recommended cadence:
   downloads) so the database stays current.
 - `sets.sh` – daily; pulls new/updated set metadata.
 - `migrations.sh` – daily; applies small data fixes shipped upstream.
+- `manifest.sh` – daily; refreshes Scryfall card data/image update timestamps
+  for each language present in `cards_scry`.
 - `rulings.sh` – Monday/Wednesday/Friday; syncs oracle rulings.
 - `bulk.sh` – nightly; refreshes the default-language subset and downloads
   images for any newly inserted records.
@@ -406,8 +411,9 @@ released:
    ```
 
    (Use `docker compose` if applicable.)
-6. **Run migrations/bulk scripts regularly** – `podman exec mtgc_web_1 php
-   bulk/scryfall_migrations.php` etc., or rely on cron.
+6. **Run migrations/bulk scripts regularly** – run the helper scripts under
+   `/opt/mtg/scripts`, such as `migrations.sh` and `manifest.sh`, or rely on
+   cron.
 7. **Verify** – check `podman-compose logs web`/`db`, run smoke tests (login,
    searches), and confirm scheduled jobs/cron markers still update.
 

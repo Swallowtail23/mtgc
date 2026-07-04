@@ -22,7 +22,8 @@ fully mobile-responsive and offers comprehensive search, deck-building,
 collection tracking, localised currency conversion, import/export tooling,
 and optional 2FA and commenting integrations.
 
-The app relies on data provided by Scryfall (sets/cards/rulings/prices/images).
+The app relies on data provided by Scryfall (sets/cards/rulings/prices/images
+and manifest update timestamps).
 While due care is taken, no security guarantees are provided. The site is
 currently developed on RHEL 8/9 with PHP 8.2 and podman containers with PHP 8.4;
 disk usage ranges from 10 GB TO 100 GB depending on downloaded images.

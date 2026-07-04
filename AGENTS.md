@@ -12,12 +12,13 @@
 
 - Data workflow order, Scryfall network access required:
   `php bulk/scryfall_sets.php` -> `php bulk/scryfall_bulk.php all` -> `php bulk/scryfall_rulings.php` ->
-  `php bulk/scryfall_migrations.php` -> `php bulk/weekly_exports.php`.
+  `php bulk/scryfall_migrations.php` -> `php bulk/scryfall_manifest.php` -> `php bulk/weekly_exports.php`.
 - Database init: `php setup/initial.php username password`.
 - Bulk data import: `php bulk/scryfall_bulk.php all`.
 - Sets import: `php bulk/scryfall_sets.php`.
 - Rulings import: `php bulk/scryfall_rulings.php`.
 - Migrations: `php bulk/scryfall_migrations.php`.
+- Manifest metadata: `php bulk/scryfall_manifest.php`.
 - Weekly exports: `php bulk/weekly_exports.php`.
 
 ## Autoloading And Bootstrap
