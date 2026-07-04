@@ -79,8 +79,9 @@ disk usage ranges from 10 GB TO 100 GB depending on downloaded images.
 - Web root (e.g. `/var/www/mtgnew`).
 - Application config/scripts: `/opt/mtg`
 - Logs under `/var/log/mtg` (e.g. `mtgapp.log`). Has to be writable.
-- `ImgLocation` (configured in the ini) stores card images and cached JSON; it
-  must exist and be writable.
+- `ImgLocation` (configured in the ini) stores card images and cached Scryfall
+  data files (`json/`, including JSONL bulk downloads); it must exist and be
+  writable.
 
 ### Ini file (`/opt/mtg/mtg_new.ini`)
 

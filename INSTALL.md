@@ -47,9 +47,10 @@ Adjust paths/commands for your platform.
   user in sets.sh.
 - Ensure the log file path specified in the ini exists and is writable (e.g.
   `/var/log/mtg/mtgapp.log`).
-- Ensure `ImgLocation` specified in the ini exists, is writable, and contains a 
-  writable `json` folder for Scryfall downloads. Ideally, symlink this to a 
-  large storage volume.
+- Ensure `ImgLocation` specified in the ini exists, is writable, and contains a
+  writable `json` folder for Scryfall downloads. Card and rulings bulk caches
+  are stored there as `.jsonl.gz` files. Ideally, symlink this to a large
+  storage volume.
 
 ## Log rotation
 
@@ -110,8 +111,9 @@ Install the required packages as the web user (example assumes Apache):
 sudo -Hu apache composer install
 ```
 
-This pulls in JSONMachine, PHPMailer, Turnstile, FX API, OTPHP, QR code libs,
-and PHPUnit (dev).
+This pulls in JSONMachine (still used for Scryfall sets/migrations and legacy
+JSON reads), PHPMailer, Turnstile, FX API, OTPHP, QR code libs, and PHPUnit
+(dev).
 
 ## Email / Disqus / Turnstile / FX setup
 

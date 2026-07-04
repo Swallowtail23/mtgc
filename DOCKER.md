@@ -171,7 +171,8 @@ for you; there is no longer a root-level `.env`.
 
 The host paths defined during bootstrap contain persistent data:
 
-- `${BASE_DIR}/cardimg` – bulk JSON cache and card images (can be tens of GBs).
+- `${BASE_DIR}/cardimg` – bulk Scryfall data cache (`json/`, including JSONL
+  bulk downloads) and card images (can be tens of GBs).
 - `${BASE_DIR}/config` – holds `mtg_new.ini`, `php_custom.ini`, the cron
   template `cron_mtgc`, and helper shell scripts under `config/scripts`. These
   are copied from `setup/*.sh` on the first run so you can schedule cron jobs.
@@ -202,6 +203,8 @@ Sets page.
 
 The bulk `default` run is designed to be a nightly card data maintenance task -
 getting new cards with their images and any data changes released by Scryfall.
+Card and rulings bulk imports use Scryfall's JSONL bulk files and cache them as
+`.jsonl.gz` files under the configured image data directory.
 
 Bare-metal installs should follow the same command order (see `INSTALL.md`) to avoid
 pulling the full image set unnecessarily.
