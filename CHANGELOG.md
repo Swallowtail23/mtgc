@@ -18,7 +18,8 @@ All notable changes to this project will be documented in this file.
 
 ### Security
 
--
+- Updated vulnerable Composer dependencies flagged by Dependabot: `spomky-labs/otphp`, `guzzlehttp/guzzle`, and
+  `guzzlehttp/psr7`.
 
 ### Infrastructure
 
