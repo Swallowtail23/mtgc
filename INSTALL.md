@@ -42,9 +42,7 @@ Adjust paths/commands for your platform.
 - Create `/opt/mtg`. 
 - Copy `setup/mtg_new.ini` to `/opt/mtg/mtg_new.ini` and edit per your
   environment (see README for key settings).
-- Copy the helper shell scripts from `setup/*.sh` into `/opt/mtg/scripts/`,
-  update bulk script paths (default `/var/www/mtgnew/bulk`), update web server
-  user in sets.sh.
+- Copy the helper shell scripts from `setup/*.sh` into `/opt/mtg/scripts/`.
 - Ensure the log file path specified in the ini exists and is writable (e.g.
   `/var/log/mtg/mtgapp.log`).
 - Ensure `ImgLocation` specified in the ini exists, is writable, and contains a
@@ -85,19 +83,15 @@ it (root crontab):
 - Provision a MySQL user with appropriate privileges and update the ini with the
   database credentials/host.
 - Import `setup/mtg_new.sql` into the database.
-- Run the bulk scripts from the `bulk/` directory (in order) to populate data.
+- Run the data update wrapper to populate Scryfall-managed data.
 
   ```bash
-  php scryfall_bulk.php refresh
-  php scryfall_sets.php
-  php scryfall_rulings.php
-  php scryfall_migrations.php
-  php scryfall_manifest.php
+  /opt/mtg/scripts/data_updates.sh new
   ```
   The 'refresh' run of scryfall_bulk.php is required for initial setup;
   Its first `all` pass writes every card record; the second `default` pass
   marks the primary language. See also Images section.
-  The `scryfall_bulk.php refresh` run can take a long time.
+  The `data_updates.sh new` run can take a long time.
 
 ## User setup
 
@@ -142,18 +136,14 @@ Copy the helper scripts to `/opt/mtg/scripts` (as described earlier) and use the
 sample schedule in `setup/cron_mtgc.crond` as a starting point.
 Recommended frequencies:
 
-- `bulk_all.sh` (weekly): refreshes the entire Scryfall dataset without
-  downloading images.
-- `sets.sh` (daily): syncs set metadata so new releases appear promptly.
-- `migrations.sh` (daily): applies incremental data fixes or extra inserts.
-- `manifest.sh` (daily): syncs Scryfall card manifest update timestamps for
-  each language present in `cards_scry`, used to detect card data and image
-  freshness.
-- `rulings.sh` (3× weekly): updates oracle rulings from Scryfall.
-- `bulk.sh` (nightly): reprocesses the default-language subset and downloads
-  any new images.
-- `weekly.sh` (weekly): runs the weekly export helper scripts.
-- `collection_snapshots.sh` (daily): records collection value history for charts.
+- `data_updates.sh nightly` (nightly Monday-Saturday): syncs sets, default
+  cards, rulings, migrations, manifest timestamps, collection snapshots, and
+  expired trusted-device cleanup.
+- `data_updates.sh weekly` (weekly Sunday): runs the all-cards refresh before
+  the normal nightly flow, then runs weekly exports, collection snapshots, and
+  expired trusted-device cleanup.
+- `data_updates.sh refresh --confirm` (manual only): truncates Scryfall-managed
+  data tables and repopulates them from scratch.
 - `logrotate` (daily): rotates `/var/log/mtg/*.log` using `/etc/logrotate.d/mtgc`.
 
 Install the cron file (adjusting the user, script path, and log locations):

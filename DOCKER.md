@@ -187,11 +187,7 @@ intend to migrate the installation.
 
 When `docker/docker-init.sh` runs on a fresh database it executes:
 
-1. `php bulk/scryfall_bulk.php refresh`
-2. `php bulk/scryfall_sets.php`
-3. `php bulk/scryfall_rulings.php`
-4. `php bulk/scryfall_migrations.php`
-5. `php bulk/scryfall_manifest.php`
+1. `/opt/mtg/scripts/data_updates.sh new`
 
 The 'refresh'' bulk run deliberately avoids downloading ~100k card images.
 A first `all` pass writes every card record but skips image downloads;
@@ -290,18 +286,12 @@ starts `cron` so the jobs run automatically after `docker/docker-init.sh`.
 Edit the `cron_mtgc` file on the host and restart the web container to reload
 the schedule. Recommended cadence:
 
-- `bulk_all.sh` – weekly; refreshes the Scryfall “all cards” dataset (no image
-  downloads) so the database stays current.
-- `sets.sh` – daily; pulls new/updated set metadata.
-- `migrations.sh` – daily; applies small data fixes shipped upstream.
-- `manifest.sh` – daily; refreshes Scryfall card data/image update timestamps
-  for each language present in `cards_scry`.
-- `rulings.sh` – Monday/Wednesday/Friday; syncs oracle rulings.
-- `bulk.sh` – nightly; refreshes the default-language subset and downloads
-  images for any newly inserted records.
-- `weekly.sh` – weekly; runs the weekly exports helper.
-- `collection_snapshots.sh` – daily; records collection value history for charts.
-- `cleanup_tokens.sh` - daily; clears expired device trust tokens.
+- `data_updates.sh weekly` – Sunday; refreshes the Scryfall “all cards” dataset
+  before the normal nightly flow, then runs weekly exports, collection snapshots,
+  and expired trusted-device cleanup.
+- `data_updates.sh nightly` – Monday-Saturday; refreshes sets, default cards,
+  rulings, migrations, manifest timestamps, collection snapshots, and expired
+  trusted-device cleanup.
 - `logrotate` - daily; rotates container logs via `/etc/logrotate.d/mtgc` (cron entry included in `cron_mtgc`).
 
 The template shipped at `docker/cron_mtgc.example` is copied to
@@ -411,9 +401,8 @@ released:
    ```
 
    (Use `docker compose` if applicable.)
-6. **Run migrations/bulk scripts regularly** – run the helper scripts under
-   `/opt/mtg/scripts`, such as `migrations.sh` and `manifest.sh`, or rely on
-   cron.
+6. **Run migrations/bulk scripts regularly** – run `/opt/mtg/scripts/data_updates.sh nightly`,
+   `/opt/mtg/scripts/data_updates.sh weekly`, or rely on cron.
 7. **Verify** – check `podman-compose logs web`/`db`, run smoke tests (login,
    searches), and confirm scheduled jobs/cron markers still update.
 

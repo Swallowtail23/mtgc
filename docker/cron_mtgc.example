@@ -9,29 +9,8 @@ LOG_ROOT=/var/log/mtg
 # Daily log rotation (container installs logrotate config at /etc/logrotate.d/mtgc)
 5 0 * * * /usr/sbin/logrotate /etc/logrotate.d/mtgc
 
-# Weekly "all cards" refresh (no image downloads)
-0 1 * * 0 "$SCRIPT_ROOT"/bulk_all.sh >> "$LOG_ROOT"/cron_bulk_all.log 2>&1
+# Weekly Scryfall refresh: all cards, default cards, rulings, migrations, manifest, weekly exports
+0 1 * * 0 "$SCRIPT_ROOT"/data_updates.sh weekly >> "$LOG_ROOT"/cron_data_weekly.log 2>&1
 
-# Daily Sets metadata refresh
-30 1 * * * "$SCRIPT_ROOT"/sets.sh >> "$LOG_ROOT"/cron_sets.log 2>&1
-
-# Daily migrations (backfill/emergency data fixes)
-0 2 * * * "$SCRIPT_ROOT"/migrations.sh >> "$LOG_ROOT"/cron_migrations.log 2>&1
-
-# Daily Scryfall manifest timestamps
-30 2 * * * "$SCRIPT_ROOT"/manifest.sh >> "$LOG_ROOT"/cron_manifest.log 2>&1
-
-# Rulings from Scryfall (Mon/Wed/Fri)
-0 3 * * 1,3,5 "$SCRIPT_ROOT"/rulings.sh >> "$LOG_ROOT"/cron_rulings.log 2>&1
-
-# Nightly default bulk refresh (primary language, downloads new images)
-0 4 * * * "$SCRIPT_ROOT"/bulk.sh >> "$LOG_ROOT"/cron_bulk_default.log 2>&1
-
-# Weekly exports (CSV/email helpers)
-30 4 * * 0 "$SCRIPT_ROOT"/weekly.sh >> "$LOG_ROOT"/cron_weekly.log 2>&1
-
-# Daily collection value snapshots
-15 5 * * * "$SCRIPT_ROOT"/collection_snapshots.sh >> "$LOG_ROOT"/cron_collection_snapshots.log 2>&1
-
-# Nightly cleanup of expired trusted device tokens
-0 6 * * * "$SCRIPT_ROOT"/cleanup_tokens.sh >> "$LOG_ROOT"/cron_cleanup_tokens.log 2>&1
+# Nightly Scryfall refresh: sets, default cards, rulings, migrations, manifest
+0 4 * * 1-6 "$SCRIPT_ROOT"/data_updates.sh nightly >> "$LOG_ROOT"/cron_data_nightly.log 2>&1

@@ -313,11 +313,7 @@ marker_exists() {
 
 if ! marker_exists; then
     echo "Running bulk Scryfall import - this may take up to 2 hours..."
-    ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php refresh"
-    ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
-    ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
-    ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
-    ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_manifest.php"
+    ${DOCKER_CMD} exec mtgc_web_1 bash -c "/opt/mtg/scripts/data_updates.sh new"
     ${DOCKER_CMD} exec mtgc_web_1 bash -c "printf 'done\n' > /var/log/mtg/scryfall_import_done"
 else
     echo "Bulk import already completed previously - skipping."

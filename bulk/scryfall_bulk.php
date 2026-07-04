@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     9.30
+Version:     9.31
 Date:        04/07/26
 Name:        scryfall_bulk.php
 Purpose:     Import/update Scryfall bulk data
@@ -38,6 +38,7 @@ Filesystem::ensureDirectoryExists($imgLocation . 'json', $appConfig, $msg);
 /// Call without parameters does a 'default' file update only
 /// Call with 'all' gets the all cards file
 /// Call with 'refresh' gets fresh copies of BOTH files (run by docker install for initial setup)
+/// Call with 'sync-state' backfills local Scryfall data sync state
 
 $arg1 = $argv[1] ?? '';
 $arg1 = strtolower(trim($arg1));
@@ -47,6 +48,12 @@ if ($arg1 === 'test') :
     $type = 'default';
     $useTestTable = true;
     $msg->logMessage('[NOTICE]', 'Scryfall Bulk API: test mode enabled; using cards_scry_test');
+elseif ($arg1 === 'sync-state') :
+    $affected = ScryfallImport::backfillDataSyncState($db, $msg);
+    if (PHP_SAPI === 'cli') :
+        echo "Scryfall sync state: data backfill completed; affected rows: $affected\n";
+    endif;
+    exit(0);
 elseif ($arg1 === 'all') :
     $type = 'all';
 elseif ($arg1 === 'refresh') :

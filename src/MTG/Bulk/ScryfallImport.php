@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.12
+Version:     1.13
 Date:        04/07/26
 Name:        ScryfallImport.php
 Purpose:     Scryfall bulk import helpers.
@@ -554,6 +554,35 @@ class ScryfallImport
 
         if ($imageDownloads === true) :
             $imageManager = new ImageManager($db, $appConfig, $gameRules);
+        endif;
+
+        $syncStmt = null;
+        $syncLookupId = null;
+        if ($tableName === 'cards_scry') :
+            $syncStmt = $db->prepare(
+                "INSERT INTO
+                    `scryfall_sync_state`
+                        (id, manifest_data_updated_at, data_checked_at)
+                    SELECT
+                        lookup.id,
+                        manifest.data_updated_at,
+                        NOW()
+                    FROM
+                        (SELECT ? AS id) AS lookup
+                    LEFT JOIN
+                        `scryfall_manifest` AS manifest
+                        ON manifest.id = lookup.id
+                    ON DUPLICATE KEY UPDATE
+                        manifest_data_updated_at = VALUES(manifest_data_updated_at),
+                        data_checked_at = VALUES(data_checked_at)"
+            );
+            if ($syncStmt === false) :
+                throw new \Exception('[ERROR] scryfall_bulk.php: Preparing sync state SQL: ' . $db->error);
+            endif;
+            $syncBind = $syncStmt->bind_param('s', $syncLookupId);
+            if ($syncBind === false) :
+                throw new \Exception('[ERROR] scryfall_bulk.php: Binding sync state SQL: ' . $db->error);
+            endif;
         endif;
 
         $insertSql = sprintf("INSERT INTO
@@ -1927,6 +1956,16 @@ class ScryfallImport
                             $count_add = $count_add + 1;
                             $msg->logMessage('[DEBUG]', "Added card - no error returned; return code: $status");
 
+                            if ($syncStmt !== null) :
+                                $syncLookupId = $id;
+                                if (!$syncStmt->execute()) :
+                                    throw new \Exception(
+                                        '[ERROR] scryfall_bulk.php: Updating sync state for added card: '
+                                        . $db->error
+                                    );
+                                endif;
+                            endif;
+
                             if ($imageDownloads === true) :
                                 $imageManager->getImage(
                                     $set_code,
@@ -1942,12 +1981,30 @@ class ScryfallImport
                                     '[DEBUG]',
                                     "Updated card - content and price hash change; return code: $status"
                                 );
+                                if ($syncStmt !== null) :
+                                    $syncLookupId = $id;
+                                    if (!$syncStmt->execute()) :
+                                        throw new \Exception(
+                                            '[ERROR] scryfall_bulk.php: Updating sync state for content update: '
+                                            . $db->error
+                                        );
+                                    endif;
+                                endif;
                             elseif ($content_changed === true) :
                                 $count_update_content = $count_update_content + 1;
                                 $msg->logMessage(
                                     '[DEBUG]',
                                     "Updated card - content hash change; return code: $status"
                                 );
+                                if ($syncStmt !== null) :
+                                    $syncLookupId = $id;
+                                    if (!$syncStmt->execute()) :
+                                        throw new \Exception(
+                                            '[ERROR] scryfall_bulk.php: Updating sync state for content update: '
+                                            . $db->error
+                                        );
+                                    endif;
+                                endif;
                             elseif ($price_changed === true) :
                                 $count_update_price = $count_update_price + 1;
                                 $msg->logMessage(
@@ -2007,6 +2064,11 @@ class ScryfallImport
                 . "File: {$file_location}. Error: " . $e->getMessage()
             );
             $db->rollback();
+            if ($syncStmt !== null) :
+                $syncStmt->close();
+            endif;
+            $stmt->close();
+            $hashStmt->close();
 
             $badPath = $file_location . '.bad-' . date('Ymd-His');
             $renamed = @rename($file_location, $badPath);
@@ -2025,6 +2087,9 @@ class ScryfallImport
         endif;
         $stmt->close();
         $hashStmt->close();
+        if ($syncStmt !== null) :
+            $syncStmt->close();
+        endif;
 
         $msg->logMessage(
             '[NOTICE]',
@@ -2050,6 +2115,39 @@ class ScryfallImport
             . "price: $count_update_price; both: $count_update_both)";
         return $message;
         // return $message to then use in parent to send email using MyPHPMailer
+    }
+
+    /**
+    * @param \mysqli|object $db
+    */
+    public static function backfillDataSyncState($db, Message $msg): int
+    {
+        $msg->logMessage('[NOTICE]', 'Scryfall sync state: starting data backfill');
+
+        $sql = "INSERT INTO
+            `scryfall_sync_state`
+                (id, manifest_data_updated_at, data_checked_at)
+            SELECT
+                cards_scry.id,
+                scryfall_manifest.data_updated_at,
+                NOW()
+            FROM
+                `cards_scry`
+            LEFT JOIN
+                `scryfall_manifest`
+                ON scryfall_manifest.id = cards_scry.id
+            ON DUPLICATE KEY UPDATE
+                manifest_data_updated_at = VALUES(manifest_data_updated_at),
+                data_checked_at = VALUES(data_checked_at)";
+
+        $result = $db->query($sql);
+        if ($result === false) :
+            throw new \Exception('[ERROR] scryfall_sync_state: data backfill failed: ' . $db->error);
+        endif;
+
+        $affected = isset($db->affected_rows) ? (int) $db->affected_rows : 0;
+        $msg->logMessage('[NOTICE]', "Scryfall sync state: data backfill completed; affected rows: $affected");
+        return $affected;
     }
 
 }

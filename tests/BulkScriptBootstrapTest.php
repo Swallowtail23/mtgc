@@ -12,6 +12,8 @@ class BulkScriptBootstrapTest extends TestCase
             'bulk/scryfall_sets.php',
             'bulk/scryfall_migrations.php',
             'bulk/scryfall_manifest.php',
+            'bulk/scryfall_reset_data.php',
+            'bulk/scryfall_sync_state.php',
             'bulk/weekly_exports.php',
             'bulk/collection_snapshots.php',
             'bulk/setimgreload.php',
