@@ -192,15 +192,12 @@ if [[ ! -f "$BASE_DIR/config/php_custom.ini" ]]; then
     cp setup/php_custom.ini "$BASE_DIR/config/php_custom.ini"
 fi
 
-# Copy helper shell scripts for cron/bulk workflows
+# Copy helper shell script for cron/data workflows
 SCRIPTS_DEST="$BASE_DIR/config/scripts"
 mkdir -p "$SCRIPTS_DEST"
-for helper in setup/*.sh; do
-    target="$SCRIPTS_DEST/$(basename "$helper")"
-    if [[ ! -f "$target" ]]; then
-        cp "$helper" "$target"
-    fi
-done
+if [[ ! -f "$SCRIPTS_DEST/data_updates.sh" ]]; then
+    cp setup/data_updates.sh "$SCRIPTS_DEST/data_updates.sh"
+fi
 CRON_TEMPLATE_DEST="$BASE_DIR/config/cron_mtgc"
 if [[ ! -f "$CRON_TEMPLATE_DEST" ]]; then
     cp docker/cron_mtgc.example "$CRON_TEMPLATE_DEST"

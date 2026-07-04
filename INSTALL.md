@@ -42,7 +42,7 @@ Adjust paths/commands for your platform.
 - Create `/opt/mtg`. 
 - Copy `setup/mtg_new.ini` to `/opt/mtg/mtg_new.ini` and edit per your
   environment (see README for key settings).
-- Copy the helper shell scripts from `setup/*.sh` into `/opt/mtg/scripts/`.
+- Copy `setup/data_updates.sh` into `/opt/mtg/scripts/` and make it executable.
 - Ensure the log file path specified in the ini exists and is writable (e.g.
   `/var/log/mtg/mtgapp.log`).
 - Ensure `ImgLocation` specified in the ini exists, is writable, and contains a
@@ -88,9 +88,9 @@ it (root crontab):
   ```bash
   /opt/mtg/scripts/data_updates.sh new
   ```
-  The 'refresh' run of scryfall_bulk.php is required for initial setup;
-  Its first `all` pass writes every card record; the second `default` pass
-  marks the primary language. See also Images section.
+  The `new` run performs the supported first-load sequence: sets, all-cards
+  bulk import, default-cards bulk import, rulings, migrations, manifest
+  metadata, and sync-state backfill. See also Images section.
   The `data_updates.sh new` run can take a long time.
 
 ## User setup
@@ -132,8 +132,8 @@ Set each rule action to `Cache: Bypass`.
 
 ## Cron / scheduled tasks
 
-Copy the helper scripts to `/opt/mtg/scripts` (as described earlier) and use the
-sample schedule in `setup/cron_mtgc.crond` as a starting point.
+Copy `setup/data_updates.sh` to `/opt/mtg/scripts` (as described earlier) and
+use the sample schedule in `setup/cron_mtgc.crond` as a starting point.
 Recommended frequencies:
 
 - `data_updates.sh nightly` (nightly Monday-Saturday): syncs sets, default
@@ -169,11 +169,12 @@ log directory referenced in the cron file.
 
 ## Images
 
-- The first setup pass (`php bulk/scryfall_bulk.php all`) loads all cards without
-  downloading the ~100k images; the second pass (`php bulk/scryfall_bulk.php default`)
-  marks the primary language and only downloads images for truly new rows.
+- The initial `data_updates.sh new` run loads all cards before the default-card
+  pass. The first bulk pass avoids downloading the full image catalogue; the
+  second pass marks the primary language and only downloads images for truly new
+  rows.
   Subsequent bulk runs download images as new cards appear.
 - Image sets can be downloaded for specific sets from the Sets page.
-- Bare metal installs should follow the same command order above to avoid
-  triggering a full image download. If you run only `php scryfall_bulk.php default`,
-  on an empty database it will download images for all cards inserted during that run.
+- Bare metal installs should use `data_updates.sh new` for first load to avoid
+  triggering a full image download. If you run only `php bulk/scryfall_bulk.php default`
+  on an empty database, it will download images for all cards inserted during that run.

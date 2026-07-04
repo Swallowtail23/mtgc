@@ -14,13 +14,11 @@
   `setup/data_updates.sh new`, `setup/data_updates.sh nightly`, `setup/data_updates.sh weekly`, or
   `setup/data_updates.sh refresh --confirm`.
 - Database init: `php setup/initial.php username password`.
-- Bulk data import: `php bulk/scryfall_bulk.php all`.
-- Sets import: `php bulk/scryfall_sets.php`.
-- Rulings import: `php bulk/scryfall_rulings.php`.
-- Migrations: `php bulk/scryfall_migrations.php`.
-- Manifest metadata: `php bulk/scryfall_manifest.php`.
-- Sync state backfill: `php bulk/scryfall_sync_state.php data-backfill`.
-- Weekly exports: `php bulk/weekly_exports.php`.
+- Focused script entrypoints are still available for debugging:
+  `php bulk/scryfall_sets.php`, `php bulk/scryfall_bulk.php all|default|refresh`,
+  `php bulk/scryfall_rulings.php`, `php bulk/scryfall_migrations.php`,
+  `php bulk/scryfall_manifest.php`, `php bulk/scryfall_sync_state.php data-backfill`,
+  and `php bulk/weekly_exports.php`.
 
 ## Autoloading And Bootstrap
 

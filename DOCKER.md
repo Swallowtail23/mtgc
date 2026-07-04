@@ -97,8 +97,8 @@ Clone the repo to your local host:
         Invalid or empty responses default to the container copy.
     - It creates `docker/.env` with those values, builds both images, starts the
       stack, and prompts for the first admin user credentials.
-    - On a fresh database it runs all Scryfall bulk import scripts. Expect the
-      initial download to take a long time.
+    - On a fresh database it runs `/opt/mtg/scripts/data_updates.sh new`, which
+      loads Scryfall-managed data. Expect the initial download to take a long time.
     - Finally, ownership of the mounted directories is handed to the container
       user (`www-data` inside the rootless container).
 
@@ -174,8 +174,9 @@ The host paths defined during bootstrap contain persistent data:
 - `${BASE_DIR}/cardimg` – bulk Scryfall data cache (`json/`, including JSONL
   bulk downloads) and card images (can be tens of GBs).
 - `${BASE_DIR}/config` – holds `mtg_new.ini`, `php_custom.ini`, the cron
-  template `cron_mtgc`, and helper shell scripts under `config/scripts`. These
-  are copied from `setup/*.sh` on the first run so you can schedule cron jobs.
+  template `cron_mtgc`, and the `data_updates.sh` helper under
+  `config/scripts`. This is copied from `setup/data_updates.sh` on the first
+  run so you can schedule cron jobs.
   Inside the container they are available at `/mnt/data/config/scripts` (and
   `/opt/mtg/scripts` via symlink).
 - `${BASE_DIR}/logs` – application logs, including the Scryfall import marker.
@@ -189,14 +190,14 @@ When `docker/docker-init.sh` runs on a fresh database it executes:
 
 1. `/opt/mtg/scripts/data_updates.sh new`
 
-The 'refresh'' bulk run deliberately avoids downloading ~100k card images.
-A first `all` pass writes every card record but skips image downloads;
-a second `default` pass marks the primary language. A `default` run will only
-download an image when a new row is inserted; because the `all` pass already
-populated all cards, again, no images are fetched. Cards later viewed via the UI
-or added in future bulk runs download on demand, so storage grows gradually
-rather than all at once. Full image sets can be downloaded per set from the
-Sets page.
+The `new` run deliberately avoids downloading the full card image catalogue. It
+performs an `all` bulk pass that writes every card record while skipping image
+downloads, followed by a `default` bulk pass that marks the primary language. A
+`default` run only downloads an image when a new row is inserted; because the
+`all` pass already populated all cards, the first-load `default` pass does not
+pull every image. Cards later viewed via the UI or added in future bulk runs
+download on demand, so storage grows gradually rather than all at once. Full
+image sets can be downloaded per set from the Sets page.
 
 The bulk `default` run is designed to be a nightly card data maintenance task -
 getting new cards with their images and any data changes released by Scryfall.

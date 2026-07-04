@@ -22,7 +22,8 @@ All notable changes to this project will be documented in this file.
 
 ### Infrastructure
 
--
+- Aligned install, Docker, and developer documentation with the single `data_updates.sh` Scryfall data workflow.
+- Docker bootstrap scripts now copy only `setup/data_updates.sh` into the persisted scripts directory.
 
 ## [v0.6.3] - 2026-07-04 (release 4)
 
