@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
--
+- Scryfall card and rulings bulk imports now prefer JSONL bulk files and stream `.jsonl.gz` records directly.
 
 ### Fixed
 

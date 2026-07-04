@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.11
-Date:        28/04/26
+Version:     1.12
+Date:        04/07/26
 Name:        ScryfallImport.php
 Purpose:     Scryfall bulk import helpers.
 Notes:       -
@@ -15,6 +15,7 @@ namespace MTG\Bulk;
 
 use JsonMachine\Items;
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
+use Generator;
 use Throwable;
 use MTG\Cards\ImageManager;
 use MTG\Core\AppConfig;
@@ -152,19 +153,19 @@ class ScryfallImport
 
         if ($type === "all") :
             $url = $allCardsUrl;
-            $fileLocation = $imgLocation . 'json/bulk_all.json';
+            $fileLocation = $imgLocation . 'json/bulk_all.jsonl.gz';
         elseif ($type === "default") :  // At the moment, elseif and else do the same, i.e. a "primary" load only
             $url = $defaultCardsUrl;
-            $fileLocation = $imgLocation . 'json/bulk.json';
+            $fileLocation = $imgLocation . 'json/bulk.jsonl.gz';
         elseif ($type === "refresh") :
             $urlDefault = $defaultCardsUrl;
             $urlAll = $allCardsUrl;
-            $fileLocationDefault = $imgLocation . 'json/bulk.json';
-            $fileLocationAll = $imgLocation . 'json/bulk_all.json';
+            $fileLocationDefault = $imgLocation . 'json/bulk.jsonl.gz';
+            $fileLocationAll = $imgLocation . 'json/bulk_all.jsonl.gz';
         else :  // At the moment, else does a "default" load only - catches anything else
             $type = "default";
             $url = $defaultCardsUrl;
-            $fileLocation = $imgLocation . 'json/bulk.json';
+            $fileLocation = $imgLocation . 'json/bulk.jsonl.gz';
         endif;
 
         if (!empty($url) && !empty($fileLocation)) :
@@ -206,15 +207,15 @@ class ScryfallImport
                 $msg->logMessage('[ERROR]', "Scryfall bulk API: expected default_cards, got {$scryfallBulk['type']}");
                 return false;
             endif;
-            if (isset($scryfallBulk["download_uri"])) :
-                $bulk_uri = $scryfallBulk["download_uri"];
+            if (isset($scryfallBulk["jsonl_download_uri"])) :
+                $bulk_uri = $scryfallBulk["jsonl_download_uri"];
                 $msg->logMessage('[NOTICE]', "Scryfall bulk API: Download URI: $bulk_uri");
                 $bulkInfo = [
                     'bulkUrl' => $bulk_uri,
                     'fileLocation' => $fileLocation
                 ];
             else :
-                $msg->logMessage('[ERROR]', "Scryfall bulk API info not available");
+                $msg->logMessage('[ERROR]', "Scryfall bulk API jsonl_download_uri not available");
                 return false;
             endif;
         elseif (
@@ -222,18 +223,18 @@ class ScryfallImport
             && $scryfallBulkDefault['type'] === 'default_cards'
             && $scryfallBulkAll['type'] === 'all_cards'
         ) :
-            if (isset($scryfallBulkDefault["download_uri"])) :
-                $bulk_uri_default = $scryfallBulkDefault["download_uri"];
+            if (isset($scryfallBulkDefault["jsonl_download_uri"])) :
+                $bulk_uri_default = $scryfallBulkDefault["jsonl_download_uri"];
                 $msg->logMessage('[NOTICE]', "Scryfall bulk API: Download URI: $bulk_uri_default");
             else :
-                $msg->logMessage('[ERROR]', "Scryfall bulk API: Error");
+                $msg->logMessage('[ERROR]', "Scryfall bulk API: default_cards jsonl_download_uri not available");
                 return false;
             endif;
-            if (isset($scryfallBulkAll["download_uri"])) :
-                $bulk_uri_all = $scryfallBulkAll["download_uri"];
+            if (isset($scryfallBulkAll["jsonl_download_uri"])) :
+                $bulk_uri_all = $scryfallBulkAll["jsonl_download_uri"];
                 $msg->logMessage('[NOTICE]', "Scryfall bulk API: Download URI: $bulk_uri_all");
             else :
-                $msg->logMessage('[ERROR]', "Scryfall bulk API: Error");
+                $msg->logMessage('[ERROR]', "Scryfall bulk API: all_cards jsonl_download_uri not available");
                 return false;
             endif;
             $bulkInfo = [
@@ -250,7 +251,7 @@ class ScryfallImport
         return $bulkInfo;
     }
 
-    public static function getBulkJson(
+    public static function getBulkDataFile(
         string $uri,
         string $file_location,
         int $max_fileage,
@@ -321,6 +322,121 @@ class ScryfallImport
 
         $msg->logMessage('[ERROR]', "Scryfall bulk API: Download failed after retry, exiting");
         return false;
+    }
+
+    public static function getBulkJson(
+        string $uri,
+        string $file_location,
+        int $max_fileage,
+        AppConfig $appConfig
+    ): string|false {
+        return static::getBulkDataFile($uri, $file_location, $max_fileage, $appConfig);
+    }
+
+    /**
+     * @return Generator<int|string, array<string, mixed>>
+     */
+    public static function iterateBulkRecords(string $fileLocation): Generator
+    {
+        if (str_ends_with($fileLocation, '.jsonl.gz')) :
+            yield from static::iterateJsonlGzipRecords($fileLocation);
+            return;
+        endif;
+
+        if (str_ends_with($fileLocation, '.jsonl')) :
+            yield from static::iterateJsonlRecords($fileLocation);
+            return;
+        endif;
+
+        $data = Items::fromFile(
+            $fileLocation,
+            ['decoder' => new ExtJsonDecoder(true)]
+        );
+
+        foreach ($data as $key => $value) :
+            if (is_array($value)) :
+                yield $key => $value;
+            endif;
+        endforeach;
+    }
+
+    /**
+     * @return Generator<int, array<string, mixed>>
+     */
+    private static function iterateJsonlGzipRecords(string $fileLocation): Generator
+    {
+        $handle = gzopen($fileLocation, 'rb');
+        if ($handle === false) :
+            throw new \RuntimeException("Unable to open gzipped JSONL file: {$fileLocation}");
+        endif;
+
+        try {
+            $lineNumber = 0;
+            while (!gzeof($handle)) :
+                $line = gzgets($handle);
+                if ($line === false) :
+                    break;
+                endif;
+                $lineNumber++;
+                $record = static::decodeJsonlLine($line, $lineNumber, $fileLocation);
+                if ($record !== null) :
+                    yield $lineNumber => $record;
+                endif;
+            endwhile;
+        } finally {
+            gzclose($handle);
+        }
+    }
+
+    /**
+     * @return Generator<int, array<string, mixed>>
+     */
+    private static function iterateJsonlRecords(string $fileLocation): Generator
+    {
+        $handle = fopen($fileLocation, 'rb');
+        if ($handle === false) :
+            throw new \RuntimeException("Unable to open JSONL file: {$fileLocation}");
+        endif;
+
+        try {
+            $lineNumber = 0;
+            while (($line = fgets($handle)) !== false) :
+                $lineNumber++;
+                $record = static::decodeJsonlLine($line, $lineNumber, $fileLocation);
+                if ($record !== null) :
+                    yield $lineNumber => $record;
+                endif;
+            endwhile;
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private static function decodeJsonlLine(string $line, int $lineNumber, string $fileLocation): ?array
+    {
+        $line = trim($line);
+        if ($line === '') :
+            return null;
+        endif;
+
+        try {
+            $record = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new \RuntimeException(
+                "Invalid JSONL in {$fileLocation} at line {$lineNumber}: " . $e->getMessage(),
+                0,
+                $e
+            );
+        }
+
+        if (!is_array($record)) :
+            throw new \RuntimeException("Invalid JSONL in {$fileLocation} at line {$lineNumber}: record is not object");
+        endif;
+
+        return $record;
     }
 
     public static function scryfallImport(
@@ -395,10 +511,7 @@ class ScryfallImport
         // Initiate counters at zero
         $count_inc = $count_skip = $total_count = $count_add = $count_update = $count_other = 0;
         $count_update_content = $count_update_price = $count_update_both = 0;
-        $data = Items::fromFile(
-            $file_location,
-            ['decoder' => new ExtJsonDecoder(true)]
-        );
+        $data = static::iterateBulkRecords($file_location);
 
         $date = date('Y-m-d');
         $timeslice_start = microtime(true);

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     9.29
-Date:        26/02/26
+Version:     9.30
+Date:        04/07/26
 Name:        scryfall_bulk.php
 Purpose:     Import/update Scryfall bulk data
 Notes:       {none}
@@ -195,17 +195,17 @@ if ($type === "refresh") :
         . "$fileLocationAll / $fileLocationDefault"
     );
     $maxFileAge = 0;
-    $get_all = ScryfallImport::getBulkJson($bulkUrlAll, $fileLocationAll, $maxFileAge, $appConfig);
-    $get_default = ScryfallImport::getBulkJson($bulkUrlDefault, $fileLocationDefault, $maxFileAge, $appConfig);
+    $get_all = ScryfallImport::getBulkDataFile($bulkUrlAll, $fileLocationAll, $maxFileAge, $appConfig);
+    $get_default = ScryfallImport::getBulkDataFile($bulkUrlDefault, $fileLocationDefault, $maxFileAge, $appConfig);
     if ($get_all === false) :
-        $text = "Scryfall Bulk API: getBulkJson (all) returned error for $bulkUrlAll";
+        $text = "Scryfall Bulk API: getBulkDataFile (all) returned error for $bulkUrlAll";
         $msg->logMessage('[ERROR]', $text);
         if (PHP_SAPI === 'cli') :
             fwrite(STDERR, $text . PHP_EOL);
         endif;
         exit(1);
     elseif ($get_default === false) :
-        $text = "Scryfall Bulk API: getBulkJson (default) returned error for $bulkUrlDefault";
+        $text = "Scryfall Bulk API: getBulkDataFile (default) returned error for $bulkUrlDefault";
         $msg->logMessage('[ERROR]', $text);
         if (PHP_SAPI === 'cli') :
             fwrite(STDERR, $text . PHP_EOL);
@@ -267,9 +267,9 @@ else :
     $fileLocation = $bulkInfo['fileLocation'];
     $msg->logMessage('[NOTICE]', "Scryfall Bulk API: Download URI: $bulkUrl; File location: $fileLocation");
     $maxFileAge = 23 * 3600;
-    $get_json = ScryfallImport::getBulkJson($bulkUrl, $fileLocation, $maxFileAge, $appConfig);
-    if ($get_json === false) :
-        $text = "Scryfall Bulk API: Download URI: getBulkJson returned error for $bulkUrl";
+    $get_data_file = ScryfallImport::getBulkDataFile($bulkUrl, $fileLocation, $maxFileAge, $appConfig);
+    if ($get_data_file === false) :
+        $text = "Scryfall Bulk API: Download URI: getBulkDataFile returned error for $bulkUrl";
         $msg->logMessage('[ERROR]', $text);
         if (PHP_SAPI === 'cli') :
             fwrite(STDERR, $text . PHP_EOL);

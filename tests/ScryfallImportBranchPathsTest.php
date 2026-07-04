@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        28/04/26
+Version:     1.1
+Date:        04/07/26
 Name:        ScryfallImportBranchPathsTest.php
 Purpose:     Tests Scryfall import update path classification.
 Notes:       -
@@ -191,8 +191,15 @@ class ScryfallImportBranchPathsTest extends TestCase
         $fixturePath = __DIR__ . '/test_data/bulk_sample_10.json';
         $cards = json_decode((string) file_get_contents($fixturePath), true);
         $subset = array_slice($cards, 0, 3);
-        $tempFile = tempnam(sys_get_temp_dir(), 'scryfall_branch_');
-        file_put_contents($tempFile, json_encode($subset));
+        $tempFile = tempnam(sys_get_temp_dir(), 'scryfall_branch_') . '.jsonl';
+        $jsonl = implode(
+            "\n",
+            array_map(
+                static fn (array $card): string => json_encode($card, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+                $subset
+            )
+        );
+        file_put_contents($tempFile, $jsonl . "\n");
 
         $state = new ScryfallBranchState();
         $insertStmt = new ScryfallBranchInsertStmt($state, [2, 2, 2]);

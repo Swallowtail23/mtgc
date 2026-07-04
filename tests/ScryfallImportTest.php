@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        28/04/26
+Version:     1.1
+Date:        04/07/26
 Name:        ScryfallImportTest.php
 Purpose:     Tests Scryfall bulk metadata helpers.
 Notes:       -
@@ -145,7 +145,7 @@ class ScryfallImportTest extends TestCase
         ScryfallImportStub::$fetchMap = [
             $defaultUrl => [
                 'type' => 'default_cards',
-                'download_uri' => 'https://download.example/default'
+                'jsonl_download_uri' => 'https://download.example/default.jsonl.gz'
             ]
         ];
 
@@ -153,11 +153,33 @@ class ScryfallImportTest extends TestCase
 
         $this->assertSame(
             [
-                'bulkUrl' => 'https://download.example/default',
-                'fileLocation' => $imgLocation . 'json/bulk.json'
+                'bulkUrl' => 'https://download.example/default.jsonl.gz',
+                'fileLocation' => $imgLocation . 'json/bulk.jsonl.gz'
             ],
             $result
         );
+    }
+
+    public function testGetBulkInfoRejectsMissingJsonlDownloadUri()
+    {
+        $defaultUrl = 'https://api.example/default';
+        $allUrl = 'https://api.example/all';
+        $imgLocation = sys_get_temp_dir() . '/mtg/';
+        $appConfig = $this->buildAppConfig([
+            'general' => ['imageBaseDir' => $imgLocation],
+        ]);
+        $gameRules = new GameRules([
+            'defaultCardsUrl' => $defaultUrl,
+            'allCardsUrl' => $allUrl,
+        ]);
+        ScryfallImportStub::$fetchMap = [
+            $defaultUrl => [
+                'type' => 'default_cards',
+                'download_uri' => 'https://download.example/default'
+            ]
+        ];
+
+        $this->assertFalse(ScryfallImportStub::getBulkInfo('default', $appConfig, $gameRules));
     }
 
     public function testGetBulkInfoRefresh()
@@ -175,11 +197,11 @@ class ScryfallImportTest extends TestCase
         ScryfallImportStub::$fetchMap = [
             $defaultUrl => [
                 'type' => 'default_cards',
-                'download_uri' => 'https://download.example/default'
+                'jsonl_download_uri' => 'https://download.example/default.jsonl.gz'
             ],
             $allUrl => [
                 'type' => 'all_cards',
-                'download_uri' => 'https://download.example/all'
+                'jsonl_download_uri' => 'https://download.example/all.jsonl.gz'
             ]
         ];
 
@@ -187,30 +209,30 @@ class ScryfallImportTest extends TestCase
 
         $this->assertSame(
             [
-                'bulkUrlDefault' => 'https://download.example/default',
-                'fileLocationDefault' => $imgLocation . 'json/bulk.json',
-                'bulkUrlAll' => 'https://download.example/all',
-                'fileLocationAll' => $imgLocation . 'json/bulk_all.json',
+                'bulkUrlDefault' => 'https://download.example/default.jsonl.gz',
+                'fileLocationDefault' => $imgLocation . 'json/bulk.jsonl.gz',
+                'bulkUrlAll' => 'https://download.example/all.jsonl.gz',
+                'fileLocationAll' => $imgLocation . 'json/bulk_all.jsonl.gz',
             ],
             $result
         );
     }
 
-    public function testGetBulkJsonSkipsFreshFile()
+    public function testGetBulkDataFileSkipsFreshFile()
     {
         $appConfig = $this->buildAppConfig();
         $file = tempnam(sys_get_temp_dir(), 'bulk_');
         file_put_contents($file, 'data');
         touch($file, time());
 
-        $result = ScryfallImportStub::getBulkJson('https://download.example/file', $file, 3600, $appConfig);
+        $result = ScryfallImportStub::getBulkDataFile('https://download.example/file', $file, 3600, $appConfig);
 
         $this->assertSame('Skipped', $result);
         $this->assertSame(0, ScryfallImportStub::$downloadCalls);
         unlink($file);
     }
 
-    public function testGetBulkJsonDownloadsWhenMissing()
+    public function testGetBulkDataFileDownloadsWhenMissing()
     {
         $appConfig = $this->buildAppConfig();
         $file = sys_get_temp_dir() . '/bulk_missing.json';
@@ -218,7 +240,7 @@ class ScryfallImportTest extends TestCase
             unlink($file);
         endif;
 
-        $result = ScryfallImportStub::getBulkJson('https://download.example/file', $file, 3600, $appConfig);
+        $result = ScryfallImportStub::getBulkDataFile('https://download.example/file', $file, 3600, $appConfig);
 
         $this->assertSame('Success', $result);
         $this->assertSame(1, ScryfallImportStub::$downloadCalls);
@@ -247,7 +269,7 @@ class ScryfallImportTest extends TestCase
         $this->assertFalse(ScryfallImportStub::getBulkInfo('default', $appConfig, $gameRules));
     }
 
-    public function testGetBulkInfoRejectsMissingDownloadUri()
+    public function testGetBulkInfoRejectsMissingJsonlDownloadUriOnly()
     {
         $defaultUrl = 'https://api.example/default';
         $imgLocation = sys_get_temp_dir() . '/mtg/';
@@ -281,7 +303,7 @@ class ScryfallImportTest extends TestCase
         $this->assertFalse(ScryfallImportStub::getBulkInfo('default', $appConfig, $gameRules));
     }
 
-    public function testGetBulkJsonDownloadsWhenStale()
+    public function testGetBulkDataFileDownloadsWhenStale()
     {
         $appConfig = $this->buildAppConfig();
         $file = tempnam(sys_get_temp_dir(), 'bulk_');
@@ -289,11 +311,46 @@ class ScryfallImportTest extends TestCase
         touch($file, time() - 7200);
 
         ScryfallImportStub::$downloadResults = [true];
-        $result = ScryfallImportStub::getBulkJson('https://download.example/file', $file, 3600, $appConfig);
+        $result = ScryfallImportStub::getBulkDataFile('https://download.example/file', $file, 3600, $appConfig);
 
         $this->assertSame('Success', $result);
         $this->assertSame(1, ScryfallImportStub::$downloadCalls);
         unlink($file);
+    }
+
+    public function testIterateBulkRecordsReadsJsonlGzip()
+    {
+        $file = tempnam(sys_get_temp_dir(), 'bulk_jsonl_') . '.jsonl.gz';
+        $handle = gzopen($file, 'wb');
+        $this->assertNotFalse($handle);
+        gzwrite($handle, "{\"id\":\"one\",\"name\":\"First\"}\n\n{\"id\":\"two\",\"name\":\"Second\"}\n");
+        gzclose($handle);
+
+        $records = iterator_to_array(ScryfallImport::iterateBulkRecords($file), false);
+
+        unlink($file);
+        $this->assertSame(
+            [
+                ['id' => 'one', 'name' => 'First'],
+                ['id' => 'two', 'name' => 'Second'],
+            ],
+            $records
+        );
+    }
+
+    public function testIterateBulkRecordsReportsJsonlLineError()
+    {
+        $file = tempnam(sys_get_temp_dir(), 'bulk_jsonl_') . '.jsonl';
+        file_put_contents($file, "{\"id\":\"one\"}\n{bad json}\n");
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('line 2');
+
+        try {
+            iterator_to_array(ScryfallImport::iterateBulkRecords($file), false);
+        } finally {
+            unlink($file);
+        }
     }
 
     public function testScryfallImportRejectsInvalidTableName()

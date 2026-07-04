@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.22
-Date:        13/01/26
+Version:     3.23
+Date:        04/07/26
 Name:        scryfall_rulings.php
 Purpose:     Import/update Scryfall rulings data
 Notes:       -
@@ -13,13 +13,10 @@ To do:       -
 */
 
 
-use JsonMachine\JsonDecoder\ExtJsonDecoder;
-use JsonMachine\Items;
 use MTG\Bulk\ScryfallImport;
 use MTG\Bulk\RulingsHasher;
 use MTG\Core\Filesystem;
 use MTG\Core\MyPHPMailer;
-use MTG\Core\UserAgent;
 
 $ctx = require __DIR__ . '/bulk_ini.php';
 
@@ -40,7 +37,7 @@ $max_fileage = 23 * 3600;
 $url = "https://api.scryfall.com/bulk-data/rulings";
 
 // Bulk file store point
-$file_location = $imgLocation . 'json/rulings.json';
+$file_location = $imgLocation . 'json/rulings.jsonl.gz';
 
 // Set counts
 $total_count = 0;
@@ -53,22 +50,14 @@ $log_interval = 2500;
 $timeslice_start = microtime(true);
 
 $msg->logMessage('[NOTICE]', "Scryfall Rulings API: fetching $url");
-$userAgent = UserAgent::buildFromConfig($appConfig, null, $msg);
-$msg->logMessage('[DEBUG]', "Scryfall Rulings API user agent set to $userAgent");
-$options = array(
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_FAILONERROR => true, // HTTP code > 400 will throw curl error
-    CURLOPT_USERAGENT => $userAgent,
-    CURLOPT_HTTPHEADER => array("Accept: application/json;q=0.9,*/*;q=0.8"),
-    );
-$ch = curl_init($url);
-curl_setopt_array($ch, $options);
-$curlresult = curl_exec($ch);
-curl_close($ch);
-$scryfall_rulings = json_decode($curlresult, true);
-if (isset($scryfall_rulings["type"]) and $scryfall_rulings["type"] === "rulings") :
-    $rulings_uri = $scryfall_rulings["download_uri"];
+$scryfall_rulings = ScryfallImport::fetchJson($url, $msg, 'Scryfall Rulings API', $appConfig);
+if ($scryfall_rulings === false || ($scryfall_rulings["type"] ?? '') !== "rulings") :
+    throw new Exception('[ERROR] scryfall_rulings.php: Scryfall rulings bulk metadata unavailable');
+endif;
+
+$rulings_uri = $scryfall_rulings["jsonl_download_uri"] ?? null;
+if ($rulings_uri === null || $rulings_uri === '') :
+    throw new Exception('[ERROR] scryfall_rulings.php: Scryfall rulings jsonl_download_uri not available');
 endif;
 $msg->logMessage('[NOTICE]', "Scryfall Rulings API: Download URI: $rulings_uri");
 
@@ -94,18 +83,14 @@ else :
 endif;
 if ($download > 0) :
     $msg->logMessage('[NOTICE]', "Scryfall Rulings API: downloading: $rulings_uri");
-$rulingreturn = ScryfallImport::downloadBulk(
-    $rulings_uri,
-    $file_location,
-    $msg,
-    $appConfig,
-    'Scryfall rulings data download',
-    false
-);
+    $rulingreturn = ScryfallImport::getBulkDataFile($rulings_uri, $file_location, 0, $appConfig);
+    if ($rulingreturn === false) :
+        throw new Exception('[ERROR] scryfall_rulings.php: Scryfall rulings data download failed');
+    endif;
 endif;
 $msg->logMessage('[NOTICE]', "Scryfall Rulings API: Local file: $file_location");
 
-$data = Items::fromFile($imgLocation . 'json/rulings.json', ['decoder' => new ExtJsonDecoder(true)]);
+$data = ScryfallImport::iterateBulkRecords($file_location);
 $msg->logMessage('[DEBUG]', 'Checking for rulings_scry content_hash column');
 $hashColumnResult = $db->query("SHOW COLUMNS FROM `rulings_scry` LIKE 'content_hash'");
 if ($hashColumnResult === false) :
