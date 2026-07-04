@@ -2,26 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.6.1-dev] - Unreleased
+## [v0.6.1] - 2026-07-04
 
-### Added
-
--
-
-### Changed
-
--
-
-### Fixed
-
--
-
-### Security
+### Security - 2026-07-04
 
 - Updated vulnerable Composer dependencies flagged by Dependabot: `spomky-labs/otphp`, `guzzlehttp/guzzle`, and
   `guzzlehttp/psr7`.
 
-### Infrastructure
+### Infrastructure - 2026-07-04
 
 - Updated `phpmailer/phpmailer` to 7.1.1.
 
