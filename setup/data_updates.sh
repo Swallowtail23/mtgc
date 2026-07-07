@@ -19,6 +19,7 @@ case "${mode}" in
         run_bulk_php scryfall_sets.php
         run_bulk_php scryfall_bulk.php refresh
         run_bulk_php scryfall_rulings.php
+        run_bulk_php scryfall_bulk.php tags
         run_bulk_php scryfall_migrations.php
         run_bulk_php scryfall_manifest.php
         run_bulk_php scryfall_sync_state.php data-backfill
@@ -32,6 +33,7 @@ case "${mode}" in
         run_bulk_php scryfall_sets.php
         run_bulk_php scryfall_bulk.php refresh
         run_bulk_php scryfall_rulings.php
+        run_bulk_php scryfall_bulk.php tags
         run_bulk_php scryfall_migrations.php
         run_bulk_php scryfall_manifest.php
         run_bulk_php scryfall_sync_state.php data-backfill
@@ -40,6 +42,7 @@ case "${mode}" in
         run_bulk_php scryfall_sets.php
         run_bulk_php scryfall_bulk.php default
         run_bulk_php scryfall_rulings.php
+        run_bulk_php scryfall_bulk.php tags
         run_bulk_php scryfall_migrations.php
         run_bulk_php scryfall_manifest.php
         run_bulk_php collection_snapshots.php
@@ -50,6 +53,7 @@ case "${mode}" in
         run_bulk_php scryfall_bulk.php all
         run_bulk_php scryfall_bulk.php default
         run_bulk_php scryfall_rulings.php
+        run_bulk_php scryfall_bulk.php tags
         run_bulk_php scryfall_migrations.php
         run_bulk_php scryfall_manifest.php
         run_bulk_php weekly_exports.php

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     9.31
-Date:        04/07/26
+Version:     9.34
+Date:        07/07/26
 Name:        scryfall_bulk.php
 Purpose:     Import/update Scryfall bulk data
 Notes:       {none}
@@ -39,6 +39,7 @@ Filesystem::ensureDirectoryExists($imgLocation . 'json', $appConfig, $msg);
 /// Call with 'all' gets the all cards file
 /// Call with 'refresh' gets fresh copies of BOTH files (run by docker install for initial setup)
 /// Call with 'sync-state' backfills local Scryfall data sync state
+/// Call with 'tags' imports Oracle and art tags
 
 $arg1 = $argv[1] ?? '';
 $arg1 = strtolower(trim($arg1));
@@ -52,6 +53,30 @@ elseif ($arg1 === 'sync-state') :
     $affected = ScryfallImport::backfillDataSyncState($db, $msg);
     if (PHP_SAPI === 'cli') :
         echo "Scryfall sync state: data backfill completed; affected rows: $affected\n";
+    endif;
+    exit(0);
+elseif ($arg1 === 'tags' || $arg1 === 'oracle-tags' || $arg1 === 'art-tags') :
+    $tagMode = 'all';
+    if ($arg1 === 'oracle-tags') :
+        $tagMode = 'oracle';
+    elseif ($arg1 === 'art-tags') :
+        $tagMode = 'art';
+    endif;
+    $tagResult = ScryfallImport::importTags($tagMode, $db, $appConfig, $gameRules, $msg);
+    $tagBody = implode("\n", $tagResult['summary']);
+    $subject = "MTG Scryfall tag update completed ($tagMode)";
+    if (!empty($emailEnabled)) :
+        $mail = new MyPHPMailer(true, $appConfig);
+        $mailresult = $mail->sendEmail($adminEmail, false, $subject, $tagBody);
+        $msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");
+    else :
+        $msg->logMessage('[NOTICE]', "Email disabled; scryfall_bulk tag alert not sent for $tagMode");
+    endif;
+    if (PHP_SAPI === 'cli') :
+        echo "Scryfall Tags API: {$tagResult['tags']} tags and {$tagResult['assignments']} assignments completed\n";
+        foreach ($tagResult['summary'] as $line) :
+            echo $line . PHP_EOL;
+        endforeach;
     endif;
     exit(0);
 elseif ($arg1 === 'all') :

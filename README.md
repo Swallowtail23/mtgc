@@ -22,8 +22,8 @@ fully mobile-responsive and offers comprehensive search, deck-building,
 collection tracking, localised currency conversion, import/export tooling,
 and optional 2FA and commenting integrations.
 
-The app relies on data provided by Scryfall (sets/cards/rulings/prices/images
-and manifest update timestamps).
+The app relies on data provided by Scryfall (sets/cards/rulings/prices/images,
+Oracle tags, art tags, and manifest update timestamps).
 While due care is taken, no security guarantees are provided. The site is
 currently developed on RHEL 8/9 with PHP 8.2 and podman containers with PHP 8.4;
 disk usage ranges from 10 GB TO 100 GB depending on downloaded images.
@@ -83,6 +83,10 @@ disk usage ranges from 10 GB TO 100 GB depending on downloaded images.
 - `ImgLocation` (configured in the ini) stores card images and cached Scryfall
   data files (`json/`, including JSONL bulk downloads); it must exist and be
   writable.
+- Scryfall data updates are orchestrated by `setup/data_updates.sh`. The tag
+  import is available through `php bulk/scryfall_bulk.php tags` after the
+  `scryfall_tag_definitions` and `scryfall_tag_assignments` schema has been applied. See
+  [Scryfall Tags](docs/scryfall_tags.md).
 
 ### Ini file (`/opt/mtg/mtg_new.ini`)
 
@@ -113,7 +117,7 @@ Third-party license and attribution details are tracked in
 
 - Andrew Gioia for [Keyrune](https://keyrune.andrewgioia.com/)
 - Andrew Gioia for [Mana](https://mana.andrewgioia.com/)
-- [Scryfall](https://scryfall.com) for card/set/ruling/pricing data and images
+- [Scryfall](https://scryfall.com) for card/set/ruling/pricing/tag data and images
 - Wizards of the Coast for Magic: The Gathering (not affiliated)
 
 Contact: webmaster@mtgcollection.info

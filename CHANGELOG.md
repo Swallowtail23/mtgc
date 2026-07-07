@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
--
+- Added Scryfall Oracle/art tag bulk ingestion and storage for future tag-based search.
+- Added Scryfall illustration IDs to card bulk imports for future art-tag search joins.
 
 ### Changed
 

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        28/04/26
+Version:     1.2
+Date:        07/07/26
 Name:        ScryfallImportPrintedFieldsTest.php
 Purpose:     Verifies printed type/text fields are captured in Scryfall bulk import binds.
 Notes:       -
@@ -185,6 +185,7 @@ class ScryfallImportPrintedFieldsTest extends TestCase
             'scryfall_uri' => 'https://scryfall.com/card/test',
             'layout' => 'transform',
             'image_uris' => ['normal' => 'https://img/front.jpg'],
+            'illustration_id' => '33333333-3333-3333-3333-333333333333',
             'mana_cost' => '{2}{U}',
             'cmc' => 3,
             'type_line' => 'Legendary Planeswalker — Test',
@@ -229,6 +230,7 @@ class ScryfallImportPrintedFieldsTest extends TestCase
                     'oracle_text' => '-2: Do front thing.',
                     'printed_text' => 'Texte Avant Imprime',
                     'image_uris' => ['normal' => 'https://img/f1.jpg'],
+                    'illustration_id' => '44444444-4444-4444-4444-444444444444',
                     'printed_name' => 'Nom Avant Imprime',
                 ],
                 [
@@ -238,6 +240,7 @@ class ScryfallImportPrintedFieldsTest extends TestCase
                     'oracle_text' => '-10: Do back thing.',
                     'printed_text' => 'Texte Arriere Imprime',
                     'image_uris' => ['normal' => 'https://img/f2.jpg'],
+                    'illustration_id' => '55555555-5555-5555-5555-555555555555',
                     'printed_name' => 'Nom Arriere Imprime',
                 ],
             ],
@@ -269,5 +272,8 @@ class ScryfallImportPrintedFieldsTest extends TestCase
         $this->assertContains('Texte Avant Imprime', $insertStmt->captured);
         $this->assertContains('Type Arriere Imprime', $insertStmt->captured);
         $this->assertContains('Texte Arriere Imprime', $insertStmt->captured);
+        $this->assertContains('33333333-3333-3333-3333-333333333333', $insertStmt->captured);
+        $this->assertContains('44444444-4444-4444-4444-444444444444', $insertStmt->captured);
+        $this->assertContains('55555555-5555-5555-5555-555555555555', $insertStmt->captured);
     }
 }

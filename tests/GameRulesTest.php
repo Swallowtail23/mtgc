@@ -44,6 +44,8 @@ class GameRulesTest extends TestCase
             $rules->get('defaultCardsUrl')
         );
         $this->assertSame('https://api.scryfall.com/sets', $rules->get('setsUrl'));
+        $this->assertSame('https://api.scryfall.com/bulk-data/oracle-tags', $rules->get('oracleTagsUrl'));
+        $this->assertSame('https://api.scryfall.com/bulk-data/art-tags', $rules->get('artTagsUrl'));
         $this->assertSame('https://api.scryfall.com/cards/manifest', $rules->get('manifestUrl'));
     }
 }

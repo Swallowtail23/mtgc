@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.00
-Date:        04/07/26
+Version:     1.01
+Date:        07/07/26
 Name:        scryfall_reset_data.php
 Purpose:     Destructively clear local Scryfall-managed data tables.
 Notes:       Manual use only.
@@ -29,6 +29,8 @@ endif;
 $tables = [
     'cards_scry',
     'rulings_scry',
+    'scryfall_tag_assignments',
+    'scryfall_tag_definitions',
     'migrations',
     'scryfall_manifest',
     'sets',

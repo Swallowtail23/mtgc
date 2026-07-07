@@ -36,6 +36,7 @@ CREATE TABLE `cards_scry` (
   `manacost` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `cmc` decimal(9,1) DEFAULT NULL,
   `artist` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `illustration_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `flavor` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `color` json DEFAULT NULL,
   `color_identity` json DEFAULT NULL,
@@ -64,6 +65,7 @@ CREATE TABLE `cards_scry` (
   `f1_artist` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f1_flavor` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f1_image_uri` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `f1_illustration_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f1_power` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f1_toughness` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f1_loyalty` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
@@ -80,6 +82,7 @@ CREATE TABLE `cards_scry` (
   `f2_artist` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f2_flavor` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f2_image_uri` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `f2_illustration_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f2_power` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f2_toughness` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f2_loyalty` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
@@ -241,6 +244,27 @@ CREATE TABLE `rulings_scry` (
   `content_hash` char(40) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE `scryfall_tag_definitions` (
+  `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `tag_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `label` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `slug` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `uri` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `parent_ids` json DEFAULT NULL,
+  `child_ids` json DEFAULT NULL,
+  `aliases` json DEFAULT NULL,
+  `content_hash` char(40) DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `scryfall_tag_assignments` (
+  `tag_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `tag_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `subject_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `weight` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 CREATE TABLE `scryfalljson` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `jsonupdatetime` int NOT NULL,
@@ -364,7 +388,10 @@ ALTER TABLE `cards_scry`
   ADD KEY `idx_price_fields` (`id`,`price`,`price_foil`,`price_etched`,`foil`),
   ADD KEY `idx_is_paper` (`is_paper`),
   ADD KEY `idx_is_mtgo` (`is_mtgo`),
-  ADD KEY `idx_is_arena` (`is_arena`);
+  ADD KEY `idx_is_arena` (`is_arena`),
+  ADD KEY `idx_illustration_id` (`illustration_id`),
+  ADD KEY `idx_f1_illustration_id` (`f1_illustration_id`),
+  ADD KEY `idx_f2_illustration_id` (`f2_illustration_id`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `ability` (`ability`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `name` (`name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `type` (`type`);
@@ -424,6 +451,19 @@ ALTER TABLE `rulings_scry`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `rulings_unique` (`content_hash`),
   ADD KEY `oracle_id` (`oracle_id`);
+
+ALTER TABLE `scryfall_tag_definitions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `tag_type_slug` (`tag_type`,`slug`),
+  ADD KEY `tag_type` (`tag_type`),
+  ADD KEY `slug` (`slug`),
+  ADD KEY `content_hash` (`content_hash`);
+
+ALTER TABLE `scryfall_tag_assignments`
+  ADD PRIMARY KEY (`tag_id`,`subject_id`),
+  ADD KEY `subject_type` (`subject_id`,`tag_type`),
+  ADD KEY `tag_type` (`tag_type`),
+  ADD KEY `weight` (`weight`);
 
 ALTER TABLE `scryfalljson`
   ADD UNIQUE KEY `id` (`id`);

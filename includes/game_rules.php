@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.11
-Date:        12/01/26
+Version:     1.12
+Date:        07/07/26
 Name:        game_rules.php
 Purpose:     Game rules arrays and constants.
 Notes:       Add a new rule by defining it once below; it is returned automatically.
@@ -512,6 +512,8 @@ if (!function_exists('mtg_game_rules')) :
         $allCardsUrl        = $scryfallApiBaseUrl . "/bulk-data/all-cards";
         $setsUrl            = $scryfallApiBaseUrl . "/sets";
         $rulingsUrl         = $scryfallApiBaseUrl . "/bulk-data/rulings";
+        $oracleTagsUrl      = $scryfallApiBaseUrl . "/bulk-data/oracle-tags";
+        $artTagsUrl         = $scryfallApiBaseUrl . "/bulk-data/art-tags";
         $migrationsUrl      = $scryfallApiBaseUrl . "/migrations";
         $manifestUrl        = $scryfallApiBaseUrl . "/cards/manifest";
 
