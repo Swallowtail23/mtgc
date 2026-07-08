@@ -2,9 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.6.4-dev] - Unreleased
+## [v0.6.4] - 2026-07-04
 
-### Added
+### Added - 2026-07-04
 
 - Added Scryfall Oracle/art tag bulk ingestion and storage for future tag-based search.
 - Added Scryfall illustration IDs to card bulk imports for future art-tag search joins.
@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 - Added advanced-search controls for Scryfall Oracle and image tag searches.
 - Added Scryfall Oracle and image tag summaries to card detail pages.
 
-### Changed
+### Changed - 2026-07-04
 
 - Extracted Scryfall tag bulk import logic from the main Scryfall importer into a dedicated bulk import class.
 - Extracted Scryfall bulk HTTP/download/file-iteration helpers from the main Scryfall importer.
@@ -24,15 +24,11 @@ All notable changes to this project will be documented in this file.
 - Card-detail Scryfall tag summaries now render inside a collapsed Tags disclosure section with clickable tag searches.
 - Multi-term Scryfall tag searches now match each term independently on tag boundaries instead of substrings.
 
-### Fixed
+### Fixed - 2026-07-04
 
 - Changed advanced tag search predicates to avoid correlated Scryfall tag lookups on every card row.
 
-### Security
-
--
-
-### Infrastructure
+### Infrastructure - 2026-07-04
 
 - Aligned install, Docker, and developer documentation with the single `data_updates.sh` Scryfall data workflow.
 - Docker bootstrap scripts now copy only `setup/data_updates.sh` into the persisted scripts directory.
