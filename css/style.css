@@ -1,5 +1,5 @@
 /*
-Version:     2.30
+Version:     2.33
 Date:        26/02/26
 Name:        style.css
 Purpose:     Provides global styling for the MTG Collection app.
@@ -3818,6 +3818,39 @@ td.columnhide
     font-variation-settings:
         'wght' 300,
         'GRAD' -50;
+}
+
+.carddetail-tags
+{
+    margin-top: 2px;
+    overflow-wrap: anywhere;
+}
+
+.carddetail-tags summary
+{
+    cursor: pointer;
+    display: list-item;
+    list-style-position: inside;
+}
+
+.carddetail-tags div
+{
+    margin-left: 0;
+}
+
+.carddetail-tag-link,
+.carddetail-tag-link:visited
+{
+    color: inherit;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.carddetail-tag-link:hover,
+.carddetail-tag-link:focus
+{
+    color: inherit;
+    text-decoration: none;
 }
 
 .card-info-placeholder

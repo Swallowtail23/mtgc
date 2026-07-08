@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.3
 Date:        08/07/26
 Name:        CriteriaTagSearchTest.php
 Purpose:     Tests advanced-search Scryfall tag criteria generation.
@@ -38,13 +38,16 @@ class CriteriaTagSearchTest extends TestCase
         ]);
 
         $this->assertSame('true', $result['validsearch']);
-        $this->assertStringContainsString("sta.tag_type = 'oracle'", $result['criteria']);
+        $this->assertStringContainsString('sta.tag_type = ?', $result['criteria']);
         $this->assertStringContainsString('cards_scry.oracle_id IN', $result['criteria']);
         $this->assertStringContainsString('SELECT sta.subject_id', $result['criteria']);
-        $this->assertStringContainsString('std.label LIKE ?', $result['criteria']);
-        $this->assertStringContainsString('std.slug LIKE ?', $result['criteria']);
+        $this->assertStringContainsString('std.label REGEXP ?', $result['criteria']);
+        $this->assertStringContainsString('std.slug REGEXP ?', $result['criteria']);
         $this->assertStringNotContainsString('cards_scry.illustration_id', $result['criteria']);
-        $this->assertSame(['%dragon%', '%dragon%'], $result['params']);
+        $this->assertSame(
+            ['oracle', 'oracle', '(^|[^[:alnum:]])dragon([^[:alnum:]]|$)', '(^|-)dragon(-|$)'],
+            $result['params']
+        );
     }
 
     public function testImageTagSearchCanStandAloneWithSearchText(): void
@@ -55,11 +58,27 @@ class CriteriaTagSearchTest extends TestCase
         ]);
 
         $this->assertSame('true', $result['validsearch']);
-        $this->assertStringContainsString("sta.tag_type = 'art'", $result['criteria']);
+        $this->assertStringContainsString('sta.tag_type = ?', $result['criteria']);
         $this->assertStringContainsString('cards_scry.illustration_id', $result['criteria']);
         $this->assertStringContainsString('cards_scry.f1_illustration_id', $result['criteria']);
         $this->assertStringContainsString('cards_scry.f2_illustration_id', $result['criteria']);
-        $this->assertSame(['%moon%', '%moon%', '%moon%', '%moon%', '%moon%', '%moon%'], $result['params']);
+        $this->assertSame(
+            [
+                'art',
+                'art',
+                '(^|[^[:alnum:]])moon([^[:alnum:]]|$)',
+                '(^|-)moon(-|$)',
+                'art',
+                'art',
+                '(^|[^[:alnum:]])moon([^[:alnum:]]|$)',
+                '(^|-)moon(-|$)',
+                'art',
+                'art',
+                '(^|[^[:alnum:]])moon([^[:alnum:]]|$)',
+                '(^|-)moon(-|$)',
+            ],
+            $result['params']
+        );
     }
 
     public function testNameAndOracleTagSearchNarrowsWithAnd(): void
@@ -73,10 +92,12 @@ class CriteriaTagSearchTest extends TestCase
         $this->assertSame('true', $result['validsearch']);
         $this->assertStringContainsString('cards_scry.name LIKE ?', $result['criteria']);
         $this->assertStringContainsString(') AND (cards_scry.oracle_id IN', $result['criteria']);
-        $this->assertCount(11, $result['params']);
+        $this->assertCount(13, $result['params']);
         $this->assertSame('%dragon%', $result['params'][0]);
-        $this->assertSame('%dragon%', $result['params'][9]);
-        $this->assertSame('%dragon%', $result['params'][10]);
+        $this->assertSame('oracle', $result['params'][9]);
+        $this->assertSame('oracle', $result['params'][10]);
+        $this->assertSame('(^|[^[:alnum:]])dragon([^[:alnum:]]|$)', $result['params'][11]);
+        $this->assertSame('(^|-)dragon(-|$)', $result['params'][12]);
     }
 
     public function testTagSearchWithoutTextIsRejected(): void
@@ -111,12 +132,86 @@ class CriteriaTagSearchTest extends TestCase
         ]);
 
         $this->assertSame('true', $result['validsearch']);
-        $this->assertStringContainsString("sta.tag_type = 'art'", $result['criteria']);
+        $this->assertStringContainsString('sta.tag_type = ?', $result['criteria']);
         $this->assertStringContainsString('cards_scry.setcode LIKE ?', $result['criteria']);
         $this->assertSame(
-            ['%dragon%', '%dragon%', '%dragon%', '%dragon%', '%dragon%', '%dragon%', 'fdn'],
+            [
+                'art',
+                'art',
+                '(^|[^[:alnum:]])dragon([^[:alnum:]]|$)',
+                '(^|-)dragon(-|$)',
+                'art',
+                'art',
+                '(^|[^[:alnum:]])dragon([^[:alnum:]]|$)',
+                '(^|-)dragon(-|$)',
+                'art',
+                'art',
+                '(^|[^[:alnum:]])dragon([^[:alnum:]]|$)',
+                '(^|-)dragon(-|$)',
+                'fdn',
+            ],
             $result['params']
         );
+    }
+
+    public function testImageTagSearchSplitsMultipleTermsAndRequiresEveryTerm(): void
+    {
+        $result = $this->buildCriteria([
+            'name' => 'marvel glasses',
+            'searchimagetag' => 'yes',
+        ]);
+
+        $this->assertSame('true', $result['validsearch']);
+        $this->assertStringContainsString(
+            'cards_scry.illustration_id IN',
+            $result['criteria']
+        );
+        $this->assertStringContainsString(' AND cards_scry.illustration_id IN', $result['criteria']);
+        $this->assertStringContainsString(' OR (cards_scry.f1_illustration_id IN', $result['criteria']);
+        $this->assertSame(
+            [
+                'art',
+                'art',
+                '(^|[^[:alnum:]])marvel([^[:alnum:]]|$)',
+                '(^|-)marvel(-|$)',
+                'art',
+                'art',
+                '(^|[^[:alnum:]])glasses([^[:alnum:]]|$)',
+                '(^|-)glasses(-|$)',
+                'art',
+                'art',
+                '(^|[^[:alnum:]])marvel([^[:alnum:]]|$)',
+                '(^|-)marvel(-|$)',
+                'art',
+                'art',
+                '(^|[^[:alnum:]])glasses([^[:alnum:]]|$)',
+                '(^|-)glasses(-|$)',
+                'art',
+                'art',
+                '(^|[^[:alnum:]])marvel([^[:alnum:]]|$)',
+                '(^|-)marvel(-|$)',
+                'art',
+                'art',
+                '(^|[^[:alnum:]])glasses([^[:alnum:]]|$)',
+                '(^|-)glasses(-|$)',
+            ],
+            $result['params']
+        );
+    }
+
+    public function testTagTermsDoNotUseSubstringLikeMatching(): void
+    {
+        $result = $this->buildCriteria([
+            'name' => 'ice',
+            'searchimagetag' => 'yes',
+        ]);
+
+        $this->assertSame('true', $result['validsearch']);
+        $this->assertStringNotContainsString('LIKE ?', $result['criteria']);
+        $this->assertStringContainsString('REGEXP ?', $result['criteria']);
+        $this->assertNotContains('%ice%', $result['params']);
+        $this->assertContains('(^|[^[:alnum:]])ice([^[:alnum:]]|$)', $result['params']);
+        $this->assertContains('(^|-)ice(-|$)', $result['params']);
     }
 
     /**

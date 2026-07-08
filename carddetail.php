@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     22.74
-Date:        06/05/26
+Version:     22.77
+Date:        08/07/26
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -220,6 +220,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                "SELECT
                     cards_scry.id as cs_id,
                     oracle_id,
+                    illustration_id,
                     tcgplayer_id,
                     scryfalljson.tcg_buy_uri,
                     multiverse,
@@ -262,6 +263,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     f1_printed_text,
                     f1_artist,
                     f1_flavor,
+                    f1_illustration_id,
                     f1_power,
                     f1_toughness,
                     f1_loyalty,
@@ -276,6 +278,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     f2_printed_text,
                     f2_artist,
                     f2_flavor,
+                    f2_illustration_id,
                     f2_power,
                     f2_toughness,
                     f2_loyalty,
@@ -626,6 +629,66 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                         endif;
                     endif;
                 endif;
+            endif;
+
+            $oracleTags = [];
+            $imageTags = [];
+            if (!empty($row['oracle_id'])) :
+                $oracleTagsResult = $db->execute_query(
+                    "SELECT DISTINCT std.label
+                    FROM scryfall_tag_assignments sta
+                    JOIN scryfall_tag_definitions std
+                        ON std.id = sta.tag_id
+                    WHERE sta.tag_type = 'oracle'
+                        AND std.tag_type = 'oracle'
+                        AND sta.subject_id = ?
+                    ORDER BY std.label",
+                    [$row['oracle_id']]
+                );
+                if ($oracleTagsResult === false) :
+                    throw new Exception(
+                        "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": Oracle tag lookup failure: "
+                        . $db->error
+                    );
+                endif;
+                while ($tagRow = $oracleTagsResult->fetch_assoc()) :
+                    if (isset($tagRow['label']) && $tagRow['label'] !== '') :
+                        $oracleTags[] = (string) $tagRow['label'];
+                    endif;
+                endwhile;
+                $oracleTagsResult->free();
+            endif;
+
+            $illustrationIds = array_values(array_unique(array_filter([
+                $row['illustration_id'] ?? null,
+                $row['f1_illustration_id'] ?? null,
+                $row['f2_illustration_id'] ?? null,
+            ], static fn ($value): bool => is_string($value) && $value !== '')));
+            if ($illustrationIds !== []) :
+                $imageTagPlaceholders = implode(',', array_fill(0, count($illustrationIds), '?'));
+                $imageTagsResult = $db->execute_query(
+                    "SELECT DISTINCT std.label
+                    FROM scryfall_tag_assignments sta
+                    JOIN scryfall_tag_definitions std
+                        ON std.id = sta.tag_id
+                    WHERE sta.tag_type = 'art'
+                        AND std.tag_type = 'art'
+                        AND sta.subject_id IN ($imageTagPlaceholders)
+                    ORDER BY std.label",
+                    $illustrationIds
+                );
+                if ($imageTagsResult === false) :
+                    throw new Exception(
+                        "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": Image tag lookup failure: "
+                        . $db->error
+                    );
+                endif;
+                while ($tagRow = $imageTagsResult->fetch_assoc()) :
+                    if (isset($tagRow['label']) && $tagRow['label'] !== '') :
+                        $imageTags[] = (string) $tagRow['label'];
+                    endif;
+                endwhile;
+                $imageTagsResult->free();
             endif;
 
                 $setcode = htmlentities($setcode, ENT_QUOTES, "UTF-8");
@@ -1509,6 +1572,38 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                 endif;
 
                                 echo $legalitystring . "<br>";
+                                if ($oracleTags !== [] || $imageTags !== []) :
+                                    echo "<details class='carddetail-tags'><summary><b>Tags</b></summary>";
+                                    if ($oracleTags !== []) :
+                                        $oracleTagLinks = array_map(
+                                            static function (string $tag): string {
+                                                $tagEsc = htmlspecialchars($tag, ENT_QUOTES, 'UTF-8');
+                                                $tagUrl = htmlspecialchars(rawurlencode($tag), ENT_QUOTES, 'UTF-8');
+
+                                                return "<a class='carddetail-tag-link' href='index.php?complex=yes"
+                                                    . "&amp;layout=grid&amp;name={$tagUrl}&amp;searchoracletag=yes"
+                                                    . "&amp;scope=all&amp;sortBy=auto'>{$tagEsc}</a>";
+                                            },
+                                            $oracleTags
+                                        );
+                                        echo "<div><b>Oracle tags: </b>" . implode('; ', $oracleTagLinks) . "</div>";
+                                    endif;
+                                    if ($imageTags !== []) :
+                                        $imageTagLinks = array_map(
+                                            static function (string $tag): string {
+                                                $tagEsc = htmlspecialchars($tag, ENT_QUOTES, 'UTF-8');
+                                                $tagUrl = htmlspecialchars(rawurlencode($tag), ENT_QUOTES, 'UTF-8');
+
+                                                return "<a class='carddetail-tag-link' href='index.php?complex=yes"
+                                                    . "&amp;layout=grid&amp;name={$tagUrl}&amp;searchimagetag=yes"
+                                                    . "&amp;scope=all&amp;sortBy=auto'>{$tagEsc}</a>";
+                                            },
+                                            $imageTags
+                                        );
+                                        echo "<div><b>Image tags: </b>" . implode('; ', $imageTagLinks) . "</div>";
+                                    endif;
+                                    echo "</details>";
+                                endif;
                             endif;
                             if ($row['layout'] === 'adventure') :
                                 echo "<h3>Adventure: </h3>";

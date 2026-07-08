@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     8.13
+Version:     8.15
 Date:        08/07/26
 Name:        criteria.php
 Purpose:     PHP script to build search criteria
@@ -309,58 +309,41 @@ else :
                 $params = array_fill(0, 3, "%{$name}%");
             endif;
             if ($tagSearchRequested) :
+                $tagTerms = array_values(array_filter(
+                    preg_split('/\s+/', trim($name)) ?: [],
+                    static fn (string $term): bool => $term !== ''
+                ));
+                $tagSubjectSql = "SELECT sta.subject_id
+                    FROM scryfall_tag_assignments sta
+                    JOIN scryfall_tag_definitions std
+                        ON std.id = sta.tag_id
+                    WHERE sta.tag_type = ?
+                        AND std.tag_type = ?
+                        AND (
+                            std.label REGEXP ?
+                            OR std.slug REGEXP ?
+                        )";
                 if ($searchoracletag === "yes") :
-                    $criteriaTag = "cards_scry.oracle_id IN (
-                        SELECT sta.subject_id
-                        FROM scryfall_tag_assignments sta
-                        JOIN scryfall_tag_definitions std
-                            ON std.id = sta.tag_id
-                        WHERE sta.tag_type = 'oracle'
-                            AND std.tag_type = 'oracle'
-                            AND (
-                                std.label LIKE ?
-                                OR std.slug LIKE ?
-                            )
-                    )";
+                    $oracleTagCriteria = [];
+                    foreach ($tagTerms as $tagTerm) :
+                        $oracleTagCriteria[] = "cards_scry.oracle_id IN ($tagSubjectSql)";
+                    endforeach;
+                    $criteriaTag = implode(" AND ", $oracleTagCriteria);
                 else :
-                    $criteriaTag = "(
-                        cards_scry.illustration_id IN (
-                            SELECT sta.subject_id
-                            FROM scryfall_tag_assignments sta
-                            JOIN scryfall_tag_definitions std
-                                ON std.id = sta.tag_id
-                            WHERE sta.tag_type = 'art'
-                                AND std.tag_type = 'art'
-                                AND (
-                                    std.label LIKE ?
-                                    OR std.slug LIKE ?
-                                )
-                        )
-                        OR cards_scry.f1_illustration_id IN (
-                            SELECT sta.subject_id
-                            FROM scryfall_tag_assignments sta
-                            JOIN scryfall_tag_definitions std
-                                ON std.id = sta.tag_id
-                            WHERE sta.tag_type = 'art'
-                                AND std.tag_type = 'art'
-                                AND (
-                                    std.label LIKE ?
-                                    OR std.slug LIKE ?
-                                )
-                        )
-                        OR cards_scry.f2_illustration_id IN (
-                            SELECT sta.subject_id
-                            FROM scryfall_tag_assignments sta
-                            JOIN scryfall_tag_definitions std
-                                ON std.id = sta.tag_id
-                            WHERE sta.tag_type = 'art'
-                                AND std.tag_type = 'art'
-                                AND (
-                                    std.label LIKE ?
-                                    OR std.slug LIKE ?
-                                )
-                            )
-                    )";
+                    $imageTagCriteria = [];
+                    $imageTagColumns = [
+                        'cards_scry.illustration_id',
+                        'cards_scry.f1_illustration_id',
+                        'cards_scry.f2_illustration_id',
+                    ];
+                    foreach ($imageTagColumns as $illustrationIdColumn) :
+                        $imageColumnCriteria = [];
+                        foreach ($tagTerms as $tagTerm) :
+                            $imageColumnCriteria[] = "$illustrationIdColumn IN ($tagSubjectSql)";
+                        endforeach;
+                        $imageTagCriteria[] = "(" . implode(" AND ", $imageColumnCriteria) . ")";
+                    endforeach;
+                    $criteriaTag = "(" . implode(" OR ", $imageTagCriteria) . ")";
                 endif;
 
                 if (!empty($criteriaNTA)) :
@@ -369,12 +352,20 @@ else :
                     $criteriaNTA = $criteriaTag;
                 endif;
                 if ($searchoracletag === "yes") :
-                    $params[] = "%$name%";
-                    $params[] = "%$name%";
+                    foreach ($tagTerms as $tagTerm) :
+                        $params[] = 'oracle';
+                        $params[] = 'oracle';
+                        $params[] = '(^|[^[:alnum:]])' . preg_quote($tagTerm, '/') . '([^[:alnum:]]|$)';
+                        $params[] = '(^|-)' . preg_quote($tagTerm, '/') . '(-|$)';
+                    endforeach;
                 else :
                     for ($tagParamSet = 0; $tagParamSet < 3; $tagParamSet++) :
-                        $params[] = "%$name%";
-                        $params[] = "%$name%";
+                        foreach ($tagTerms as $tagTerm) :
+                            $params[] = 'art';
+                            $params[] = 'art';
+                            $params[] = '(^|[^[:alnum:]])' . preg_quote($tagTerm, '/') . '([^[:alnum:]]|$)';
+                            $params[] = '(^|-)' . preg_quote($tagTerm, '/') . '(-|$)';
+                        endforeach;
                     endfor;
                 endif;
             endif;
