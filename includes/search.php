@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.24
-Date:        28/04/26
+Version:     6.26
+Date:        08/07/26
 Name:        search.php
 Purpose:     Layout for search on index.php
 Notes:       -
@@ -70,7 +70,7 @@ $rulesSearchLangs = $gameRules->getArray('search_langs');
                 <input
                     id='cb1'
                     type="checkbox"
-                    class="scopecheckbox checkbox notnotes notability notsetcode notpromo"
+                    class="scopecheckbox mainsearchcheckbox checkbox notnotes notability notsetcode notpromo"
                     name="searchname"
                     value="yes"
                     checked="checked"
@@ -84,7 +84,8 @@ $rulesSearchLangs = $gameRules->getArray('search_langs');
                 <input
                     id='cb2'
                     type="checkbox"
-                    class="scopecheckbox checkbox notname notnotes notability notsetcode notpromo"
+                    class="scopecheckbox mainsearchcheckbox tagdisabledsearchcheckbox checkbox notname notnotes
+                        notability notsetcode notpromo"
                     name="searchtype"
                     value="yes"
                 >
@@ -96,7 +97,8 @@ $rulesSearchLangs = $gameRules->getArray('search_langs');
                 <input
                     id="yesnotes"
                     type="checkbox"
-                    class="scopecheckbox checkbox notname notability notsetcode notpromo"
+                    class="scopecheckbox mainsearchcheckbox tagdisabledsearchcheckbox checkbox notname notability
+                        notsetcode notpromo"
                     name="searchnotes"
                     value="yes"
                 >
@@ -109,7 +111,8 @@ $rulesSearchLangs = $gameRules->getArray('search_langs');
                 <input
                     id='searchsetcode'
                     type="checkbox"
-                    class="scopecheckbox checkbox notname notnotes notability notpromo"
+                    class="scopecheckbox mainsearchcheckbox tagdisabledsearchcheckbox checkbox notname notnotes
+                        notability notpromo"
                     name="searchsetcode"
                     value="yes"
                 >
@@ -121,7 +124,8 @@ $rulesSearchLangs = $gameRules->getArray('search_langs');
                 <input
                     id='searchpromo'
                     type="checkbox"
-                    class="scopecheckbox checkbox notname notnotes notability"
+                    class="scopecheckbox mainsearchcheckbox tagdisabledsearchcheckbox checkbox notname notnotes
+                        notability"
                     name="searchpromo"
                     value="yes"
                 >
@@ -133,7 +137,7 @@ $rulesSearchLangs = $gameRules->getArray('search_langs');
                 <input
                     id='searchnew'
                     type="checkbox"
-                    class="scopecheckbox checkbox notnotes"
+                    class="scopecheckbox mainsearchcheckbox checkbox notnotes"
                     name="searchnew"
                     value="yes"
                 >
@@ -146,7 +150,7 @@ $rulesSearchLangs = $gameRules->getArray('search_langs');
                 <input
                     id="abilitymain"
                     type="checkbox"
-                    class="scopecheckbox checkbox notname notsetcode"
+                    class="scopecheckbox mainsearchcheckbox tagdisabledsearchcheckbox checkbox notname notsetcode"
                     name="searchability"
                     value="yes"
                 >
@@ -157,10 +161,43 @@ $rulesSearchLangs = $gameRules->getArray('search_langs');
             </span>
             <!-- Exact -->
             <span title="Exact" class="parametersmall checkbox-group">
-                <input id="exactbox" type="checkbox" class="scopecheckbox checkbox" name="exact" value="yes">
+                <input
+                    id="exactbox"
+                    type="checkbox"
+                    class="scopecheckbox mainsearchcheckbox tagdisabledsearchcheckbox checkbox"
+                    name="exact"
+                    value="yes"
+                >
                 <label for="exactbox">
                     <span class="check"></span>
                     <span class="box"></span>Exact
+                </label>
+            </span>
+            <h4 class="h4" style="margin-top:30px;">Tags</h4>
+            <span title="Search Scryfall Oracle tags" class="parametersmall checkbox-group">
+                <input
+                    id="searchoracletag"
+                    type="checkbox"
+                    class="tagcheckbox checkbox"
+                    name="searchoracletag"
+                    value="yes"
+                >
+                <label for="searchoracletag">
+                    <span class="check"></span>
+                    <span class="box"></span>Oracle
+                </label>
+            </span>
+            <span title="Search Scryfall image tags" class="parametersmall checkbox-group">
+                <input
+                    id="searchimagetag"
+                    type="checkbox"
+                    class="tagcheckbox checkbox"
+                    name="searchimagetag"
+                    value="yes"
+                >
+                <label for="searchimagetag">
+                    <span class="check"></span>
+                    <span class="box"></span>Image
                 </label>
             </span>
             <h4 class="h4" style="margin-top:30px;">Search scope:</h4>

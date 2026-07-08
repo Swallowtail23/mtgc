@@ -1010,7 +1010,8 @@ table
     background-color: rgba(255,255,255,0.4);
 }
 
-#exactbox:disabled + label {
+#exactbox:disabled + label,
+.tagdisabledsearchcheckbox:disabled + label {
     opacity: 0.5;
     cursor: not-allowed;
 }

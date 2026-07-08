@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     8.11
-Date:        06/05/26
+Version:     8.13
+Date:        08/07/26
 Name:        criteria.php
 Purpose:     PHP script to build search criteria
 Notes:       {none}
@@ -68,8 +68,10 @@ $scope = $scope ?? '';
 $searchLang = $searchLang ?? '';
 $searchability = $searchability ?? '';
 $searchabilityexact = $searchabilityexact ?? '';
+$searchimagetag = $searchimagetag ?? '';
 $searchname = $searchname ?? '';
 $searchnotes = $searchnotes ?? '';
+$searchoracletag = $searchoracletag ?? '';
 $searchpromo = $searchpromo ?? '';
 $searchsetcode = $searchsetcode ?? '';
 $searchtype = $searchtype ?? '';
@@ -183,7 +185,16 @@ else :
         $msg->logMessage('[DEBUG]', "Advanced search called ($name)");
         // An advanced search called
         $criteriaNTA = "";
-        if ($searchability === "yes" && $name === "") :
+        $tagSearchRequested = ($searchoracletag === "yes" || $searchimagetag === "yes");
+        if ($searchoracletag === "yes" && $searchimagetag === "yes") :
+            $msg->logMessage('[DEBUG]', "Oracle tag and image tag search called together");
+            $qtyresults = 0;
+            $validsearch = "false";
+        elseif ($tagSearchRequested && trim($name) === "") :
+            $msg->logMessage('[DEBUG]', "Tag search called with no text");
+            $qtyresults = 0;
+            $validsearch = "false";
+        elseif ($searchability === "yes" && $name === "") :
             $msg->logMessage('[DEBUG]', "Ability search called with no text");
             $qtyresults = 0;
             $validsearch = "false";
@@ -203,6 +214,8 @@ else :
             and empty($searchpromo)
             and empty($searchability)
             and empty($searchabilityexact)
+            and empty($searchoracletag)
+            and empty($searchimagetag)
         ) :
             $criteriaNTA .= "cards_scry.name LIKE '%%' ";
             $validsearch = "true";
@@ -213,14 +226,16 @@ else :
             and empty($searchpromo)
             and empty($searchability)
             and empty($searchabilityexact)
+            and empty($searchoracletag)
+            and empty($searchimagetag)
         ) :
             $criteriaNTA .= "cards_scry.name LIKE ? ";
             $params[] = "%$name%";
             $validsearch = "true";
-        elseif (!empty($searchpromo) and empty($name)) :
+        elseif (!$tagSearchRequested && !empty($searchpromo) && empty($name)) :
             $criteriaNTA .= "cards_scry.promo_types IS NOT NULL ";
             $validsearch = "true";
-        elseif (!empty($searchpromo) and !empty($name)) :
+        elseif (!$tagSearchRequested && !empty($searchpromo) && !empty($name)) :
             $criteriaNTA .= "cards_scry.promo_types LIKE ? ";
             $params[] = "%$name%";
             $validsearch = "true";
@@ -256,6 +271,13 @@ else :
                 $criteriaNTA .= "cards_scry.setcode LIKE ? ";
                 $params[] = $name;
             endif;
+            if ($searchpromo === "yes") :
+                if (!empty($criteriaNTA)) :
+                    $criteriaNTA .= "OR ";
+                endif;
+                $criteriaNTA .= "cards_scry.promo_types LIKE ? ";
+                $params[] = "%$name%";
+            endif;
             if ($searchability === "yes" && $exact === "") :
                 $abilitytext = "";
                 $parts = explode(" ", trim($name));
@@ -285,6 +307,76 @@ else :
                     cards_scry.ability LIKE ? OR cards_scry.f1_ability LIKE ?
                     OR cards_scry.f1_ability LIKE ?) ";
                 $params = array_fill(0, 3, "%{$name}%");
+            endif;
+            if ($tagSearchRequested) :
+                if ($searchoracletag === "yes") :
+                    $criteriaTag = "cards_scry.oracle_id IN (
+                        SELECT sta.subject_id
+                        FROM scryfall_tag_assignments sta
+                        JOIN scryfall_tag_definitions std
+                            ON std.id = sta.tag_id
+                        WHERE sta.tag_type = 'oracle'
+                            AND std.tag_type = 'oracle'
+                            AND (
+                                std.label LIKE ?
+                                OR std.slug LIKE ?
+                            )
+                    )";
+                else :
+                    $criteriaTag = "(
+                        cards_scry.illustration_id IN (
+                            SELECT sta.subject_id
+                            FROM scryfall_tag_assignments sta
+                            JOIN scryfall_tag_definitions std
+                                ON std.id = sta.tag_id
+                            WHERE sta.tag_type = 'art'
+                                AND std.tag_type = 'art'
+                                AND (
+                                    std.label LIKE ?
+                                    OR std.slug LIKE ?
+                                )
+                        )
+                        OR cards_scry.f1_illustration_id IN (
+                            SELECT sta.subject_id
+                            FROM scryfall_tag_assignments sta
+                            JOIN scryfall_tag_definitions std
+                                ON std.id = sta.tag_id
+                            WHERE sta.tag_type = 'art'
+                                AND std.tag_type = 'art'
+                                AND (
+                                    std.label LIKE ?
+                                    OR std.slug LIKE ?
+                                )
+                        )
+                        OR cards_scry.f2_illustration_id IN (
+                            SELECT sta.subject_id
+                            FROM scryfall_tag_assignments sta
+                            JOIN scryfall_tag_definitions std
+                                ON std.id = sta.tag_id
+                            WHERE sta.tag_type = 'art'
+                                AND std.tag_type = 'art'
+                                AND (
+                                    std.label LIKE ?
+                                    OR std.slug LIKE ?
+                                )
+                            )
+                    )";
+                endif;
+
+                if (!empty($criteriaNTA)) :
+                    $criteriaNTA = "($criteriaNTA) AND ($criteriaTag) ";
+                else :
+                    $criteriaNTA = $criteriaTag;
+                endif;
+                if ($searchoracletag === "yes") :
+                    $params[] = "%$name%";
+                    $params[] = "%$name%";
+                else :
+                    for ($tagParamSet = 0; $tagParamSet < 3; $tagParamSet++) :
+                        $params[] = "%$name%";
+                        $params[] = "%$name%";
+                    endfor;
+                endif;
             endif;
             $validsearch = "true";
         endif;

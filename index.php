@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.81
-Date:        06/05/26
+Version:     14.85
+Date:        08/07/26
 Name:        index.php
 Purpose:     Main site page
 Notes:       -
@@ -153,6 +153,8 @@ $flagMap = [
     'searchability'  => 'searchability',
     'searchnotes'    => 'searchnotes',
     'searchpromo'    => 'searchpromo',
+    'searchoracletag' => 'searchoracletag',
+    'searchimagetag' => 'searchimagetag',
     'searchnew'      => 'new',
 
     'white'          => 'white',
@@ -467,11 +469,25 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                 setupMutualExclusion('#abilitymain', '.notability');
                 setupMutualExclusion('#yesnotes', '.notnotes');
                 setupMutualExclusion('#searchpromo', '.notpromo');
+                setupMutualExclusion('#searchoracletag', '#searchimagetag');
+                setupMutualExclusion('#searchimagetag', '#searchoracletag');
                 setupMutualExclusion('.notnotes', '#yesnotes');
                 setupMutualExclusion('.notsetcode', '#searchsetcode');
                 setupMutualExclusion('.notpromo', '#searchpromo');
                 setupMutualExclusion('#abilityall', '.notability');
                 setupMutualExclusion('.notability', '#abilityall');
+
+                $('.tagcheckbox').click(function () {
+                    if ($(this).is(':checked')) {
+                        $('.mainsearchcheckbox').prop('checked', false).trigger('change');
+                    }
+                });
+
+                $('.mainsearchcheckbox').not('#cb1, #searchnew').click(function () {
+                    if ($(this).is(':checked')) {
+                        $('.tagcheckbox').prop('checked', false).trigger('change');
+                    }
+                });
 
                 $('.scopecheckbox').click(function () {
                     if ($('.scopecheckbox:checked').length === 0) {
@@ -1611,18 +1627,35 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
             }
 
             $(document).ready(function() {
+                function tagSearchSelected() {
+                    return $('.tagcheckbox:checked').length > 0;
+                }
+
                 function updateVisibility() {
-                    if ($('#cb1').is(':checked') || $('#abilitymain').is(':checked')) {
+                    if (($('#cb1').is(':checked') || $('#abilitymain').is(':checked')) && !tagSearchSelected()) {
                         $('#exactbox').prop('disabled', false); // Enable checkbox
                     } else {
                         $('#exactbox').prop('checked', false).prop('disabled', true); // Uncheck and disable
                     }
                 }
 
+                function updateTagSearchState() {
+                    if (tagSearchSelected()) {
+                        $('.tagdisabledsearchcheckbox')
+                            .prop('checked', false)
+                            .prop('disabled', true);
+                    } else {
+                        $('.tagdisabledsearchcheckbox').prop('disabled', false);
+                    }
+                    updateVisibility();
+                }
+
                 // Trigger when checkboxes change
                 $('#cb1, #abilitymain').change(updateVisibility);
+                $('.tagcheckbox').change(updateTagSearchState);
 
                 // Initialize on page load
+                updateTagSearchState();
                 updateVisibility();
                 function updateCollQtyState() {
                     if ($('input[name="scope"]:checked').val() === "mycollection") {

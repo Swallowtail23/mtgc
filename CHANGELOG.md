@@ -8,14 +8,17 @@ All notable changes to this project will be documented in this file.
 
 - Added Scryfall Oracle/art tag bulk ingestion and storage for future tag-based search.
 - Added Scryfall illustration IDs to card bulk imports for future art-tag search joins.
+- Added backend advanced-search criteria support for Scryfall Oracle and image tag searches.
+- Added advanced-search controls for Scryfall Oracle and image tag searches.
 
 ### Changed
 
 - Extracted Scryfall tag bulk import logic from the main Scryfall importer into a dedicated bulk import class.
+- Advanced tag-search selection now disables incompatible top-level search options while preserving Name and New.
 
 ### Fixed
 
--
+- Changed advanced tag search predicates to avoid correlated Scryfall tag lookups on every card row.
 
 ### Security
 
