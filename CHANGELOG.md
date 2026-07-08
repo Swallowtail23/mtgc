@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
--
+- Extracted Scryfall tag bulk import logic from the main Scryfall importer into a dedicated bulk import class.
 
 ### Fixed
 
