@@ -15,6 +15,11 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Extracted Scryfall tag bulk import logic from the main Scryfall importer into a dedicated bulk import class.
+- Extracted Scryfall bulk HTTP/download/file-iteration helpers from the main Scryfall importer.
+- Extracted Scryfall card record normalisation from the main Scryfall importer.
+- Extracted Scryfall card import SQL and bind field ordering from the main Scryfall importer.
+- Extracted Scryfall card import batching and persistence orchestration from the main Scryfall importer.
+- Extracted Scryfall data sync-state update and backfill SQL from the main Scryfall importer.
 - Advanced tag-search selection now disables incompatible top-level search options while preserving Name and New.
 - Card-detail Scryfall tag summaries now render inside a collapsed Tags disclosure section with clickable tag searches.
 - Multi-term Scryfall tag searches now match each term independently on tag boundaries instead of substrings.
@@ -70,7 +75,7 @@ All notable changes to this project will be documented in this file.
 - Updated vulnerable Composer dependencies flagged by Dependabot: `spomky-labs/otphp`, `guzzlehttp/guzzle`, and
   `guzzlehttp/psr7`.
 
-### Infrastructure - 2026-07-04
+### Infrastructure - 2026-07-04 (release 2)
 
 - Updated `phpmailer/phpmailer` to 7.1.1.
 

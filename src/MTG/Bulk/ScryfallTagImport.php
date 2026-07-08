@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.0
+Version:     1.1
 Date:        08/07/26
 Name:        ScryfallTagImport.php
 Purpose:     Import Scryfall Oracle and art tag bulk data.
@@ -142,7 +142,7 @@ class ScryfallTagImport
         $subjectId = null;
         $weight = null;
 
-        if (!$tagStmt->bind_param(
+        $tagBind = $tagStmt->bind_param(
             "ssssssssss",
             $tagId,
             $tagType,
@@ -154,7 +154,8 @@ class ScryfallTagImport
             $childIds,
             $aliases,
             $contentHash
-        )) :
+        );
+        if (!$tagBind) :
             throw new \Exception('[ERROR] scryfall_tag_definitions: Binding tag parameters: ' . $db->error);
         endif;
         if (!$taggingStmt->bind_param("ssss", $tagId, $tagType, $subjectId, $weight)) :
@@ -172,7 +173,7 @@ class ScryfallTagImport
                 $config = $tagConfig[$importType];
                 $url = self::requireGameRuleUrl($gameRules, $config['rule']);
                 $msg->logMessage('[NOTICE]', "Scryfall {$config['label']} API: fetching $url");
-                $bulkInfo = ScryfallImport::fetchJson($url, $msg, "Scryfall {$config['label']} API", $appConfig);
+                $bulkInfo = ScryfallBulkFiles::fetchJson($url, $msg, "Scryfall {$config['label']} API", $appConfig);
                 if ($bulkInfo === false || ($bulkInfo['type'] ?? '') !== $config['expectedType']) :
                     throw new \Exception("[ERROR] scryfall_tag_definitions: {$config['label']} bulk metadata unavailable");
                 endif;
@@ -182,7 +183,12 @@ class ScryfallTagImport
                     throw new \Exception("[ERROR] scryfall_tag_definitions: {$config['label']} jsonl_download_uri missing");
                 endif;
 
-                $downloadResult = ScryfallImport::getBulkDataFile($downloadUri, $config['file'], $maxFileAge, $appConfig);
+                $downloadResult = ScryfallBulkFiles::getBulkDataFile(
+                    $downloadUri,
+                    $config['file'],
+                    $maxFileAge,
+                    $appConfig
+                );
                 if ($downloadResult === false) :
                     throw new \Exception("[ERROR] scryfall_tag_definitions: {$config['label']} data download failed");
                 endif;
@@ -325,7 +331,7 @@ class ScryfallTagImport
         endif;
 
         try {
-            foreach (ScryfallImport::iterateBulkRecords($config['file']) as $value) :
+            foreach (ScryfallBulkFiles::iterateBulkRecords($config['file']) as $value) :
                 $countTags++;
                 $grandTotalTags++;
                 $commitDue = (($countTags + $countTaggings) % $batchSize === 0);
