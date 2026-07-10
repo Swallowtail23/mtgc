@@ -10,7 +10,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
--
+- Extracted the Scryfall bulk script workflow into `ScryfallBulkCommand`, leaving the CLI entrypoint as a bootstrap
+  wrapper while preserving its card, tag, sync-state, test, notification, and error-handling modes.
 
 ### Fixed
 
