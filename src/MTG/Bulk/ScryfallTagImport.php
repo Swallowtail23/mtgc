@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.3
 Date:        10/07/26
 Name:        ScryfallTagImport.php
 Purpose:     Import Scryfall Oracle and art tag bulk data.
@@ -46,6 +46,8 @@ class ScryfallTagImport
         $schema = new ScryfallSchemaGuard($db, $msg, 'scryfall_tag_definitions');
         $schema->requireTable('scryfall_tag_definitions');
         $schema->requireTable('scryfall_tag_assignments');
+        $schema->requireTable('scryfall_bulk_sources');
+        $sourceTracker = new ScryfallBulkSourceTracker($db);
 
         $imgLocation = (string) $appConfig->general('imageBaseDir', '');
         $tagConfig = [
@@ -181,30 +183,45 @@ class ScryfallTagImport
                     throw new \Exception("[ERROR] scryfall_tag_definitions: {$config['label']} data download failed");
                 endif;
 
-                $summary[] = self::importTagFile(
-                    $config,
-                    $importType,
-                    $db,
-                    $msg,
-                    $tagStmt,
-                    $taggingStmt,
-                    $tagId,
-                    $tagType,
-                    $label,
-                    $slug,
-                    $uri,
-                    $description,
-                    $parentIds,
-                    $childIds,
-                    $aliases,
-                    $contentHash,
-                    $subjectId,
-                    $weight,
-                    $grandTotalTags,
-                    $grandTotalTaggings,
-                    $batchSize,
-                    $logInterval
-                );
+                if ($sourceTracker->isCurrent($importType . '_tags', $downloadUri, $config['file'])) :
+                    $line = "{$config['label']}: source unchanged; import skipped";
+                    $msg->logMessage('[NOTICE]', $line);
+                    $summary[] = $line;
+                    continue;
+                endif;
+
+                $sourceType = $importType . '_tags';
+                $sourceTracker->markStarted($sourceType, $downloadUri, $config['file']);
+                try {
+                    $summary[] = self::importTagFile(
+                        $config,
+                        $importType,
+                        $db,
+                        $msg,
+                        $tagStmt,
+                        $taggingStmt,
+                        $tagId,
+                        $tagType,
+                        $label,
+                        $slug,
+                        $uri,
+                        $description,
+                        $parentIds,
+                        $childIds,
+                        $aliases,
+                        $contentHash,
+                        $subjectId,
+                        $weight,
+                        $grandTotalTags,
+                        $grandTotalTaggings,
+                        $batchSize,
+                        $logInterval
+                    );
+                    $sourceTracker->markCompleted($sourceType, $downloadUri, $config['file']);
+                } catch (Throwable $e) {
+                    $sourceTracker->markFailed($sourceType, $downloadUri, $config['file']);
+                    throw $e;
+                }
             endforeach;
         } finally {
             $tagStmt->close();

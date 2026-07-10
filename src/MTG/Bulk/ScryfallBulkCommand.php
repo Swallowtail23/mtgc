@@ -186,6 +186,8 @@ class ScryfallBulkCommand
     /** @param array<string, mixed> $bulkInfo */
     private function runRefresh(array $bulkInfo, string $targetTable, float $start): int
     {
+        $this->requireSourceTracking();
+        $tracker = new ScryfallBulkSourceTracker($this->db);
         $this->msg->logMessage(
             '[NOTICE]',
             "Scryfall Bulk API: Download URIs: {$bulkInfo['bulkUrlAll']} / {$bulkInfo['bulkUrlDefault']}; File locations: "
@@ -201,6 +203,12 @@ class ScryfallBulkCommand
         endif;
         $this->logElapsed('Time after bulk files obtained', $start);
         foreach ([['all', 'fileLocationAll'], ['default', 'fileLocationDefault']] as [$importType, $fileKey]) :
+            $sourceType = $importType . '_cards';
+            if ($tracker->isCurrent($sourceType, $bulkInfo['bulkUrl' . ucfirst($importType)], $bulkInfo[$fileKey])) :
+                $this->write("Scryfall Bulk API: $importType cards source unchanged; import skipped");
+                continue;
+            endif;
+            $tracker->markStarted($sourceType, $bulkInfo['bulkUrl' . ucfirst($importType)], $bulkInfo[$fileKey]);
             $result = ScryfallImport::scryfallImport(
                 $bulkInfo[$fileKey],
                 $importType,
@@ -211,9 +219,11 @@ class ScryfallBulkCommand
             );
             $this->logElapsed("Time after \"$importType\" import completed", $start);
             if ($result === false) :
+                $tracker->markFailed($sourceType, $bulkInfo['bulkUrl' . ucfirst($importType)], $bulkInfo[$fileKey]);
                 $this->error("Scryfall Bulk API: scryfallImport from {$bulkInfo[$fileKey]} failed for type '$importType'");
                 return 1;
             endif;
+            $tracker->markCompleted($sourceType, $bulkInfo['bulkUrl' . ucfirst($importType)], $bulkInfo[$fileKey]);
             $this->write("Scryfall Bulk API: MTG bulk update completed ($importType), $result");
         endforeach;
         return 0;
@@ -221,12 +231,23 @@ class ScryfallBulkCommand
 
     private function runSingleImport(string $url, string $file, string $type, string $targetTable, float $start): int
     {
+        $this->requireSourceTracking();
+        $tracker = new ScryfallBulkSourceTracker($this->db);
         $this->msg->logMessage('[NOTICE]', "Scryfall Bulk API: Download URI: $url; File location: $file");
         if (ScryfallImport::getBulkDataFile($url, $file, 23 * 3600, $this->appConfig) === false) :
             $this->error("Scryfall Bulk API: Download URI: getBulkDataFile returned error for $url");
             return 1;
         endif;
         $this->logElapsed('Time after bulk files obtained', $start);
+        $sourceType = $type . '_cards';
+        if ($tracker->isCurrent($sourceType, $url, $file)) :
+            $subject = "MTG bulk update skipped ($type)";
+            $body = 'Source unchanged; import skipped.';
+            $this->sendEmail($subject, $body, "scryfall_bulk alert not sent for $type");
+            $this->write("Scryfall Bulk API: $subject, $body");
+            return 0;
+        endif;
+        $tracker->markStarted($sourceType, $url, $file);
         $result = ScryfallImport::scryfallImport(
             $file,
             $type,
@@ -236,14 +257,22 @@ class ScryfallBulkCommand
             $this->gameRules
         );
         if ($result === false) :
+            $tracker->markFailed($sourceType, $url, $file);
             $this->error("Scryfall Bulk API: scryfallImport from $file failed for type '$type'");
             return 1;
         endif;
+        $tracker->markCompleted($sourceType, $url, $file);
         $this->logElapsed('Time after import completed', $start);
         $subject = "MTG bulk update completed ($type)";
         $this->sendEmail($subject, $result, "scryfall_bulk alert not sent for $type");
         $this->write("Scryfall Bulk API: $subject, $result");
         return 0;
+    }
+
+    private function requireSourceTracking(): void
+    {
+        $schema = new ScryfallSchemaGuard($this->db, $this->msg, 'scryfall_bulk.php');
+        $schema->requireTable('scryfall_bulk_sources');
     }
 
     private function sendEmail(string $subject, string $body, string $disabledMessage): void

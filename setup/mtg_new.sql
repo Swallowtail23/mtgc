@@ -265,6 +265,18 @@ CREATE TABLE `scryfall_tag_assignments` (
   `weight` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE `scryfall_bulk_sources` (
+  `source_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `download_uri` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `local_path` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `file_size` bigint unsigned NOT NULL,
+  `file_mtime` bigint unsigned NOT NULL,
+  `content_hash` char(64) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
+  `status` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `last_import_started_at` datetime DEFAULT NULL,
+  `last_import_completed_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 CREATE TABLE `scryfalljson` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `jsonupdatetime` int NOT NULL,
@@ -464,6 +476,11 @@ ALTER TABLE `scryfall_tag_assignments`
   ADD KEY `subject_type` (`subject_id`,`tag_type`),
   ADD KEY `tag_type` (`tag_type`),
   ADD KEY `weight` (`weight`);
+
+ALTER TABLE `scryfall_bulk_sources`
+  ADD PRIMARY KEY (`source_type`),
+  ADD KEY `status_completed` (`status`,`last_import_completed_at`),
+  ADD KEY `download_uri` (`download_uri`(191));
 
 ALTER TABLE `scryfalljson`
   ADD UNIQUE KEY `id` (`id`);

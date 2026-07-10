@@ -104,9 +104,16 @@ $msg->logMessage('[NOTICE]', "Scryfall Rulings API: Local file: $file_location")
 
 $data = ScryfallImport::iterateBulkRecords($file_location);
 $schema = new ScryfallSchemaGuard($db, $msg, 'scryfall_rulings.php');
+$schema->requireTable('scryfall_bulk_sources');
 $schema->requireTable('rulings_scry');
 $schema->requireColumns('rulings_scry', ['content_hash']);
 $schema->requireIndexes('rulings_scry', ['rulings_unique']);
+$sourceTracker = new ScryfallBulkSourceTracker($db);
+if ($sourceTracker->isCurrent('rulings', $rulings_uri, $file_location)) :
+    $msg->logMessage('[NOTICE]', 'Scryfall Rulings API: source unchanged; import skipped');
+    return;
+endif;
+$sourceTracker->markStarted('rulings', $rulings_uri, $file_location);
 
 $msg->logMessage('[DEBUG]', 'Preparing temporary rulings key table');
 $tempResult = $db->query("DROP TEMPORARY TABLE IF EXISTS `rulings_scry_keys`");
@@ -256,6 +263,7 @@ try {
     $db->rollback();
     $stmt->close();
     $keyStmt->close();
+    $sourceTracker->markFailed('rulings', $rulings_uri, $file_location);
     throw $e;
 }
 
@@ -265,6 +273,7 @@ if ($commitResult === false) :
 endif;
 $stmt->close();
 $keyStmt->close();
+$sourceTracker->markCompleted('rulings', $rulings_uri, $file_location);
 
 $msg->logMessage('[DEBUG]', 'Removing rulings no longer present in Scryfall data');
 $deleteResult = $db->query(

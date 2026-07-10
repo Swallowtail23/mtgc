@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Centralized Scryfall import table, column, and index prerequisites in `ScryfallSchemaGuard`.
 - Replaced dynamic mapped-card variable assignment in the card import runner with explicit mapped-field access.
 - Moved Scryfall card inclusion and skip decisions into `ScryfallCardImportPolicy`.
+- Added Scryfall bulk-source tracking so unchanged Oracle/art tag files can skip reprocessing after a successful import.
 
 ### Fixed
 

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.27
-Date:        04/07/26
+Version:     2.28
+Date:        10/07/26
 Name:        scryfall_sets.php
 Purpose:     Import/update Scryfall sets data
 Notes:       {none}
@@ -15,6 +15,8 @@ To do:       -
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
 use MTG\Bulk\ScryfallImport;
+use MTG\Bulk\ScryfallBulkSourceTracker;
+use MTG\Bulk\ScryfallSchemaGuard;
 use MTG\Core\Filesystem;
 use MTG\Core\MyPHPMailer;
 
@@ -100,6 +102,15 @@ $setsreturn = ScryfallImport::downloadBulk(
 );
 endif;
 $msg->logMessage('[NOTICE]', "Scryfall sets API: Local file: $file_location");
+
+$schema = new ScryfallSchemaGuard($db, $msg, 'scryfall_sets.php');
+$schema->requireTable('scryfall_bulk_sources');
+$sourceTracker = new ScryfallBulkSourceTracker($db);
+if ($sourceTracker->isCurrent('sets', $url, $file_location)) :
+    $msg->logMessage('[NOTICE]', 'Scryfall Sets API: source unchanged; import skipped');
+    exit(0);
+endif;
+$sourceTracker->markStarted('sets', $url, $file_location);
 
 $data = Items::fromFile($imgLocation . 'json/sets.json', ['decoder' => new ExtJsonDecoder(true)]);
 if ($result = $db->query('TRUNCATE TABLE sets')) :
@@ -187,6 +198,7 @@ foreach ($data as $key => $value) :
     endif;
 endforeach;
 $msg->logMessage('[NOTICE]', "$total_count bulk sets completed");
+$sourceTracker->markCompleted('sets', $url, $file_location);
 if (php_sapi_name() == 'cli') :
     echo "Sets: $total_count bulk sets completed\n";
 endif;
