@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.0
+Version:     1.1
 Date:        10/07/26
 Name:        ScryfallManifestImport.php
 Purpose:     Import/update Scryfall card manifest metadata.
@@ -19,23 +19,21 @@ use Exception;
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
 use MTG\Core\AppConfig;
+use MTG\Core\AppContext;
 use MTG\Core\Filesystem;
+use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 use Throwable;
 
 class ScryfallManifestImport
 {
-    private static ?float $lastRequestAt = null;
-    private static mixed $message = null;
-
-    public static function run(mixed $ctx): void
+    public static function run(AppContext $ctx): void
     {
 
 $appConfig = $ctx->config();
 $db = $ctx->db();
 $msg = $ctx->message();
 $gameRules = $ctx->rules();
-$GLOBALS['msg'] = $msg;
 
 $adminEmail = (string) $appConfig->email('adminEmail', '');
 $imgLocation = (string) $appConfig->general('imageBaseDir', '');
@@ -53,18 +51,31 @@ $emailEnabled = (bool) $appConfig->email('enabled', false);
 $file_folder = $imgLocation . 'json/';
 $max_fileage = 23 * 3600;
 $manifest_request_interval = 10.0;
-global $manifest_last_request_at;
-$manifest_last_request_at = null;
+$manifestLastRequestAt = null;
 $batch_size = 5000;
 $log_interval = 10000;
 $timeslice_start = microtime(true);
 $total_count = 0;
 
-function throttleManifestRequest(float $minimumIntervalSeconds): void
+        self::import(
+            $db,
+            $msg,
+            $starturl,
+            $file_folder,
+            $max_fileage,
+            $manifest_request_interval,
+            $batch_size,
+            $log_interval,
+            $appConfig,
+            $emailEnabled,
+            $adminEmail
+        );
+    }
+
+    private static function throttleManifestRequest(float $minimumIntervalSeconds, ?float &$lastRequestAt, Message $msg): void
 {
-    global $manifest_last_request_at, $msg;
-    if ($manifest_last_request_at !== null) :
-        $elapsed = microtime(true) - $manifest_last_request_at;
+    if ($lastRequestAt !== null) :
+        $elapsed = microtime(true) - $lastRequestAt;
         if ($elapsed < $minimumIntervalSeconds) :
             $sleepSeconds = $minimumIntervalSeconds - $elapsed;
             $msg->logMessage(
@@ -75,20 +86,20 @@ function throttleManifestRequest(float $minimumIntervalSeconds): void
         endif;
     endif;
 
-    $manifest_last_request_at = microtime(true);
+    $lastRequestAt = microtime(true);
 }
 
-function getManifestData(
+    private static function getManifestData(
     string $url,
     string $file_location,
     int $max_fileage,
     float $minimumIntervalSeconds,
     int $pageNumber,
     string $language,
-    AppConfig $appConfig
+    AppConfig $appConfig,
+    ?float &$lastRequestAt,
+    Message $msg
 ): string {
-    global $msg;
-
     $msg->logMessage('[DEBUG]', "Scryfall manifest API: fetching $url for language $language");
     if ($pageNumber === 0) :
         $page = $file_location . 'manifest_' . $language . '.json';
@@ -112,7 +123,7 @@ function getManifestData(
     endif;
 
     if ($download > 0) :
-        throttleManifestRequest($minimumIntervalSeconds);
+        self::throttleManifestRequest($minimumIntervalSeconds, $lastRequestAt, $msg);
         ScryfallImport::downloadBulk(
             $url,
             $page,
@@ -126,10 +137,8 @@ function getManifestData(
     return $page;
 }
 
-function getManifestLanguages(\mysqli $db): array
+    private static function getManifestLanguages(\mysqli $db, Message $msg): array
 {
-    global $msg;
-
     $result = $db->execute_query(
         "SELECT DISTINCT lang
         FROM cards_scry
@@ -164,16 +173,14 @@ function getManifestLanguages(\mysqli $db): array
     return $languages;
 }
 
-function buildManifestLanguageUrl(string $baseUrl, string $language): string
+    private static function buildManifestLanguageUrl(string $baseUrl, string $language): string
 {
     $separator = str_contains($baseUrl, '?') ? '&' : '?';
     return $baseUrl . $separator . 'lang=' . rawurlencode($language);
 }
 
-function checkManifestDataForMore(string $file): string
+    private static function checkManifestDataForMore(string $file, Message $msg): string
 {
-    global $msg;
-
     $data = Items::fromFile($file, ['decoder' => new ExtJsonDecoder(true)]);
     $hasMore = false;
     $next_page = 'none';
@@ -192,7 +199,7 @@ function checkManifestDataForMore(string $file): string
     return $next_page;
 }
 
-function getManifestRowCount(string $file): int
+    private static function getManifestRowCount(string $file): int
 {
     $data = Items::fromFile($file, ['decoder' => new ExtJsonDecoder(true)]);
     $count = 0;
@@ -209,10 +216,8 @@ function getManifestRowCount(string $file): int
     return $count;
 }
 
-function clearDBManifest(\mysqli $db): void
+    private static function clearDBManifest(\mysqli $db, Message $msg): void
 {
-    global $msg;
-
     if ($db->query('TRUNCATE TABLE scryfall_manifest')) :
         $msg->logMessage('[NOTICE]', 'Scryfall manifest API: scryfall_manifest table cleared');
     else :
@@ -220,7 +225,7 @@ function clearDBManifest(\mysqli $db): void
     endif;
 }
 
-function manifestDateTime(?string $value): ?string
+    private static function manifestDateTime(?string $value): ?string
 {
     if ($value === null || trim($value) === '') :
         return null;
@@ -233,49 +238,69 @@ function manifestDateTime(?string $value): ?string
     }
 }
 
-$manifest_languages = getManifestLanguages($db);
+    private static function import(
+        mixed $db,
+        Message $msg,
+        string $starturl,
+        string $file_folder,
+        int $max_fileage,
+        float $manifest_request_interval,
+        int $batch_size,
+        int $log_interval,
+        AppConfig $appConfig,
+        bool $emailEnabled,
+        string $adminEmail
+    ): void {
+        $timeslice_start = microtime(true);
+        $total_count = 0;
+        $manifestLastRequestAt = null;
+        $manifest_languages = self::getManifestLanguages($db, $msg);
 $result_files = [];
 
 foreach ($manifest_languages as $language) :
     $page = 0;
-    $manifestUrl = buildManifestLanguageUrl($starturl, $language);
-    $file = getManifestData(
+    $manifestUrl = self::buildManifestLanguageUrl($starturl, $language);
+    $file = self::getManifestData(
         $manifestUrl,
         $file_folder,
         $max_fileage,
         $manifest_request_interval,
         $page,
         $language,
-        $appConfig
+        $appConfig,
+        $manifestLastRequestAt,
+        $msg
     );
     $result_files[] = $file;
-    $moreurl = checkManifestDataForMore($file);
+    $moreurl = self::checkManifestDataForMore($file, $msg);
     while ($moreurl !== 'none') :
         $page = $page + 1;
-        $file = getManifestData(
+        $file = self::getManifestData(
             $moreurl,
             $file_folder,
             $max_fileage,
             $manifest_request_interval,
             $page,
             $language,
-            $appConfig
+            $appConfig,
+            $manifestLastRequestAt,
+            $msg
         );
         $result_files[] = $file;
-        $moreurl = checkManifestDataForMore($file);
+        $moreurl = self::checkManifestDataForMore($file, $msg);
     endwhile;
 endforeach;
 
 $total_rows = 0;
 foreach ($result_files as $data) :
-    $total_rows = $total_rows + getManifestRowCount($data);
+    $total_rows = $total_rows + self::getManifestRowCount($data);
 endforeach;
 
 if ($total_rows <= 0) :
     throw new Exception('[ERROR] scryfall_manifest.php: No manifest rows found; refusing to clear manifest table.');
 endif;
 
-clearDBManifest($db);
+self::clearDBManifest($db, $msg);
 
 $stmt = $db->prepare(
     "INSERT INTO
@@ -318,17 +343,17 @@ try {
                     endif;
 
                     $id = $manifest['id'];
-                    $created_at = manifestDateTime(
+                    $created_at = self::manifestDateTime(
                         isset($manifest['created_at']) && is_string($manifest['created_at'])
                             ? $manifest['created_at']
                             : null
                     );
-                    $data_updated_at = manifestDateTime(
+                    $data_updated_at = self::manifestDateTime(
                         isset($manifest['data_updated_at']) && is_string($manifest['data_updated_at'])
                             ? $manifest['data_updated_at']
                             : null
                     );
-                    $image_updated_at = manifestDateTime(
+                    $image_updated_at = self::manifestDateTime(
                         isset($manifest['image_updated_at']) && is_string($manifest['image_updated_at'])
                             ? $manifest['image_updated_at']
                             : null
