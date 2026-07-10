@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        08/07/26
+Version:     1.2
+Date:        10/07/26
 Name:        ScryfallTagImport.php
 Purpose:     Import Scryfall Oracle and art tag bulk data.
 Notes:       -
@@ -43,21 +43,9 @@ class ScryfallTagImport
             default => throw new \InvalidArgumentException("Invalid Scryfall tag import mode '$mode'")
         };
 
-        foreach (['scryfall_tag_definitions', 'scryfall_tag_assignments'] as $requiredTable) :
-            $tableCheck = $db->execute_query(
-                "SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?",
-                [$requiredTable]
-            );
-            if ($tableCheck === false) :
-                throw new \Exception("[ERROR] scryfall_tag_definitions: Checking $requiredTable table: " . $db->error);
-            endif;
-            if ($tableCheck->num_rows === 0) :
-                throw new \Exception(
-                    "[ERROR] scryfall_tag_definitions: $requiredTable table missing; apply schema updates first"
-                );
-            endif;
-            $tableCheck->free();
-        endforeach;
+        $schema = new ScryfallSchemaGuard($db, $msg, 'scryfall_tag_definitions');
+        $schema->requireTable('scryfall_tag_definitions');
+        $schema->requireTable('scryfall_tag_assignments');
 
         $imgLocation = (string) $appConfig->general('imageBaseDir', '');
         $tagConfig = [

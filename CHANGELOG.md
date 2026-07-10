@@ -12,6 +12,11 @@ All notable changes to this project will be documented in this file.
 
 - Extracted the Scryfall bulk script workflow into `ScryfallBulkCommand`, leaving the CLI entrypoint as a bootstrap
   wrapper while preserving its card, tag, sync-state, test, notification, and error-handling modes.
+- Extracted Scryfall rulings and manifest workflows into dedicated import services, leaving their CLI entrypoints as
+  bootstrap wrappers.
+- Centralized Scryfall import table, column, and index prerequisites in `ScryfallSchemaGuard`.
+- Replaced dynamic mapped-card variable assignment in the card import runner with explicit mapped-field access.
+- Moved Scryfall card inclusion and skip decisions into `ScryfallCardImportPolicy`.
 
 ### Fixed
 

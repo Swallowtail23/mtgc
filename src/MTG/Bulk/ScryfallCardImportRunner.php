@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        08/07/26
+Version:     1.3
+Date:        10/07/26
 Name:        ScryfallCardImportRunner.php
 Purpose:     Runs Scryfall card import batching and persistence orchestration.
 Notes:       -
@@ -32,22 +32,7 @@ class ScryfallCardImportRunner
         bool $collectStats = true
     ): string|false {
         $msg = new Message($appConfig);
-        $games_to_include = $gameRules->get('games_to_include', []);
-        $langs_to_skip = $gameRules->get('langs_to_skip', []);
-        $langs_to_skip_all = $gameRules->get('langs_to_skip_all', []);
-        $layouts_to_skip = $gameRules->get('layouts_to_skip', []);
-        if (!is_array($games_to_include)) :
-            $games_to_include = [];
-        endif;
-        if (!is_array($langs_to_skip)) :
-            $langs_to_skip = [];
-        endif;
-        if (!is_array($langs_to_skip_all)) :
-            $langs_to_skip_all = [];
-        endif;
-        if (!is_array($layouts_to_skip)) :
-            $layouts_to_skip = [];
-        endif;
+        $importPolicy = new ScryfallCardImportPolicy($gameRules);
 
         $allowedTables = ['cards_scry', 'cards_scry_test'];
         if (!in_array($tableName, $allowedTables, true)) :
@@ -55,58 +40,11 @@ class ScryfallCardImportRunner
             throw new \Exception('[ERROR] scryfall_bulk.php: Invalid cards table name supplied');
         endif;
         $msg->logMessage('[DEBUG]', "Using cards table '$tableName' for scryfall import");
-        $msg->logMessage('[DEBUG]', "Checking for {$tableName} content_hash and price_hash columns");
-        $contentHashQuery = sprintf("SHOW COLUMNS FROM `%s` LIKE 'content_hash'", $tableName);
-        $contentHashResult = $db->query($contentHashQuery);
-        if ($contentHashResult === false) :
-            throw new \Exception(
-                '[ERROR] scryfall_bulk.php: Checking cards table content_hash column: ' . $db->error
-            );
-        elseif ($contentHashResult->num_rows === 0) :
-            throw new \Exception(
-                '[ERROR] scryfall_bulk.php: cards table content_hash column missing (manual schema update required)'
-            );
-        else :
-            $msg->logMessage('[DEBUG]', 'cards table content_hash column present');
-        endif;
-        if ($contentHashResult !== false) :
-            $contentHashResult->free();
-        endif;
-
-        $priceHashQuery = sprintf("SHOW COLUMNS FROM `%s` LIKE 'price_hash'", $tableName);
-        $priceHashResult = $db->query($priceHashQuery);
-        if ($priceHashResult === false) :
-            throw new \Exception(
-                '[ERROR] scryfall_bulk.php: Checking cards table price_hash column: ' . $db->error
-            );
-        elseif ($priceHashResult->num_rows === 0) :
-            throw new \Exception(
-                '[ERROR] scryfall_bulk.php: cards table price_hash column missing (manual schema update required)'
-            );
-        else :
-            $msg->logMessage('[DEBUG]', 'cards table price_hash column present');
-        endif;
-        if ($priceHashResult !== false) :
-            $priceHashResult->free();
-        endif;
-
-        foreach (['illustration_id', 'f1_illustration_id', 'f2_illustration_id'] as $columnName) :
-            $columnQuery = sprintf("SHOW COLUMNS FROM `%s` LIKE '%s'", $tableName, $columnName);
-            $columnResult = $db->query($columnQuery);
-            if ($columnResult === false) :
-                throw new \Exception(
-                    "[ERROR] scryfall_bulk.php: Checking cards table $columnName column: " . $db->error
-                );
-            elseif ($columnResult->num_rows === 0) :
-                throw new \Exception(
-                    "[ERROR] scryfall_bulk.php: cards table $columnName column missing "
-                    . '(manual schema update required)'
-                );
-            else :
-                $msg->logMessage('[DEBUG]', "cards table $columnName column present");
-            endif;
-            $columnResult->free();
-        endforeach;
+        $schema = new ScryfallSchemaGuard($db, $msg, 'scryfall_bulk.php');
+        $schema->requireColumns(
+            $tableName,
+            ['content_hash', 'price_hash', 'illustration_id', 'f1_illustration_id', 'f2_illustration_id']
+        );
 
         $count_inc = $count_skip = $total_count = $count_add = $count_update = $count_other = 0;
         $count_update_content = $count_update_price = $count_update_both = 0;
@@ -245,60 +183,16 @@ class ScryfallCardImportRunner
 
                 $msg->logMessage('[DEBUG]', "Scryfall bulk API ($type), Record $id: $total_count");
 
-                $multi_1 = $multi_2 = null;
-                $number_int = null;
-
-                $name_1 = $name_2 = null;
-                $printed_name_1 = $printed_name_2 = null;
-                $flavor_name_1 = $flavor_name_2 = null;
-                $manacost_1 = $manacost_2 = null;
-                $power_1 = $power_2 = null;
-                $toughness_1 = $toughness_2 = null;
-                $loyalty_1 = $loyalty_2 = null;
-                $type_1 = $type_2 = null;
-                $printed_type_1 = $printed_type_2 = null;
-                $ability_1 = $ability_2 = null;
-                $printed_text_1 = $printed_text_2 = null;
-                $colour_1 = $colour_2 = null;
-                $artist_1 = $artist_2 = null;
-                $flavor_1 = $flavor_2 = null;
-                $image_1 = $image_2 = null;
-                $illustration_id_1 = $illustration_id_2 = null;
-                $cmc_1 = $cmc_2 = null;
-
-                $id_p1 = $component_p1 = $name_p1 = $type_line_p1 = $uri_p1 = null;
-                $id_p2 = $component_p2 = $name_p2 = $type_line_p2 = $uri_p2 = null;
-                $id_p3 = $component_p3 = $name_p3 = $type_line_p3 = $uri_p3 = null;
-                $id_p4 = $component_p4 = $name_p4 = $type_line_p4 = $uri_p4 = null;
-                $id_p5 = $component_p5 = $name_p5 = $type_line_p5 = $uri_p5 = null;
-                $id_p6 = $component_p6 = $name_p6 = $type_line_p6 = $uri_p6 = null;
-                $id_p7 = $component_p7 = $name_p7 = $type_line_p7 = $uri_p7 = null;
-
                 $mappedCard = ScryfallCardRecordMapper::map($value);
                 ScryfallCardImportStatement::applyMappedCard($bindValues, $mappedCard);
-                foreach ($mappedCard as $mappedField => $mappedValue) :
-                    ${$mappedField} = $mappedValue;
-                endforeach;
+                $lang = $mappedCard['lang'] ?? null;
+                $layout = $mappedCard['layout'] ?? null;
+                $content_hash = $mappedCard['content_hash'] ?? null;
+                $price_hash = $mappedCard['price_hash'] ?? null;
+                $set_code = $mappedCard['set_code'] ?? null;
 
-                $skip = 1;
-
-                $games = $value['games'] ?? array();
-                foreach ($games as $game_type) :
-                    if (in_array($game_type, $games_to_include, true)) :
-                        $skip = 0;
-                        break;
-                    endif;
-                endforeach;
-
-                if (
-                    (in_array($lang, $langs_to_skip, true) and $type === 'default')
-                    or
-                    (in_array($lang, $langs_to_skip_all, true) and $type === 'all')
-                    or
-                    (in_array($layout, $layouts_to_skip, true))
-                ) :
-                    $skip = 1;
-                endif;
+                $decision = $importPolicy->decide($value, $type);
+                $skip = $decision['include'] ? 0 : 1;
 
                 if ($skip === 1) :
                     $count_skip = $count_skip + 1;
