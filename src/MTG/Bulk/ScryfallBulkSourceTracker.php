@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        10/07/26
+Version:     1.1
+Date:        11/07/26
 Name:        ScryfallBulkSourceTracker.php
 Purpose:     Track successful Scryfall bulk-source imports.
 Notes:       -
@@ -60,6 +60,7 @@ class ScryfallBulkSourceTracker
         bool $completed
     ): void {
         $snapshot = $this->snapshot($localPath);
+        $completedFlag = $completed ? 1 : 0;
         $result = $this->db->execute_query(
             "INSERT INTO `scryfall_bulk_sources`
                 (source_type, download_uri, local_path, file_size, file_mtime, content_hash, status,
@@ -78,7 +79,7 @@ class ScryfallBulkSourceTracker
                 $snapshot['mtime'],
                 $snapshot['hash'],
                 $status,
-                $completed,
+                $completedFlag,
             ]
         );
         if ($result === false) :

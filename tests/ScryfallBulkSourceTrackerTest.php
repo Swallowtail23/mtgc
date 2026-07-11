@@ -38,11 +38,15 @@ class ScryfallBulkSourceTrackerTest extends TestCase
         $tracker = new ScryfallBulkSourceTracker($db);
 
         $this->assertTrue($tracker->isCurrent('oracle_tags', 'https://example.test/source', $path));
+        $tracker->markStarted('oracle_tags', 'https://example.test/source', $path);
         $tracker->markCompleted('oracle_tags', 'https://example.test/source', $path);
 
         $this->assertSame('oracle_tags', $db->parameters[0][0]);
-        $this->assertSame('completed', $db->parameters[1][6]);
-        $this->assertSame(hash_file('sha256', $path), $db->parameters[1][5]);
+        $this->assertSame('running', $db->parameters[1][6]);
+        $this->assertSame(0, $db->parameters[1][7]);
+        $this->assertSame('completed', $db->parameters[2][6]);
+        $this->assertSame(1, $db->parameters[2][7]);
+        $this->assertSame(hash_file('sha256', $path), $db->parameters[2][5]);
         unlink($path);
     }
 }
