@@ -205,7 +205,7 @@ docker exec mtgc_web_1 bash -c "printf 'done\n' > /var/log/mtg/scryfall_import_d
 exit /b 0
 
 :FinalizeConfigPerms
-docker exec mtgc_web_1 bash -c "chown -R www-data:www-data /mnt/data/config && chmod -R u+rwX /mnt/data/config"
+docker exec mtgc_web_1 bash -c "chown -R www-data:www-data /mnt/data/config && chmod -R u+rwX /mnt/data/config && chmod 700 /mnt/data/config && if [ -f /mnt/data/config/mtg_new.ini ]; then chmod 600 /mnt/data/config/mtg_new.ini; fi"
 exit /b 0
 
 :ClearMaintenance

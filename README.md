@@ -96,7 +96,10 @@ disk usage ranges from 10 GB TO 100 GB depending on downloaded images.
   FreecurrencyAPI key, Disqus settings, FX defaults, etc. SMTP configuration
   includes host, port, authentication, HELO name, encryption mode, and whether
   to enforce TLS certificate validation.
-- Web/container users must have read/write access; admin UI writes back changes.
+- The service account must be able to read the file. It needs write access only
+  when Admin UI configuration editing is enabled; keep the file private to that
+  account (`0600`) and keep its parent directory private (`0750`/`0700`). See
+  INSTALL.md for the supported permission modes.
 
 ## Work In Progress
 

@@ -115,6 +115,10 @@ restore_host_permissions "$BASE_DIR/config/scripts"
 
 # Create required directories
 mkdir -p "$BASE_DIR/cardimg" "$BASE_DIR/config" "$BASE_DIR/logs"
+# The config directory contains the application database and integration
+# credentials. Keep it private on the host until the container assigns it to
+# its runtime account during startup.
+chmod 700 "$BASE_DIR/config"
 
 COMPOSER_CHECK_FILE="$BASE_DIR/config/composer_installed.flag"
 LEGACY_COMPOSER_CHECK="$BASE_DIR/config/.composer_installed"
@@ -182,6 +186,9 @@ if [[ "$DO_DB_SETUP" -eq 1 ]]; then
 
     # 5) Force FreecurrencyAPI to be empty
     sed -i -E 's/^FreecurrencyAPI[[:space:]]*=.*/FreecurrencyAPI = ""/' "$INI_FILE"
+
+    # The ini contains database credentials after the substitutions above.
+    chmod 600 "$INI_FILE"
 else
     echo "Existing install detected — keeping mtg_new.ini unchanged."
 fi
@@ -210,11 +217,6 @@ fi
 restore_host_permissions "$SCRIPTS_DEST"
 chmod +x "$SCRIPTS_DEST"/*.sh
 
-# Make config editable if it exists
-if [[ -f "$BASE_DIR/config/mtg_new.ini" ]]; then
-    chmod +w "$BASE_DIR/config/mtg_new.ini"
-fi
-
 # ─────────────────────────────────────────────
 # Start containers via compose
 # ─────────────────────────────────────────────
@@ -224,14 +226,6 @@ export COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-mtgc}
     ${COMPOSE_CMD} "${COMPOSE_ARGS[@]}" build --pull
     ${COMPOSE_CMD} "${COMPOSE_ARGS[@]}" up --build -d
 )
-
-# ─────────────────────────────────────────────
-# Reapply host-side write permissions for config file
-# ─────────────────────────────────────────────
-if [[ -f "$BASE_DIR/config/mtg_new.ini" ]]; then
-    chmod +w "$BASE_DIR/config/mtg_new.ini"
-fi
-chmod +w "$BASE_DIR/config"
 
 # ─────────────────────────────────────────────
 # Wait for MySQL
@@ -321,7 +315,10 @@ fi
 # ─────────────────────────────────────────────
 echo "Finalising config directory ownership for container runtime..."
 ${DOCKER_CMD} exec mtgc_web_1 bash -c \
-    "chown -R www-data:www-data /mnt/data/config && chmod -R u+rwX /mnt/data/config"
+    "chown -R www-data:www-data /mnt/data/config \
+    && chmod -R u+rwX /mnt/data/config \
+    && chmod 700 /mnt/data/config \
+    && if [ -f /mnt/data/config/mtg_new.ini ]; then chmod 600 /mnt/data/config/mtg_new.ini; fi"
 
 # ─────────────────────────────────────────────
 # Clear maintenance mode

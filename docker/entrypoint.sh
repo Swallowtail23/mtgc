@@ -1,9 +1,16 @@
 #!/bin/bash
 
 # Ensure application ini is linked from mounted config directory
+CONFIG_DIR="/mnt/data/config"
 CONFIG_SRC="/mnt/data/config/mtg_new.ini"
 CONFIG_DEST="/opt/mtg/mtg_new.ini"
+if [ -d "$CONFIG_DIR" ]; then
+    chown www-data:www-data "$CONFIG_DIR"
+    chmod 700 "$CONFIG_DIR"
+fi
 if [ -f "$CONFIG_SRC" ]; then
+    chown www-data:www-data "$CONFIG_SRC"
+    chmod 600 "$CONFIG_SRC"
     mkdir -p /opt/mtg
     ln -sf "$CONFIG_SRC" "$CONFIG_DEST"
 fi

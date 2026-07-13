@@ -28,7 +28,9 @@ All notable changes to this project will be documented in this file.
 
 ### Security
 
--
+- Docker bootstrap now applies explicit private permissions to the persisted
+  configuration directory and credentials ini; native-install documentation now
+  specifies safe service-account ownership and read-only deployment options.
 
 ### Infrastructure
 

@@ -179,6 +179,13 @@ The host paths defined during bootstrap contain persistent data:
   run so you can schedule cron jobs.
   Inside the container they are available at `/mnt/data/config/scripts` (and
   `/opt/mtg/scripts` via symlink).
+- `mtg_new.ini` contains database and optional integration credentials. The
+  Linux/macOS init script sets the config directory to `0700` and the ini to
+  `0600`, then assigns both to `www-data` inside the container so the existing
+  Admin UI editor continues to work. Do not relax these modes or place this
+  directory in the checkout. On Windows, restrict the host `config` directory's
+  NTFS ACL to the installing account, Administrators, and SYSTEM; Docker Desktop
+  bind mounts do not reliably enforce Linux mode bits on the host filesystem.
 - `${BASE_DIR}/logs` – application logs, including the Scryfall import marker.
 
 Keep backups of the database volume (`mtgc_db-data`) and these folders if you

@@ -39,9 +39,37 @@ Adjust paths/commands for your platform.
 
 ## File/Directory setup
 
-- Create `/opt/mtg`. 
-- Copy `setup/mtg_new.ini` to `/opt/mtg/mtg_new.ini` and edit per your
-  environment (see README for key settings).
+- Keep `/opt/mtg` outside the web root. The ini contains database and optional
+  third-party credentials, so do not put it in the repository, a web-served
+  directory, or an unencrypted shared backup.
+- Create the directory and copy the ini with restrictive permissions. Substitute
+  the PHP-FPM/Apache account and group for `www-data` where necessary (on RHEL,
+  these are commonly `apache`):
+
+  ```bash
+  sudo install -d -o root -g www-data -m 0750 /opt/mtg
+  sudo install -o www-data -g www-data -m 0600 setup/mtg_new.ini /opt/mtg/mtg_new.ini
+  ```
+
+  This permits the application service account to read and update the existing
+  ini through the Admin UI while preventing other local users from reading it.
+  If the Admin UI configuration editor is disabled, prefer a root-owned,
+  read-only deployment file instead:
+
+  ```bash
+  sudo chown root:www-data /opt/mtg/mtg_new.ini
+  sudo chmod 0640 /opt/mtg/mtg_new.ini
+  ```
+
+  Verify the application account has the access required by the selected mode:
+
+  ```bash
+  sudo -u www-data test -r /opt/mtg/mtg_new.ini
+  # Required only when Admin UI configuration editing is enabled:
+  sudo -u www-data test -w /opt/mtg/mtg_new.ini
+  ```
+
+- Edit `/opt/mtg/mtg_new.ini` per your environment (see README for key settings).
 - Copy `setup/data_updates.sh` into `/opt/mtg/scripts/` and make it executable.
 - Ensure the log file path specified in the ini exists and is writable (e.g.
   `/var/log/mtg/mtgapp.log`).
@@ -161,8 +189,9 @@ log directory referenced in the cron file.
 
 ## Final checks
 
-- Confirm Apache can read/write `/opt/mtg/mtg_new.ini`, the log directory, and
-  `ImgLocation`.
+- Confirm the application account can read `/opt/mtg/mtg_new.ini`; it requires
+  write access only when Admin UI configuration editing is enabled. Also confirm
+  the log directory and `ImgLocation` are writable.
 - Verify file permissions on card images and JSON cache directories.
 - Log in, configure the admin email/SMTP via the UI, and run through the initial
   bulk data validation.
