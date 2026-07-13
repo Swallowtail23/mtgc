@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        28/04/26
+Version:     1.2
+Date:        13/07/26
 Name:        ImportExportEmailTest.php
 Purpose:     Tests import/export email and CSV generation behavior.
 Notes:       -
@@ -17,11 +17,33 @@ use MTG\Cards\ImportExport;
 use MTG\Core\AppConfig;
 use MTG\Core\GameRules;
 use MTG\Core\MyPHPMailer;
+use PHPMailer\PHPMailer\PHPMailer;
 
 require_once __DIR__ . '/bootstrap.php';
 
 class ImportExportEmailTest extends TestCase
 {
+    public function testMailerDeclaresCsvAttachmentsAsUtf8Csv(): void
+    {
+        $source = (string) file_get_contents(__DIR__ . '/../src/MTG/Core/MyPHPMailer.php');
+
+        $this->assertStringContainsString("self::ENCODING_BASE64, 'text/csv; charset=utf-8'", $source);
+        $this->assertStringContainsString('addEmailAttachment($attachment, $attachmentname)', $source);
+        $this->assertStringContainsString('addEmailAttachment($path, $name)', $source);
+    }
+
+    public function testMailerUsesUtf8ForEmailContent(): void
+    {
+        $logfile = tempnam(sys_get_temp_dir(), 'impexp_');
+        $mailer = new MyPHPMailer(true, $this->buildConfig($logfile, false));
+
+        $this->assertSame(PHPMailer::CHARSET_UTF8, $mailer->CharSet);
+
+        if ($logfile && file_exists($logfile)) {
+            unlink($logfile);
+        }
+    }
+
     private function buildConfig(string $logfile, bool $emailEnabled): AppConfig
     {
         $iniArray = [

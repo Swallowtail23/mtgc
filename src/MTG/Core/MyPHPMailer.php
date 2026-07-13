@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.17
-Date:        29/04/26
+Version:     1.20
+Date:        13/07/26
 Name:        MyPHPMailer.php
 Purpose:     Extends PHPMailer with standard options.
 Notes:       Usage:
@@ -42,12 +42,18 @@ class MyPHPMailer extends PHPMailer
         $this->message = new Message($this->appConfig);
         $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
         $serverEmail = (string) $this->appConfig->email('serverEmail', '');
+        $senderEmail = trim((string) $this->appConfig->email('senderEmail', ''));
+        if ($senderEmail === '') :
+            $senderEmail = $serverEmail;
+        endif;
         $siteTitle = (string) $this->appConfig->general('title', '');
         $smtpParameters = $this->appConfig->getSmtpParameters();
 
         // Set defaults for PHPMailer from ini.file
         $this->setFrom($serverEmail, $siteTitle);
         $this->addReplyTo($serverEmail, $siteTitle);
+        $this->Sender = $senderEmail;
+        $this->CharSet = self::CHARSET_UTF8;
         $this->isSMTP();
         $this->Host       = $smtpParameters['SMTPHost'];
         $this->Helo       = $smtpParameters['SMTPHelo'] ?? gethostname();
@@ -115,7 +121,7 @@ class MyPHPMailer extends PHPMailer
             endif;
 
             if ($attachment !== '') :
-                $this->addAttachment($attachment, $attachmentname);
+                $this->addEmailAttachment($attachment, $attachmentname);
             endif;
             if (!empty($attachments)) :
                 $this->message->logMessage(
@@ -126,7 +132,7 @@ class MyPHPMailer extends PHPMailer
                     $path = $extra['path'] ?? ($extra[0] ?? '');
                     $name = $extra['name'] ?? ($extra[1] ?? '');
                     if ($path !== '') :
-                        $this->addAttachment($path, $name);
+                        $this->addEmailAttachment($path, $name);
                     endif;
                 endforeach;
             endif;
@@ -139,5 +145,18 @@ class MyPHPMailer extends PHPMailer
             $this->message->logMessage('[ERROR]', "Email NOT sent to $recipient ({$e->getMessage()})");
             return false;
         }
+    }
+
+    private function addEmailAttachment(string $path, string $name = ''): void
+    {
+        $filename = $name !== '' ? $name : $path;
+        $extension = strtolower((string) pathinfo($filename, PATHINFO_EXTENSION));
+
+        if ($extension === 'csv') :
+            $this->addAttachment($path, $name, self::ENCODING_BASE64, 'text/csv; charset=utf-8');
+            return;
+        endif;
+
+        $this->addAttachment($path, $name);
     }
 }

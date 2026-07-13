@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.56
-Date:        29/04/26
+Version:     1.57
+Date:        13/07/26
 Name:        AppContext.php
 Purpose:     Bootstrap context container for app-wide dependencies.
 Notes:       -
@@ -112,6 +112,7 @@ class AppContext
                 'enabled' => $emailEnabled,
                 'adminEmail' => $iniArray['email']['AdminEmail'] ?? '',
                 'serverEmail' => $iniArray['email']['ServerEmail'] ?? '',
+                'senderEmail' => $iniArray['email']['SenderEmail'] ?? '',
                 'smtp' => $smtpParameters,
             ],
             'comments' => [

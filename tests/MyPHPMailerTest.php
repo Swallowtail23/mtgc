@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        28/04/26
+Version:     1.1
+Date:        13/07/26
 Name:        MyPHPMailerTest.php
 Purpose:     Tests PHPMailer configuration wrapper behavior.
 Notes:       -
@@ -54,8 +54,11 @@ class MyPHPMailerTest extends TestCase
         );
     }
 
-    private function buildConfig(string $logfile, array $smtpOverrides = []): AppConfig
-    {
+    private function buildConfig(
+        string $logfile,
+        array $smtpOverrides = [],
+        array $emailOverrides = []
+    ): AppConfig {
         $smtpParameters = array_merge($this->buildParams(), $smtpOverrides);
         $iniArray = [
             'general' => [
@@ -77,7 +80,7 @@ class MyPHPMailerTest extends TestCase
                 'Badloginlimit' => 0,
                 'AdminIP' => ''
             ],
-            'email' => [
+            'email' => array_merge([
                 'Email' => 'disabled',
                 'AdminEmail' => 'admin@example.test',
                 'ServerEmail' => 'server@example.test',
@@ -90,7 +93,7 @@ class MyPHPMailerTest extends TestCase
                 'Port' => $smtpParameters['SMTPPort'],
                 'SMTPHelo' => $smtpParameters['SMTPHelo'],
                 'SMTPVerifySSL' => $smtpParameters['SMTPVerifySSL']
-            ],
+            ], $emailOverrides),
             'fx' => [
                 'FreecurrencyAPI' => '',
                 'TargetCurrency' => ''
@@ -137,5 +140,24 @@ class MyPHPMailerTest extends TestCase
         $mailer = new MyPHPMailer(true, $this->appConfig);
 
         $this->assertSame([], $mailer->SMTPOptions);
+    }
+
+    public function testSenderUsesConfiguredAddress(): void
+    {
+        $appConfig = $this->buildConfig(
+            $this->tempLog,
+            [],
+            ['SenderEmail' => 'bounce@example.test']
+        );
+        $mailer = new MyPHPMailer(true, $appConfig);
+
+        $this->assertSame('bounce@example.test', $mailer->Sender);
+    }
+
+    public function testSenderFallsBackToReplyToAddress(): void
+    {
+        $mailer = new MyPHPMailer(true, $this->appConfig);
+
+        $this->assertSame('server@example.test', $mailer->Sender);
     }
 }

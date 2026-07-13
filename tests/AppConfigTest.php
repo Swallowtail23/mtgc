@@ -21,6 +21,7 @@ class AppConfigTest extends TestCase
             ],
             'email' => [
                 'Email' => 'disabled',
+                'SenderEmail' => 'bounce@example.test',
                 'SMTPVerifySSL' => '0',
                 'Port' => '2525'
             ],
@@ -39,6 +40,7 @@ class AppConfigTest extends TestCase
         $this->assertSame(5, $config->security('badLoginLimit'));
         $this->assertFalse($config->getSmtpParameters()['SMTPVerifySSL']);
         $this->assertSame(2525, $config->getSmtpParameters()['SMTPPort']);
+        $this->assertSame('bounce@example.test', $config->email('senderEmail'));
         $this->assertSame('15', $config->general('maxCardDataAge'));
     }
 

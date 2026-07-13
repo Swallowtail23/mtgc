@@ -10,6 +10,9 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Email messages are now declared as UTF-8 so names and future content with accented characters render correctly.
+- Email settings now clearly distinguish the visible From/Reply-To address from an optional bounce envelope sender,
+  which defaults to the visible address.
 - Extracted the Scryfall bulk script workflow into `ScryfallBulkCommand`, leaving the CLI entrypoint as a bootstrap
   wrapper while preserving its card, tag, sync-state, test, notification, and error-handling modes.
 - Extracted Scryfall rulings and manifest workflows into dedicated import services, leaving their CLI entrypoints as

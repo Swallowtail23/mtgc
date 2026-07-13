@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.5
-Date:        29/04/26
+Version:     1.6
+Date:        13/07/26
 Name:        AppConfig.php
 Purpose:     App-wide config container built from ini values.
 Notes:       -
@@ -28,7 +28,7 @@ class AppConfig
      * Expected override shape:
      * - general: array (url, title, tier, logLevel, logFile, imageBaseDir, timezone, locale, copyright)
      * - security: array (turnstileEnabled, turnstileSiteKey, turnstileSecretKey, trustDuration, badLoginLimit, adminIp)
-     * - email: array (enabled, adminEmail, serverEmail, smtp => array(...))
+     * - email: array (enabled, adminEmail, serverEmail, senderEmail, smtp => array(...))
      * - fx: array (api, local, url)
      * - comments: array (disqusEnabled, disqusDevUrl, disqusProdUrl)
      * - database: array (host, user, pass, name)
@@ -69,6 +69,7 @@ class AppConfig
             'enabled' => ($iniArray['email']['Email'] ?? 'enabled') === 'enabled',
             'adminEmail' => $iniArray['email']['AdminEmail'] ?? '',
             'serverEmail' => $iniArray['email']['ServerEmail'] ?? '',
+            'senderEmail' => $iniArray['email']['SenderEmail'] ?? '',
             'smtp' => [
                 'SMTPDebug' => $iniArray['email']['SMTPDebug'] ?? '',
                 'SMTPHost' => $iniArray['email']['Host'] ?? '',

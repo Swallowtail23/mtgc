@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.47
-Date:        29/04/26
+Version:     6.49
+Date:        13/07/26
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       -
@@ -38,6 +38,7 @@ $copyright                  = (string) $appConfig->general('copyright', '');
 $logfile                    = (string) $appConfig->general('logFile', '');
 $adminEmail                 = (string) $appConfig->email('adminEmail', '');
 $serverEmail                = (string) $appConfig->email('serverEmail', '');
+$senderEmail                = (string) $appConfig->email('senderEmail', '');
 
 $user                       = $sessionUser->id();
 $userName                   = $sessionUser->userName();
@@ -753,6 +754,7 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
     // Email settings
     $previousEmailStatus = $iniArray['email']['Email'] ?? 'enabled';
     $updatedIni['email']['ServerEmail'] = getPostedValue('email_server', $iniArray['email']['ServerEmail']);
+    $updatedIni['email']['SenderEmail'] = getPostedValue('email_sender', $iniArray['email']['SenderEmail'] ?? '');
     $updatedIni['email']['AdminEmail'] = getPostedValue('email_admin', $iniArray['email']['AdminEmail']);
     $smtpDebugChoice = getPostedValue('email_smtp_debug', $smtpDebugIni);
     if ($smtpDebugChoice === 'enabled') :
@@ -1015,6 +1017,7 @@ $disqusProdUrlIni = $commentsConfig['disqusProdUrl'] ?? '';
                     '#email_status',
                     [
                         '#email_server',
+                        '#email_sender',
                         '#email_admin',
                         '#email_smtp_debug',
                         '#email_host',
@@ -1584,7 +1587,7 @@ require APP_ROOT . '/includes/menu.php';
                                                     >disabled</option>
                                                 </select>
                                             </label><br>
-                                            <label>Server email<br>
+                                            <label>Visible From and Reply-To address<br>
                                                 <?php $serverEmailEsc = htmlspecialchars(
                                                     $serverEmail,
                                                     ENT_QUOTES,
@@ -1597,8 +1600,28 @@ require APP_ROOT . '/includes/menu.php';
                                                     id="email_server"
                                                     name="email_server"
                                                     <?php echo $configInputStyle;?>
-                                                    title="From/Reply-To address used by emails"
+                                                    title="Address recipients see and use when replying"
                                                     value="<?php echo $serverEmailEsc; ?>"
+                                                    <?php if (!$emailEnabled) :
+                                                        echo ' disabled';
+                                                    endif;?>
+                                                >
+                                            </label><br>
+                                            <label>Bounce address / envelope sender (optional)<br>
+                                                <?php $senderEmailEsc = htmlspecialchars(
+                                                    $senderEmail,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
+                                                <input
+                                                    class="textinput"
+                                                    type="email"
+                                                    id="email_sender"
+                                                    name="email_sender"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Bounce address; blank uses visible From"
+                                                    value="<?php echo $senderEmailEsc; ?>"
                                                     <?php if (!$emailEnabled) :
                                                         echo ' disabled';
                                                     endif;?>
