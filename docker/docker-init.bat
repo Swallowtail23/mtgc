@@ -46,6 +46,10 @@ set "BASE_DIR=%BASE_PARENT%\mtgc"
 call :EnsureDir "%BASE_DIR%\cardimg"
 call :EnsureDir "%BASE_DIR%\config"
 call :EnsureDir "%BASE_DIR%\logs"
+call :EnsureDir "%BASE_DIR%\secrets"
+call :ProtectPrivateDirectory "%BASE_DIR%\config" || exit /b 1
+call :ProtectPrivateDirectory "%BASE_DIR%\secrets" || exit /b 1
+set "MYSQL_SECRETS_FILE=%BASE_DIR%\secrets\mysql.env"
 
 set "COMPOSER_CHECK=%BASE_DIR%\config\composer_installed.flag"
 set "LEGACY_FORCE=%BASE_DIR%\config\.force_composer_install"
@@ -61,10 +65,13 @@ if not exist "%COMPOSER_CHECK%" (
     )
 )
 
-call :WriteEnv "%ENV_FILE%"
-
 set DO_DB_SETUP=1
 for /f "tokens=*" %%I in ('docker volume ls --format {{.Name}} ^| findstr /I "mtgc_db-data"') do set DO_DB_SETUP=0
+call :EnsureDatabaseSecrets %DO_DB_SETUP%
+if errorlevel 1 exit /b 1
+call :WriteEnv "%ENV_FILE%"
+for /f "usebackq tokens=1,* delims==" %%A in ("%MYSQL_SECRETS_FILE%") do set "%%A=%%B"
+
 if %DO_DB_SETUP%==1 (
     echo Fresh install detected ^- generating mtg_new.ini from template...
     copy /Y "%PROJECT_ROOT%\setup\mtg_new.ini" "%BASE_DIR%\config\mtg_new.ini" >nul
@@ -84,9 +91,9 @@ if not exist "%BASE_DIR%\config\logrotate-mtgc.conf" (
     powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-Content '%PROJECT_ROOT%\docker\logrotate-mtgc.conf') -replace '__BASE_DIR__','/var/log/mtg' | Set-Content '%BASE_DIR%\config\logrotate-mtgc.conf'"
 )
 
-call :GetComposeValue MYSQL_DATABASE DB_NAME
-call :GetComposeValue MYSQL_USER DB_USER
-call :GetComposeValue MYSQL_PASSWORD DB_PASS
+set "DB_NAME=%MYSQL_DATABASE%"
+set "DB_USER=%MYSQL_USER%"
+set "DB_PASS=%MYSQL_PASSWORD%"
 set DB_SERVER=db
 call :UpdateIni "%BASE_DIR%\config\mtg_new.ini" "%DB_SERVER%" "%DB_USER%" "%DB_PASS%" "%DB_NAME%"
 
@@ -140,9 +147,33 @@ if not exist %1 (
 )
 exit /b 0
 
+:ProtectPrivateDirectory
+icacls "%~1" /inheritance:r /grant:r "%USERNAME%":(OI)(CI)F "*S-1-5-18":(OI)(CI)F "*S-1-5-32-544":(OI)(CI)F >nul
+if errorlevel 1 (
+    echo [ERROR] Unable to restrict access to %~1
+    exit /b 1
+)
+exit /b 0
+
 :WriteEnv
 > %1 echo BASE_DIR=%BASE_DIR%
 >> %1 echo WEB_PORT=%WEB_PORT%
+>> %1 echo MYSQL_SECRETS_FILE=%MYSQL_SECRETS_FILE%
+exit /b 0
+
+:EnsureDatabaseSecrets
+if exist "%MYSQL_SECRETS_FILE%" exit /b 0
+if not "%~1"=="1" (
+    echo [ERROR] Existing database volume found, but %MYSQL_SECRETS_FILE% is missing.
+    echo         Do not generate replacement credentials: they would not match the existing database.
+    echo         Restore this file from backup or create it with the database's current MYSQL_* values.
+    exit /b 1
+)
+echo Generating database credentials in %MYSQL_SECRETS_FILE%...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$rng=[Security.Cryptography.RandomNumberGenerator]::Create(); function New-Hex { $bytes=New-Object byte[] 32; $rng.GetBytes($bytes); return -join ($bytes ^| ForEach-Object { $_.ToString('x2') }) }; @('MYSQL_ROOT_PASSWORD=' + (New-Hex), 'MYSQL_DATABASE=mtg_new', 'MYSQL_USER=mtg', 'MYSQL_PASSWORD=' + (New-Hex)) ^| Set-Content -Encoding ascii '%MYSQL_SECRETS_FILE%'"
+if errorlevel 1 exit /b 1
+icacls "%MYSQL_SECRETS_FILE%" /inheritance:r /grant:r "%USERNAME%":F "*S-1-5-18":F "*S-1-5-32-544":F >nul
+if errorlevel 1 exit /b 1
 exit /b 0
 
 :SanitizeIni
@@ -155,10 +186,6 @@ if not exist "%SCRIPTS_DEST%" mkdir "%SCRIPTS_DEST%"
 if not exist "%SCRIPTS_DEST%\data_updates.sh" copy /Y "%PROJECT_ROOT%\setup\data_updates.sh" "%SCRIPTS_DEST%\data_updates.sh" >nul
 if not exist "%BASE_DIR%\config\cron_mtgc" copy /Y "%PROJECT_ROOT%\docker\cron_mtgc.example" "%BASE_DIR%\config\cron_mtgc" >nul
 for %%F in ("%SCRIPTS_DEST%\*.sh") do attrib -R "%%~F"
-exit /b 0
-
-:GetComposeValue
-for /f "usebackq delims=" %%V in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-Content '%COMPOSE_FILE%') ^| Where-Object { \$_ -match '%1' } ^| Select-Object -First 1 ^| ForEach-Object { (\$_ -split ':')[1].Trim().Trim(''\"'') }"`) do set "%2=%%V"
 exit /b 0
 
 :UpdateIni
@@ -180,8 +207,8 @@ exit /b 0
 
 :RunUserSetup
 echo Starting initial DB setup...
-docker exec mtgc_db_1 mysql -u root -prootpass -e "INSERT INTO mtg_new.admin (\`key\`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
-docker exec mtgc_db_1 mysql -u root -prootpass -e "SET FOREIGN_KEY_CHECKS=0; TRUNCATE TABLE mtg_new.collection_values; TRUNCATE TABLE mtg_new.users; SET FOREIGN_KEY_CHECKS=1;"
+docker exec -e MYSQL_PWD=%MYSQL_ROOT_PASSWORD% mtgc_db_1 mysql -u root -e "INSERT INTO mtg_new.admin (\`key\`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
+docker exec -e MYSQL_PWD=%MYSQL_ROOT_PASSWORD% mtgc_db_1 mysql -u root -e "SET FOREIGN_KEY_CHECKS=0; TRUNCATE TABLE mtg_new.collection_values; TRUNCATE TABLE mtg_new.users; SET FOREIGN_KEY_CHECKS=1;"
 set /p ADMIN_EMAIL="Enter email address for admin user: "
 echo [INFO] This will be set as the site admin email address in mtg_new.ini.
 set /p ADMIN_USER="Enter desired username (display only): "
@@ -189,9 +216,9 @@ set /p ADMIN_PASS="Enter password: "
 powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-Content '%BASE_DIR%\config\mtg_new.ini') ^| %% { \$_ -replace '^AdminEmail\s*=.*', 'AdminEmail     = \"%ADMIN_EMAIL%\"' } ^| Set-Content '%BASE_DIR%\config\mtg_new.ini'"
 for /f "usebackq tokens=2 delims=:" %%H in (`docker exec mtgc_web_1 php /var/www/mtgnew/setup/initial.php "%ADMIN_USER%" "%ADMIN_PASS%" ^| findstr /C:"Hashed password:"`) do set "HASHED=%%H"
 set "HASHED=%HASHED: =%"
-docker exec mtgc_db_1 mysql -u root -prootpass -e "INSERT INTO mtg_new.users (username, email, password, reg_date, status) VALUES ('%ADMIN_USER%', '%ADMIN_EMAIL%', '%HASHED%', NOW(), 'active');"
-docker exec mtgc_db_1 mysql -u root -prootpass -e "UPDATE mtg_new.users SET admin=1 WHERE username='%ADMIN_USER%';"
-docker exec mtgc_db_1 mysql -u root -prootpass -e "INSERT INTO mtg_new.groups (groupnumber, groupname, owner) VALUES (1, 'Masters', 1) ON DUPLICATE KEY UPDATE groupname='Masters';"
+docker exec -e MYSQL_PWD=%MYSQL_ROOT_PASSWORD% mtgc_db_1 mysql -u root -e "INSERT INTO mtg_new.users (username, email, password, reg_date, status) VALUES ('%ADMIN_USER%', '%ADMIN_EMAIL%', '%HASHED%', NOW(), 'active');"
+docker exec -e MYSQL_PWD=%MYSQL_ROOT_PASSWORD% mtgc_db_1 mysql -u root -e "UPDATE mtg_new.users SET admin=1 WHERE username='%ADMIN_USER%';"
+docker exec -e MYSQL_PWD=%MYSQL_ROOT_PASSWORD% mtgc_db_1 mysql -u root -e "INSERT INTO mtg_new.groups (groupnumber, groupname, owner) VALUES (1, 'Masters', 1) ON DUPLICATE KEY UPDATE groupname='Masters';"
 exit /b 0
 
 :RunBulkIfNeeded
@@ -209,5 +236,5 @@ docker exec mtgc_web_1 bash -c "chown -R www-data:www-data /mnt/data/config && c
 exit /b 0
 
 :ClearMaintenance
-docker exec mtgc_db_1 mysql -u root -prootpass -e "INSERT INTO mtg_new.admin (\`key\`, usemin, mtce) VALUES (1, 0, 0) ON DUPLICATE KEY UPDATE mtce=0;"
+docker exec -e MYSQL_PWD=%MYSQL_ROOT_PASSWORD% mtgc_db_1 mysql -u root -e "INSERT INTO mtg_new.admin (\`key\`, usemin, mtce) VALUES (1, 0, 0) ON DUPLICATE KEY UPDATE mtce=0;"
 exit /b 0

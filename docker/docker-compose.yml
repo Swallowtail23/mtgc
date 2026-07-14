@@ -25,11 +25,8 @@ services:
     container_name: mtgc_db_1
     ports:
       - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: mtg_new
-      MYSQL_USER: mtg
-      MYSQL_PASSWORD: mtgpass
+    env_file:
+      - ${MYSQL_SECRETS_FILE:?Run docker/docker-init.sh before starting the stack.}
     volumes:
       - db-data:/var/lib/mysql
       - ../setup/mtg_new.sql:/docker-entrypoint-initdb.d/mtg_new.sql:ro

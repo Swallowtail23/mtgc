@@ -114,11 +114,29 @@ restore_host_permissions "$BASE_DIR/logs"
 restore_host_permissions "$BASE_DIR/config/scripts"
 
 # Create required directories
-mkdir -p "$BASE_DIR/cardimg" "$BASE_DIR/config" "$BASE_DIR/logs"
+mkdir -p "$BASE_DIR/cardimg" "$BASE_DIR/config" "$BASE_DIR/logs" "$BASE_DIR/secrets"
 # The config directory contains the application database and integration
 # credentials. Keep it private on the host until the container assigns it to
 # its runtime account during startup.
 chmod 700 "$BASE_DIR/config"
+chmod 700 "$BASE_DIR/secrets"
+
+MYSQL_SECRETS_FILE="$BASE_DIR/secrets/mysql.env"
+
+generate_database_secret() {
+    od -An -N32 -tx1 /dev/urandom | tr -d ' \n'
+}
+
+read_database_secret() {
+    local key="$1"
+    local value
+    value=$(sed -n "s/^${key}=//p" "$MYSQL_SECRETS_FILE" | head -n 1)
+    if [[ -z "$value" ]]; then
+        echo "[ERROR] Missing $key in $MYSQL_SECRETS_FILE."
+        exit 1
+    fi
+    printf '%s' "$value"
+}
 
 COMPOSER_CHECK_FILE="$BASE_DIR/config/composer_installed.flag"
 LEGACY_COMPOSER_CHECK="$BASE_DIR/config/.composer_installed"
@@ -135,12 +153,6 @@ else
     fi
 fi
 
-# Write .env file for compose
-cat <<EOF > "$ENV_FILE"
-BASE_DIR=$BASE_DIR
-WEB_PORT=$WEB_PORT
-EOF
-
 # ─────────────────────────────────────────────
 # Check if db-data volume exists (before containers start)
 # ─────────────────────────────────────────────
@@ -149,6 +161,36 @@ if ${DOCKER_CMD} volume ls --format '{{.Name}}' | grep -qi 'mtgc_db-data'; then
     echo "Existing DB volume found."
     DO_DB_SETUP=0
 fi
+
+if [[ "$DO_DB_SETUP" -eq 1 && ! -f "$MYSQL_SECRETS_FILE" ]]; then
+    echo "Generating database credentials in $MYSQL_SECRETS_FILE..."
+    umask 077
+    {
+        printf 'MYSQL_ROOT_PASSWORD=%s\n' "$(generate_database_secret)"
+        printf 'MYSQL_DATABASE=mtg_new\n'
+        printf 'MYSQL_USER=mtg\n'
+        printf 'MYSQL_PASSWORD=%s\n' "$(generate_database_secret)"
+    } > "$MYSQL_SECRETS_FILE"
+    chmod 600 "$MYSQL_SECRETS_FILE"
+elif [[ "$DO_DB_SETUP" -eq 0 && ! -f "$MYSQL_SECRETS_FILE" ]]; then
+    echo "[ERROR] Existing database volume found, but $MYSQL_SECRETS_FILE is missing."
+    echo "        Do not generate replacement credentials: they would not match the existing database."
+    echo "        Restore this file from backup or create it with the database's current MYSQL_* values."
+    exit 1
+fi
+
+DB_NAME=$(read_database_secret 'MYSQL_DATABASE')
+DB_USER=$(read_database_secret 'MYSQL_USER')
+DB_PASS=$(read_database_secret 'MYSQL_PASSWORD')
+DB_ROOT_PASS=$(read_database_secret 'MYSQL_ROOT_PASSWORD')
+DB_SERVER="db"
+
+# Write Compose variables without including credential values.
+cat <<EOF > "$ENV_FILE"
+BASE_DIR=$BASE_DIR
+WEB_PORT=$WEB_PORT
+MYSQL_SECRETS_FILE=$MYSQL_SECRETS_FILE
+EOF
 
 # ─────────────────────────────────────────────
 # Handle mtg_new.ini based on whether this is a fresh install
@@ -166,14 +208,8 @@ if [[ "$DO_DB_SETUP" -eq 1 ]]; then
     # 2) Strip trailing whitespace
     sed -i -E 's/[[:space:]]+$//' "$INI_FILE"
 
-    # 3) Read DB settings from docker-compose.yml
-    #    DBServer is the service name "db" from compose
-    DB_SERVER="db"
-    DB_NAME=$(sed -n 's/^[[:space:]]*MYSQL_DATABASE:[[:space:]]*"\?\([^"]*\)"\?/\1/p' "$COMPOSE_FILE" | head -n1)
-    DB_USER=$(sed -n 's/^[[:space:]]*MYSQL_USER:[[:space:]]*"\?\([^"]*\)"\?/\1/p' "$COMPOSE_FILE" | head -n1)
-    DB_PASS=$(sed -n 's/^[[:space:]]*MYSQL_PASSWORD:[[:space:]]*"\?\([^"]*\)"\?/\1/p' "$COMPOSE_FILE" | head -n1)
-
-    # Escape characters that are special to sed replacement
+    # The app database credentials come from the protected host secrets file.
+    # DBServer is the Compose service name.
     ESC_DB_NAME=$(printf '%s\n' "$DB_NAME" | sed 's/[&/]/\\&/g')
     ESC_DB_USER=$(printf '%s\n' "$DB_USER" | sed 's/[&/]/\\&/g')
     ESC_DB_PASS=$(printf '%s\n' "$DB_PASS" | sed 's/[&/]/\\&/g')
@@ -251,10 +287,10 @@ ${DOCKER_CMD} exec mtgc_web_1 bash -c \
 run_user_setup() {
     echo "Starting initial DB setup..."
 
-    ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
+    ${DOCKER_CMD} exec -e MYSQL_PWD="$DB_ROOT_PASS" mtgc_db_1 mysql -u root -e \
         "INSERT INTO mtg_new.admin (\`key\`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
 
-    ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
+    ${DOCKER_CMD} exec -e MYSQL_PWD="$DB_ROOT_PASS" mtgc_db_1 mysql -u root -e \
         "SET FOREIGN_KEY_CHECKS=0; TRUNCATE TABLE mtg_new.collection_values; TRUNCATE TABLE mtg_new.users; SET FOREIGN_KEY_CHECKS=1;"
 
     read -rp "Enter email address for admin user: " email
@@ -273,11 +309,11 @@ run_user_setup() {
         | grep "Hashed password:" | awk -F': ' '{print $2}' | xargs)
 
     if [[ -n "$hashed" ]]; then
-        ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
+        ${DOCKER_CMD} exec -e MYSQL_PWD="$DB_ROOT_PASS" mtgc_db_1 mysql -u root -e \
             "INSERT INTO mtg_new.users (username, email, password, reg_date, status) VALUES ('$username', '$email', '$hashed', NOW(), 'active');"
-        ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
+        ${DOCKER_CMD} exec -e MYSQL_PWD="$DB_ROOT_PASS" mtgc_db_1 mysql -u root -e \
             "UPDATE mtg_new.users SET admin=1 WHERE username='$username';"
-        ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
+        ${DOCKER_CMD} exec -e MYSQL_PWD="$DB_ROOT_PASS" mtgc_db_1 mysql -u root -e \
             "INSERT INTO mtg_new.groups (groupnumber, groupname, owner) VALUES (1, 'Masters', 1) ON DUPLICATE KEY UPDATE groupname='Masters';"
     else
         echo "[ERROR] Failed to get hashed password."
@@ -323,7 +359,7 @@ ${DOCKER_CMD} exec mtgc_web_1 bash -c \
 # ─────────────────────────────────────────────
 # Clear maintenance mode
 # ─────────────────────────────────────────────
-${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
+${DOCKER_CMD} exec -e MYSQL_PWD="$DB_ROOT_PASS" mtgc_db_1 mysql -u root -e \
     "INSERT INTO mtg_new.admin (\`key\`, usemin, mtce) VALUES (1, 0, 0) ON DUPLICATE KEY UPDATE mtce=0;"
 
 echo "✅ Setup complete. You can now log in via http://localhost:${WEB_PORT}"
