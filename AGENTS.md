@@ -129,7 +129,7 @@
 - Validate the full data path end to end: inputs -> transforms -> storage -> readback.
 - Treat logs/diagnostics as hypotheses; verify with direct checks when they conflict with observed behavior.
 - Prefer small, reversible instrumentation gated to test mode and remove it once the root cause is confirmed.
-- Before major hardening work, check `CODEBASE_REVIEW_FINDINGS.md` for the current risk priorities.
+- Before major hardening work, check `local/WORK_REMAINING.md` for the current risk priorities.
 
 ## Header
 

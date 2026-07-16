@@ -123,7 +123,8 @@ operational status, not as a substitute for checking exit status: `data_updates.
 When modifying bulk code:
 
 1. Preserve the orchestration order unless downstream data dependencies are reviewed.
-2. Update this document, `CHANGELOG.md`, and `local/scryfall_import_improvement_plan.md` when behavior changes.
+2. Update this document and `CHANGELOG.md` when behavior changes. Track unimplemented follow-up work in the active
+   local work backlog.
 3. Add or update the fresh schema in `setup/mtg_new.sql`; provide a live migration statement when a new table or
    column is required.
 4. For source-tracked single files, mark the source `running` before mutation, `completed` only after all writes and
