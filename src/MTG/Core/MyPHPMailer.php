@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.20
-Date:        13/07/26
+Version:     1.21
+Date:        25/07/26
 Name:        MyPHPMailer.php
 Purpose:     Extends PHPMailer with standard options.
 Notes:       Usage:
@@ -18,6 +18,7 @@ namespace MTG\Core;
 //Import PHPMailer classes into the global namespace
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
 
 require APP_ROOT . '/vendor/autoload.php';
 
@@ -73,21 +74,59 @@ class MyPHPMailer extends PHPMailer
             ];
         }
 
-        // Check if debugging is required
-        if ($smtpParameters['SMTPDebug'] === 'SMTP::DEBUG_OFF') :
+        // SMTP protocol traces can expose email metadata and content, so only enable them at site DEBUG level.
+        $configuredDebugLevel = $this->resolveSmtpDebugLevel($smtpParameters['SMTPDebug'] ?? 'off');
+        if ($configuredDebugLevel === null) :
+            $this->message->logMessage(
+                '[NOTICE]',
+                "Invalid SMTP debug setting '{$smtpParameters['SMTPDebug']}'; disabling SMTP debug"
+            );
+        elseif ($configuredDebugLevel === SMTP::DEBUG_OFF) :
             $this->message->logMessage(
                 '[DEBUG]',
-                "SMTP debug is off ({$smtpParameters['SMTPDebug']},{$this->SMTPDebug})"
+                "SMTP debug is off ({$smtpParameters['SMTPDebug']})"
             );
-        elseif ($smtpParameters['SMTPDebug'] !== 'SMTP::DEBUG_OFF' && $smtpParameters['globalDebug'] == 3) :
-            $this->SMTPDebug  = $smtpParameters['SMTPDebug'];
-            $this->message->logMessage('[DEBUG]', "SMTP debug is on ({$this->SMTPDebug})");
+        elseif ((int) $smtpParameters['globalDebug'] === 3) :
+            $this->SMTPDebug = $configuredDebugLevel;
+            $this->Debugoutput = function (string $message, int $level): void {
+                $message = trim($message);
+                if ($message !== '') :
+                    $this->message->logMessage('[DEBUG]', "[SMTP:$level] $message");
+                endif;
+            };
+            $this->message->logMessage('[DEBUG]', "SMTP debug is on (level $this->SMTPDebug)");
         else :
             $this->message->logMessage(
                 '[NOTICE]',
-                "SMTP debug is on ({$this->SMTPDebug}), but site log level not at DEBUG; NOT setting to SMTP debug"
+                "SMTP debug level $configuredDebugLevel requested, but site log level is not DEBUG; "
+                . 'disabling SMTP debug'
             );
         endif;
+    }
+
+    private function resolveSmtpDebugLevel(mixed $value): ?int
+    {
+        $levels = [
+            '' => SMTP::DEBUG_OFF,
+            'off' => SMTP::DEBUG_OFF,
+            '0' => SMTP::DEBUG_OFF,
+            'smtp::debug_off' => SMTP::DEBUG_OFF,
+            'client' => SMTP::DEBUG_CLIENT,
+            '1' => SMTP::DEBUG_CLIENT,
+            'smtp::debug_client' => SMTP::DEBUG_CLIENT,
+            'server' => SMTP::DEBUG_SERVER,
+            '2' => SMTP::DEBUG_SERVER,
+            'smtp::debug_server' => SMTP::DEBUG_SERVER,
+            'connection' => SMTP::DEBUG_CONNECTION,
+            '3' => SMTP::DEBUG_CONNECTION,
+            'smtp::debug_connection' => SMTP::DEBUG_CONNECTION,
+            'lowlevel' => SMTP::DEBUG_LOWLEVEL,
+            '4' => SMTP::DEBUG_LOWLEVEL,
+            'smtp::debug_lowlevel' => SMTP::DEBUG_LOWLEVEL,
+        ];
+        $setting = strtolower(trim((string) $value));
+
+        return $levels[$setting] ?? null;
     }
 
     public function sendEmail(

@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        25/07/26
+Name:        IniTest.php
+Purpose:     Tests INI configuration file read and write behavior.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use PHPUnit\Framework\TestCase;
 
 function getRealIniClass(): string
@@ -36,5 +47,15 @@ class IniTest extends TestCase
         $written = file_get_contents($output);
         $this->assertStringContainsString('[general]', $written);
         $this->assertStringContainsString('name = "updated"', $written);
+    }
+
+    public function testWriteReportsAnUnwritableTargetWithoutRaisingWarning(): void
+    {
+        $class = getRealIniClass();
+        $missingDirectory = sys_get_temp_dir() . '/mtgini_missing_' . uniqid();
+        $ini = new $class();
+
+        $this->assertFalse($ini->write($missingDirectory . '/mtg_new.ini', ['general' => ['name' => 'test']]));
+        $this->assertSame('Configuration file is not writable.', $ini->getLastError());
     }
 }

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        13/07/26
+Version:     1.3
+Date:        25/07/26
 Name:        MyPHPMailerTest.php
 Purpose:     Tests PHPMailer configuration wrapper behavior.
 Notes:       -
@@ -57,7 +57,8 @@ class MyPHPMailerTest extends TestCase
     private function buildConfig(
         string $logfile,
         array $smtpOverrides = [],
-        array $emailOverrides = []
+        array $emailOverrides = [],
+        int $logLevel = 0
     ): AppConfig {
         $smtpParameters = array_merge($this->buildParams(), $smtpOverrides);
         $iniArray = [
@@ -65,7 +66,7 @@ class MyPHPMailerTest extends TestCase
                 'URL' => 'https://test.example',
                 'title' => 'Test',
                 'tier' => 'dev',
-                'Loglevel' => 0,
+                'Loglevel' => $logLevel,
                 'Logfile' => $logfile,
                 'ImgLocation' => '',
                 'Timezone' => 'UTC',
@@ -107,7 +108,7 @@ class MyPHPMailerTest extends TestCase
 
         return AppConfig::fromIni($iniArray, [
             'general' => [
-                'logLevel' => 0,
+                'logLevel' => $logLevel,
                 'logFile' => $logfile,
             ],
             'email' => [
@@ -159,5 +160,37 @@ class MyPHPMailerTest extends TestCase
         $mailer = new MyPHPMailer(true, $this->appConfig);
 
         $this->assertSame('server@example.test', $mailer->Sender);
+    }
+
+    public function testSmtpDebugLogsProtocolTraceAtDebugSiteLevel(): void
+    {
+        $appConfig = $this->buildConfig(
+            $this->tempLog,
+            ['SMTPDebug' => 'server'],
+            [],
+            3
+        );
+        $mailer = new MyPHPMailer(true, $appConfig);
+
+        $this->assertSame(2, $mailer->SMTPDebug);
+        $this->assertIsCallable($mailer->Debugoutput);
+        call_user_func($mailer->Debugoutput, "SERVER -> CLIENT: 250 SMTP ready\r\n", 2);
+
+        $log = (string) file_get_contents($this->tempLog);
+        $this->assertStringContainsString('[SMTP:2] SERVER -> CLIENT: 250 SMTP ready', $log);
+        $this->assertStringNotContainsString('{closure}', $log);
+    }
+
+    public function testLegacySmtpDebugConstantIsMappedToNumericLevel(): void
+    {
+        $appConfig = $this->buildConfig(
+            $this->tempLog,
+            ['SMTPDebug' => 'SMTP::DEBUG_CONNECTION'],
+            [],
+            3
+        );
+        $mailer = new MyPHPMailer(true, $appConfig);
+
+        $this->assertSame(3, $mailer->SMTPDebug);
     }
 }

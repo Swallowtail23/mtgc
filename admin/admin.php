@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.49
-Date:        13/07/26
+Version:     6.51
+Date:        25/07/26
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       -
@@ -592,7 +592,32 @@ elseif ($smtpSecureIni === 'PHPMailer::ENCRYPTION_STARTTLS') :
 endif;
 $disqusDevUrlIni = $commentsConfig['disqusDevUrl'] ?? '';
 $disqusProdUrlIni = $commentsConfig['disqusProdUrl'] ?? '';
-$smtpDebugEnabled = ($smtpDebugIni !== 'SMTP::DEBUG_OFF' && $smtpDebugIni !== '');
+$smtpDebugLevels = [
+    'off' => 'Off',
+    'client' => 'Client commands',
+    'server' => 'Client and server messages',
+    'connection' => 'Connection and TLS details',
+    'lowlevel' => 'Low-level protocol details',
+];
+$smtpDebugLegacyLevels = [
+    '' => 'off',
+    '0' => 'off',
+    'smtp::debug_off' => 'off',
+    '1' => 'client',
+    'smtp::debug_client' => 'client',
+    '2' => 'server',
+    'smtp::debug_server' => 'server',
+    '3' => 'connection',
+    'smtp::debug_connection' => 'connection',
+    '4' => 'lowlevel',
+    'smtp::debug_lowlevel' => 'lowlevel',
+];
+$smtpDebugSetting = strtolower(trim((string) $smtpDebugIni));
+$smtpDebugChoice = $smtpDebugLegacyLevels[$smtpDebugSetting] ?? $smtpDebugSetting;
+if (!array_key_exists($smtpDebugChoice, $smtpDebugLevels)) :
+    $smtpDebugChoice = 'off';
+endif;
+$smtpDebugEnabled = ($smtpDebugChoice !== 'off');
 $smtpParameters = $appConfig->getSmtpParameters();
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 $titleValue = $generalConfig['title'] ?? '';
@@ -756,13 +781,11 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
     $updatedIni['email']['ServerEmail'] = getPostedValue('email_server', $iniArray['email']['ServerEmail']);
     $updatedIni['email']['SenderEmail'] = getPostedValue('email_sender', $iniArray['email']['SenderEmail'] ?? '');
     $updatedIni['email']['AdminEmail'] = getPostedValue('email_admin', $iniArray['email']['AdminEmail']);
-    $smtpDebugChoice = getPostedValue('email_smtp_debug', $smtpDebugIni);
-    if ($smtpDebugChoice === 'enabled') :
-        $updatedIni['email']['SMTPDebug'] = 'SMTP::DEBUG_SERVER';
-    elseif ($smtpDebugChoice === 'disabled') :
-        $updatedIni['email']['SMTPDebug'] = 'SMTP::DEBUG_OFF';
+    $smtpDebugChoice = getPostedValue('email_smtp_debug', $smtpDebugChoice);
+    if (array_key_exists($smtpDebugChoice, $smtpDebugLevels)) :
+        $updatedIni['email']['SMTPDebug'] = $smtpDebugChoice;
     else :
-        $updatedIni['email']['SMTPDebug'] = $smtpDebugIni;
+        $updatedIni['email']['SMTPDebug'] = 'off';
     endif;
     $updatedIni['email']['Host'] = getPostedValue('email_host', $smtpHostIni);
     $updatedIni['email']['SMTPHelo'] = getPostedValue('email_helo', $smtpHeloIni ?: gethostname());
@@ -828,6 +851,13 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
             $msg->logMessage('[NOTICE]', "Configuration updated by $userName");
             $_SESSION['config_save_message'] = 'Configuration saved.';
             $_SESSION['config_save_status'] = 'success';
+            if (
+                $updatedIni['email']['SMTPDebug'] !== 'off'
+                && (int) $updatedIni['general']['Loglevel'] !== 3
+            ) :
+                $_SESSION['config_save_message'] .= ' SMTP debug is configured but inactive until Log level '
+                    . 'is 3 - Debug.';
+            endif;
             if ($previousEmailStatus === 'enabled' && $updatedIni['email']['Email'] === 'disabled') :
                 $msg->logMessage('[NOTICE]', "Email disabled; clearing 2FA for all users");
                 if (
@@ -846,7 +876,11 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
             header('Location: admin.php');
             exit();
         else :
-            $configEditError = 'Saving configuration failed. Check ini file permissions.';
+            $iniError = $ini->getLastError();
+            $msg->logMessage('[ERROR]', "Configuration save failed for $iniPath: $iniError");
+            $configEditError = $iniError !== ''
+                ? "Saving configuration failed: $iniError"
+                : 'Saving configuration failed. Check ini file permissions.';
             $configEditMessage = $configEditError;
             $configEditMessageType = 'error';
         endif;
@@ -868,6 +902,8 @@ endif;
 $turnstileEnabled = (bool) $appConfig->security('turnstileEnabled', false);
 $commentsEnabled = (bool) $appConfig->comments('disqusEnabled', false);
 $emailEnabled = (bool) $appConfig->email('enabled', false);
+$smtpDebugWarningVisible = $smtpDebugEnabled && (int) $logLevelIni !== 3 && $emailEnabled;
+$smtpDebugWarningStyle = $smtpDebugWarningVisible ? '' : ' style="display:none"';
 $smtpAuthValue = $smtpParameters['SMTPAuth'] ?? 0;
 $emailAuthEnabled = (
     $smtpAuthValue === true
@@ -1052,12 +1088,25 @@ $disqusProdUrlIni = $commentsConfig['disqusProdUrl'] ?? '';
                 markDisabledFields();
             }
 
+            function updateSmtpDebugWarning() {
+                var smtpDebugEnabled = $('#email_smtp_debug').val() !== 'off';
+                var logLevelIsDebug = $('#general_loglevel').val() === '3';
+                var emailEnabled = $('#email_status').val() === 'enabled';
+
+                $('#smtp_debug_warning').toggle(smtpDebugEnabled && !logLevelIsDebug && emailEnabled);
+            }
+
             // Run once on load after setupPasswordSection is configured
             applyEmailUiState();
+            updateSmtpDebugWarning();
 
             // Then wire to both controllers
             $('#email_auth').on('change', applyEmailUiState);
-            $('#email_status').on('change', applyEmailUiState);
+            $('#email_status').on('change', function() {
+                applyEmailUiState();
+                updateSmtpDebugWarning();
+            });
+            $('#email_smtp_debug, #general_loglevel').on('change', updateSmtpDebugWarning);
 
             const turnstilePlaceholder = "N/A - Tier is 'dev'";
             function toggleTierTurnstileFields() {
@@ -1535,6 +1584,7 @@ require APP_ROOT . '/includes/menu.php';
                                             <label>Log level<br>
                                                 <select
                                                     name="general_loglevel"
+                                                    id="general_loglevel"
                                                     class="textinput"
                                                     <?php echo $configInputStyle;?>
                                                     title="Controls verbosity of application logging"
@@ -1658,18 +1708,36 @@ require APP_ROOT . '/includes/menu.php';
                                                         echo ' disabled';
                                                     endif;?>
                                                 >
-                                                    <option value="enabled"
-                                                        <?php if ($smtpDebugEnabled) :
-                                                            echo ' selected';
-                                                        endif;?>
-                                                    >enabled</option>
-                                                    <option value="disabled"
-                                                        <?php if (!$smtpDebugEnabled) :
-                                                            echo ' selected';
-                                                        endif;?>
-                                                    >disabled</option>
+                                                    <?php foreach ($smtpDebugLevels as $value => $label) : ?>
+                                                        <?php
+                                                        $smtpDebugValueEsc = htmlspecialchars(
+                                                            $value,
+                                                            ENT_QUOTES,
+                                                            'UTF-8'
+                                                        );
+                                                        $smtpDebugLabelEsc = htmlspecialchars(
+                                                            $label,
+                                                            ENT_NOQUOTES,
+                                                            'UTF-8'
+                                                        );
+                                                        ?>
+                                                        <option value="<?php echo $smtpDebugValueEsc; ?>"
+                                                            <?php if ($smtpDebugChoice === $value) :
+                                                                echo ' selected';
+                                                            endif;?>
+                                                        ><?php echo $smtpDebugLabelEsc; ?></option>
+                                                    <?php endforeach; ?>
                                                 </select>
-                                            </label><br>
+                                            </label>
+                                            <div
+                                                id="smtp_debug_warning"
+                                                class="alert-box notice"
+                                                role="status"
+                                                <?php echo $smtpDebugWarningStyle; ?>
+                                            >
+                                                SMTP debug writes protocol traces to the application log and only runs
+                                                when Log level is 3 - Debug. Email metadata and content may be logged.
+                                            </div><br>
                                             <label>SMTP host<br>
                                                 <?php $smtpHostEsc = htmlspecialchars(
                                                     $smtpParameters['SMTPHost'],

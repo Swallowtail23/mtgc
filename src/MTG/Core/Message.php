@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.9
-Date:        29/04/26
+Version:     1.10
+Date:        25/07/26
 Name:        Message.php
 Purpose:     Simple message and log writing class with internal logging.
 Notes:       Usage:
@@ -92,8 +92,13 @@ class Message
             $line = isset($caller['line']) ? $caller['line'] : 'Unknown line';
 
             $functionName = '';
-            if (isset($backtrace[1]['function']) && $backtrace[1]['function'] !== 'logMessage') :
-                $functionName = ": Function " . $backtrace[1]['function'];
+            $callerFunction = $backtrace[1]['function'] ?? '';
+            if (
+                is_string($callerFunction)
+                && $callerFunction !== 'logMessage'
+                && !str_ends_with($callerFunction, '{closure}')
+            ) :
+                $functionName = ": Function " . $callerFunction;
             endif;
 
             return "$file $line$functionName";

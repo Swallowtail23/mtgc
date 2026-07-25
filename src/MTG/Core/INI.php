@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.8
-Date:        29/04/26
+Version:     1.9
+Date:        25/07/26
 Name:        INI.php
 Purpose:     Simple PHP class to manage INI files (read/write).
 Notes:       Third-party code from IT-radionica.com.
@@ -73,6 +73,8 @@ class INI
     /** Process sections @var bool */
     public bool $sections = true;
 
+    private string $lastError = '';
+
     /**
      * Parse INI file.
      *
@@ -112,6 +114,18 @@ class INI
         $this->data = (!empty($data)) ? $data : $this->data;
         $this->file = ($file) ? $file : $this->file;
         $this->sections = $sections;
+        $this->lastError = '';
+        if ($this->file === null || $this->file === '') :
+            $this->lastError = 'No configuration file was specified.';
+            return false;
+        endif;
+        if (
+            (is_file($this->file) && !is_writable($this->file))
+            || (!is_file($this->file) && !is_writable(dirname($this->file)))
+        ) :
+            $this->lastError = 'Configuration file is not writable.';
+            return false;
+        endif;
         $content = null;
 
         if ($this->sections) {
@@ -144,7 +158,24 @@ class INI
             }
         }
 
-        $written = (($handle = fopen($this->file, 'w')) && fwrite($handle, trim($content)) && fclose($handle));
-        return $written ? true : false;
+        $handle = @fopen($this->file, 'w');
+        if ($handle === false) :
+            $this->lastError = 'Unable to open configuration file for writing.';
+            return false;
+        endif;
+
+        $written = fwrite($handle, trim($content));
+        $closed = fclose($handle);
+        if ($written === false || $closed === false) :
+            $this->lastError = 'Unable to write configuration file.';
+            return false;
+        endif;
+
+        return true;
+    }
+
+    public function getLastError(): string
+    {
+        return $this->lastError;
     }
 }

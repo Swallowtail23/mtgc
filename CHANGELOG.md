@@ -10,6 +10,9 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- SMTP diagnostics now accept readable debug levels and write PHPMailer protocol traces to the application DEBUG log.
+- Admin configuration now selects SMTP diagnostic detail and warns when SMTP debugging is inactive because the log
+  level is below DEBUG.
 - Email messages are now declared as UTF-8 so names and future content with accented characters render correctly.
 - Email settings now clearly distinguish the visible From/Reply-To address from an optional bounce envelope sender,
   which defaults to the visible address.
@@ -24,7 +27,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
--
+- Saving settings now reports an unwritable configuration file in the admin page instead of failing into the error page.
+- SMTP diagnostic entries no longer include PHP's internal anonymous-function label in their caller details.
 
 ### Security
 
