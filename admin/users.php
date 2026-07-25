@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.37
-Date:        29/04/26
+Version:     6.38
+Date:        25/07/26
 Name:        users.php
 Purpose:     User administrative tasks
 Notes:       {none}
@@ -56,9 +56,9 @@ function shouldRequirePasswordForNewUser(bool $emailEnabled): bool
 }
 
 //Check if user is logged in, if not redirect to login.php
-$msg->logMessage('[ERROR]', "Admin page called by user $userName ($userEmail)");
+$msg->logMessage('[DEBUG]', "Admin page called by user $userName ($userEmail)");
 // Is admin running the page
-$msg->logMessage('[ERROR]', "Admin is $admin");
+$msg->logMessage('[DEBUG]', "Admin is $admin");
 $msg->logMessage('[DEBUG]', 'Validating admin access for user session');
 if ($admin !== 1) :
     $msg->logMessage('[DEBUG]', 'User is not admin; redirecting to reject.php');
@@ -193,10 +193,10 @@ require APP_ROOT . '/includes/menu.php';
                     echo "<div class='alert-box notice'><span>notice: </span>No new collection table created, "
                      . "already exists for this user.</div>";
                 elseif ($newuserstatus === 6) :
-                    $msg->logMessage('[DEBUG]', 'New user creation failed: email validation error');
+                    $msg->logMessage('[NOTICE]', 'New user creation failed: email validation error');
                     echo "<div class='alert-box error'><span>error: </span>Email address validation failed.</div>";
                 else :
-                    $msg->logMessage('[DEBUG]', 'New user creation failed with unknown status');
+                    $msg->logMessage('[ERROR]', 'New user creation failed with unknown status');
                     echo "<div class='alert-box error'><span>error: </span>Something went wrong. Check logs.</div>";
                 endif;
             endif;
@@ -236,7 +236,7 @@ require APP_ROOT . '/includes/menu.php';
                 if ($result = $db->execute_query($query, $params)) :
                     $affected_rows = $db->affected_rows;
                     $msg->logMessage(
-                        '[ERROR]',
+                        '[DEBUG]',
                         "Update user query by $userEmail from {$_SERVER['REMOTE_ADDR']} affected $affected_rows rows"
                     );
                 else :
@@ -252,7 +252,7 @@ require APP_ROOT . '/includes/menu.php';
                             if ($deletecards->num_rows == 0) :
                                 echo "<div class='alert-box success'>"
                                      . "<span>success: </span>Cards cleared for $sql_name</div>";
-                                $msg->logMessage('[ERROR]', "Table empty successful");
+                                $msg->logMessage('[DEBUG]', "Table empty successful");
                             else :
                                 echo "<div class='alert-box error'>"
                                      . "<span>error: </span>Cards not cleared for $sql_name</div>";
@@ -273,7 +273,7 @@ require APP_ROOT . '/includes/menu.php';
                             if ($nukeuser->num_rows == 0) :
                                 echo "<div class='alert-box success'><span>success: "
                                      . "</span>User $sql_name removed</div>";
-                                $msg->logMessage('[ERROR]', "User deletion successful");
+                                $msg->logMessage('[NOTICE]', "User deletion successful");
                             else :
                                 echo "<div class='alert-box error'><span>error: "
                                      . "</span>User $sql_name not removed</div>";
@@ -282,11 +282,11 @@ require APP_ROOT . '/includes/menu.php';
                         endif;
                     endif;
                             $sqldrop = "DROP TABLE $usertable";
-                            $msg->logMessage('[ERROR]', "Running $sqldrop");
+                            $msg->logMessage('[DEBUG]', "Running $sqldrop");
                             $db->query($sqldrop);
                             $queryexists = "SHOW TABLES LIKE '$usertable'";
                             $stmt = $db->prepare($queryexists);
-                            $msg->logMessage('[ERROR]', "Checking if collection table still exists: $queryexists");
+                            $msg->logMessage('[DEBUG]', "Checking if collection table still exists: $queryexists");
                             $exec = $stmt->execute();
                     if ($exec === false) :
                         $msg->logMessage('[ERROR]', "Collection table check failed");
@@ -295,11 +295,11 @@ require APP_ROOT . '/includes/menu.php';
                                 $collection_exists = $stmt->num_rows;
                                    //$collection_exists now has qty of tables with collection name
                                 $stmt->close();
-                                $msg->logMessage('[ERROR]', "Collection table check returned $collection_exists rows");
+                                $msg->logMessage('[DEBUG]', "Collection table check returned $collection_exists rows");
                         if ($collection_exists === 0) : //No existing collection table
                             echo "<div class='alert-box success'><span>success: "
                                  . "</span>Table dropped for $sql_name</div>";
-                            $msg->logMessage('[ERROR]', "Collection table check shows 0");
+                            $msg->logMessage('[DEBUG]', "Collection table check shows 0");
                         elseif ($collection_exists == -1) :
                                     $msg->logMessage('[ERROR]', "Shouldn't be here...");
                         else : // There is still a table with this name
@@ -311,7 +311,7 @@ require APP_ROOT . '/includes/menu.php';
                 elseif (($updatearray[0]['actions'][$i]) == 'resetpassword') :
                     $msg->logMessage('[DEBUG]', "Password reset requested for $sql_name ($sql_id)");
                     $msg->logMessage(
-                        '[ERROR]',
+                        '[NOTICE]',
                         "Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}"
                     );
                     if ($emailEnabled) :
@@ -325,7 +325,7 @@ require APP_ROOT . '/includes/menu.php';
                         else :
                             echo "<div class='alert-box error'><span>error: </span>Failed to send reset link.</div>";
                             $resetResults[$sql_id] = false;
-                            $msg->logMessage('[DEBUG]', "Password reset email failed for $sql_name ($sql_id)");
+                            $msg->logMessage('[ERROR]', "Password reset email failed for $sql_name ($sql_id)");
                         endif;
                     else :
                                 echo "<div class='alert-box notice'>"
