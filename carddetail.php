@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     22.77
-Date:        08/07/26
+Version:     22.78
+Date:        25/08/26
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -11,6 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Cards\CardNavigation;
 use MTG\Cards\CardUtils;
 use MTG\Cards\DeckManager;
 use MTG\Cards\ImageManager;
@@ -840,62 +841,20 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                         // Find the prev number card's ID
                         $msg->logMessage('[DEBUG]', "Finding previous and next cards");
 
-                        // Using the current card's language and primary_card status, and the setcode, build the correct
-                        // sort order and card list. Searches here should align with criteria.php AUTO ordering as
-                        // default set order listings.
+                        // Primary cards follow the set's complete primary sequence across languages. Non-primary cards
+                        // follow their language sequence. Ordering aligns with criteria.php AUTO set listings.
 
-                    if ($row['cs_setcode'] === 'plst') :
-                        // Unique sorting for The List cards, matching order as sorted under "Auto / The List"
-                            $query = "SELECT id FROM cards_scry
-                                    WHERE setcode = ?
-                                    AND lang = ?
-                                    AND primary_card = ?
-                                    ORDER BY cards_scry.release_date DESC,
-                                        (SELECT sets.release_date
-                                            FROM sets
-                                            WHERE sets.code = SUBSTRING(
-                                                cards_scry.number_import,
-                                                1,
-                                                LOCATE('-', cards_scry.number_import) - 1
-                                            )
-                                        ) DESC,
-                                        SUBSTRING(number_import, 1, LOCATE('-', number_import) - 1) ASC,
-                                        CAST(
-                                            SUBSTRING(number_import FROM LOCATE('-', number_import) + 1)
-                                            AS UNSIGNED
-                                        ) ASC,
-                                        primary_card DESC, number ASC,
-                                        COALESCE(flavor_name, name) ASC,
-                                        id ASC ";
-                    elseif ($row['cs_setcode'] === 'sld') :
-                            // Unique sorting for Secret Lair cards, matching "Auto" ordering
-                            $query = "SELECT id FROM cards_scry
-                                    WHERE setcode = ?
-                                    AND lang = ?
-                                    AND primary_card = ?
-                                    ORDER BY release_date DESC,
-                                        number ASC,
-                                        CAST(REGEXP_REPLACE(number_import, '[[:alpha:]]', '') AS UNSIGNED) ASC,
-                                        number_import ASC,
-                                        COALESCE(flavor_name, name) ASC,
-                                        id ASC";
-                    else :
-                            $query = "SELECT id FROM cards_scry
-                                    WHERE setcode = ?
-                                    AND lang = ?
-                                    AND primary_card = ?
-                                    ORDER BY
-                                        number ASC,
-                                        release_date ASC,
-                                        CAST(REGEXP_REPLACE(number_import, '[[:alpha:]]', '') AS UNSIGNED) ASC,
-                                        number_import ASC,
-                                        COALESCE(flavor_name, name) ASC,
-                                        id ASC";
-                    endif;
-                        $stmt = $db->prepare($query);
-                        $stmt->bind_param('ssi', $row['cs_setcode'], $card_lang, $card_primary);
-                        $stmt->execute();
-                        $result = $stmt->get_result();
+                        $navigationSpec = CardNavigation::buildQuerySpec(
+                            $row['cs_setcode'],
+                            $card_lang,
+                            (int) $card_primary === 1
+                        );
+                        $result = $db->execute_query($navigationSpec['query'], $navigationSpec['params']);
+            if ($result === false) :
+                        throw new Exception(
+                            "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error
+                        );
+            endif;
                         $results = $result->fetch_all(MYSQLI_ASSOC);
                         $currentCardIndex = array_search($row['cs_id'], array_column($results, 'id'));
                         $msg->logMessage(

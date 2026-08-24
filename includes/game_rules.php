@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.12
-Date:        07/07/26
+Version:     1.13
+Date:        25/08/26
 Name:        game_rules.php
 Purpose:     Game rules arrays and constants.
 Notes:       Add a new rule by defining it once below; it is returned automatically.
@@ -109,6 +109,10 @@ if (!function_exists('mtg_game_rules')) :
             array(
                 'code' => 'qya',
                 'pretty' => 'Quenya'
+            ),
+            array(
+                'code' => 'dw',
+                'pretty' => 'Dwarven'
             )
         );
         $search_langs_codes = array_column($search_langs, 'code');

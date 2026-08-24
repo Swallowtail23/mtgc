@@ -1,5 +1,16 @@
 <?php
 
+/*
+Version:     1.0
+Date:        25/08/26
+Name:        GameRulesTest.php
+Purpose:     Tests access to centralized game rules and language labels.
+Notes:       -
+Author:      Codex
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
 
@@ -32,6 +43,7 @@ class GameRulesTest extends TestCase
         $rules = GameRules::fromDefaults();
         $this->assertIsArray($rules->all());
         $this->assertArrayHasKey('search_langs', $rules->all());
+        $this->assertSame('Dwarven', $rules->getLanguageLabel('dw'));
     }
 
     public function testScryfallEndpointRulesUseBaseUrl()

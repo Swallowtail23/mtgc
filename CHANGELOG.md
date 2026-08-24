@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
--
+- Added Dwarven (`dw`) to selectable and displayable card languages.
 
 ### Changed
 
@@ -29,6 +29,8 @@ All notable changes to this project will be documented in this file.
 
 - Saving settings now reports an unwritable configuration file in the admin page instead of failing into the error page.
 - SMTP diagnostic entries no longer include PHP's internal anonymous-function label in their caller details.
+- Card detail previous/next navigation now follows the complete primary-card sequence across languages, while explicit
+  non-primary printings continue through their selected language.
 
 ### Security
 
