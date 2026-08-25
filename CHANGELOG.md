@@ -2,13 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.6.5-dev] - Unreleased
+## [v0.6.5] - 26/08/2026
 
-### Added
+### Added - 26/08/2026
 
 - Added Dwarven (`dw`) to selectable and displayable card languages.
 
-### Changed
+### Changed - 26/08/2026
 
 - SMTP diagnostics now accept readable debug levels and write PHPMailer protocol traces to the application DEBUG log.
 - Admin configuration now selects SMTP diagnostic detail and warns when SMTP debugging is inactive because the log
@@ -25,24 +25,20 @@ All notable changes to this project will be documented in this file.
 - Moved Scryfall card inclusion and skip decisions into `ScryfallCardImportPolicy`.
 - Added Scryfall bulk-source tracking so unchanged Oracle/art tag files can skip reprocessing after a successful import.
 
-### Fixed
+### Fixed - 26/08/2026
 
 - Saving settings now reports an unwritable configuration file in the admin page instead of failing into the error page.
 - SMTP diagnostic entries no longer include PHP's internal anonymous-function label in their caller details.
 - Card detail previous/next navigation now follows the complete primary-card sequence across languages, while explicit
   non-primary printings continue through their selected language.
 
-### Security
+### Security - 26/08/2026
 
 - Docker bootstrap now applies explicit private permissions to the persisted
   configuration directory and credentials ini; native-install documentation now
   specifies safe service-account ownership and read-only deployment options.
 - Docker setup now generates unique MySQL credentials on first use and stores
   them in a private persistent secrets file instead of committed Compose values.
-
-### Infrastructure
-
--
 
 ## [v0.6.4] - 2026-07-04
 
