@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        28/04/26
+Version:     1.1
+Date:        26/08/26
 Name:        ImportExportTest.php
 Purpose:     Tests import/export CSV formatting and input interpretation.
 Notes:       -
@@ -19,10 +19,64 @@ class ImportExportTest extends TestCase
 {
     public function testBuildCollectionCsvFormatsRows()
     {
-        $fields = ['setcode', 'number_import', 'name', 'lang', 'normal', 'foil', 'etched', 'scryfall_id'];
+        $fields = [
+            'setcode',
+            'number_import',
+            'name',
+            'lang',
+            'normal',
+            'foil',
+            'etched',
+            'scryfall_id',
+            'rarity',
+            'type_line',
+            'normal_price_usd',
+            'normal_value_usd',
+            'foil_price_usd',
+            'foil_value_usd',
+            'etched_price_usd',
+            'etched_value_usd',
+            'row_value_usd'
+        ];
         $rows = [
-            ['MH3', '304', 'Plains', 'en', 1, 0, 0, 'uuid-1'],
-            ['MH3', '305', 'Island "Alt"', 'en', 0, 2, 0, 'uuid-2'],
+            [
+                'MH3',
+                '304',
+                'Plains',
+                'en',
+                2,
+                0,
+                1,
+                '123e4567-e89b-12d3-a456-426614174000',
+                'common',
+                'Basic Land - Plains',
+                '1.25',
+                '2.50',
+                '4.00',
+                '0.00',
+                null,
+                null,
+                null
+            ],
+            [
+                'MH3',
+                '305',
+                'Island "Alt"',
+                'en',
+                0,
+                2,
+                0,
+                '123e4567-e89b-12d3-a456-426614174001',
+                'common',
+                'Basic Land - Island',
+                '0.50',
+                '0.00',
+                '3.00',
+                '6.00',
+                null,
+                null,
+                '6.00'
+            ],
         ];
         $db = new ImportExportDbStub($fields, $rows);
         $manager = new ImportExport(
@@ -32,14 +86,38 @@ class ImportExportTest extends TestCase
             'user@example.test'
         );
 
-        $csv = $manager->buildCollectionCsv('collection');
+        $csv = $manager->buildCollectionCsv(
+            'collection',
+            new DateTimeImmutable('2026-08-26 18:42:10', new DateTimeZone('UTC'))
+        );
 
         $this->assertStringContainsString(
-            '"setcode","number_import","name","lang","normal","foil","etched","scryfall_id"',
+            '"exported_at","2026-08-26 18:42:10","timezone","UTC","currency","USD",'
+                . '"pricing_source","TCGplayer Near Mint market price, via Scryfall"',
             $csv
         );
-        $this->assertStringContainsString('"MH3","304","Plains","en","1","0","0","uuid-1"', $csv);
-        $this->assertStringContainsString('"MH3","305","Island \\"Alt\\"","en","0","2","0","uuid-2"', $csv);
+        $this->assertStringContainsString(
+            '"setcode","number_import","name","lang","normal","foil","etched","scryfall_id","rarity",'
+                . '"type_line","normal_price_usd","normal_value_usd","foil_price_usd","foil_value_usd",'
+                . '"etched_price_usd","etched_value_usd","row_value_usd"',
+            $csv
+        );
+        $this->assertStringContainsString(
+            '"MH3","304","Plains","en","2","0","1","123e4567-e89b-12d3-a456-426614174000",'
+                . '"common","Basic Land - Plains","1.25","2.50","4.00","0.00",,,',
+            $csv
+        );
+        $this->assertStringContainsString(
+            '"MH3","305","Island \\"Alt\\"","en","0","2","0",'
+                . '"123e4567-e89b-12d3-a456-426614174001","common","Basic Land - Island","0.50",'
+                . '"0.00","3.00","6.00",,,"6.00"',
+            $csv
+        );
+        $this->assertStringContainsString('cards_scry.price_foil > 0', $db->query);
+        $this->assertStringContainsString('cards_scry.price_etched > 0', $db->query);
+        $this->assertStringContainsString('COALESCE(cards_scry.price_foil, 0) <= 0', $db->query);
+        $this->assertStringContainsString('COALESCE(cards_scry.price_etched, 0) <= 0', $db->query);
+        $this->assertStringNotContainsString('WHEN price_foil IS NULL', $db->query);
     }
 
     public function testInputInterpreterDetectsHeader()

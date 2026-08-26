@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.27
-Date:        29/04/26
+Version:     1.28
+Date:        26/08/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
 Notes:       -
@@ -169,16 +169,62 @@ class ImportExport
         return false;
     }
 
-    public function buildCollectionCsv(string $table): string|false
+    public function buildCollectionCsv(string $table, ?\DateTimeInterface $exportedAt = null): string|false
     {
-        $csv_terminated = "\n";
-        $csv_separator = ",";
-        $csv_enclosed = '"';
-        $csv_escaped = "\\";
         $table = $this->db->real_escape_string($table);
-        $sql = "SELECT setcode,number_import,name,lang,normal,$table.foil,$table.etched,$table.id as scryfall_id
-            FROM $table JOIN cards_scry ON $table.id = cards_scry.id
-            WHERE (($table.normal > 0) OR ($table.foil > 0) OR ($table.etched > 0))";
+        $sql = "SELECT
+                    cards_scry.setcode,
+                    cards_scry.number_import,
+                    cards_scry.name,
+                    cards_scry.lang,
+                    `$table`.normal,
+                    `$table`.foil,
+                    `$table`.etched,
+                    `$table`.id AS scryfall_id,
+                    cards_scry.rarity,
+                    cards_scry.type AS type_line,
+                    CASE
+                        WHEN cards_scry.price > 0 THEN cards_scry.price
+                        ELSE NULL
+                    END AS normal_price_usd,
+                    CASE
+                        WHEN cards_scry.price > 0
+                            THEN ROUND(IFNULL(`$table`.normal, 0) * cards_scry.price, 2)
+                        ELSE NULL
+                    END AS normal_value_usd,
+                    CASE
+                        WHEN cards_scry.price_foil > 0 THEN cards_scry.price_foil
+                        ELSE NULL
+                    END AS foil_price_usd,
+                    CASE
+                        WHEN cards_scry.price_foil > 0
+                            THEN ROUND(IFNULL(`$table`.foil, 0) * cards_scry.price_foil, 2)
+                        ELSE NULL
+                    END AS foil_value_usd,
+                    CASE
+                        WHEN cards_scry.price_etched > 0 THEN cards_scry.price_etched
+                        ELSE NULL
+                    END AS etched_price_usd,
+                    CASE
+                        WHEN cards_scry.price_etched > 0
+                            THEN ROUND(IFNULL(`$table`.etched, 0) * cards_scry.price_etched, 2)
+                        ELSE NULL
+                    END AS etched_value_usd,
+                    CASE
+                        WHEN (`$table`.normal > 0 AND COALESCE(cards_scry.price, 0) <= 0)
+                            OR (`$table`.foil > 0 AND COALESCE(cards_scry.price_foil, 0) <= 0)
+                            OR (`$table`.etched > 0 AND COALESCE(cards_scry.price_etched, 0) <= 0)
+                            THEN NULL
+                        ELSE ROUND(
+                            (IFNULL(`$table`.normal, 0) * IFNULL(cards_scry.price, 0))
+                            + (IFNULL(`$table`.foil, 0) * IFNULL(cards_scry.price_foil, 0))
+                            + (IFNULL(`$table`.etched, 0) * IFNULL(cards_scry.price_etched, 0)),
+                            2
+                        )
+                    END AS row_value_usd
+                FROM `$table`
+                JOIN cards_scry ON `$table`.id = cards_scry.id
+                WHERE (`$table`.normal > 0) OR (`$table`.foil > 0) OR (`$table`.etched > 0)";
         $this->message->logMessage('[NOTICE]', "Running Export Collection to CSV: $sql");
 
         // Gets the data from the database
@@ -198,49 +244,55 @@ class ImportExport
                 endfor;
             endif;
 
-            $fields_cnt = count($fields);
-            $this->message->logMessage('[DEBUG]', "Number of fields: $fields_cnt");
-            $schema_insert = '';
-            foreach ($fields as $fieldinfo) :
-                $l = $csv_enclosed
-                    . str_replace(
-                        $csv_enclosed,
-                        $csv_escaped . $csv_enclosed,
-                        stripslashes($fieldinfo->name)
-                    )
-                    . $csv_enclosed;
-                $schema_insert .= $l;
-                $schema_insert .= $csv_separator;
-            endforeach;
+            $fieldsCount = count($fields);
+            $this->message->logMessage('[DEBUG]', "Number of fields: $fieldsCount");
+            $timezoneName = (string) $this->appConfig->general('timezone', 'UTC');
+            $timezone = new \DateTimeZone($timezoneName);
+            $exportTimestamp = $exportedAt === null
+                ? new \DateTimeImmutable('now', $timezone)
+                : \DateTimeImmutable::createFromInterface($exportedAt)->setTimezone($timezone);
+            $out = self::formatCsvRow([
+                'exported_at',
+                $exportTimestamp->format('Y-m-d H:i:s'),
+                'timezone',
+                $timezoneName,
+                'currency',
+                'USD',
+                'pricing_source',
+                'TCGplayer Near Mint market price, via Scryfall'
+            ]);
 
-            $out = trim(substr($schema_insert, 0, -1));
-            $out .= $csv_terminated;
+            $fieldNames = [];
+            foreach ($fields as $fieldinfo) :
+                $fieldNames[] = stripslashes($fieldinfo->name);
+            endforeach;
+            $out .= self::formatCsvRow($fieldNames);
 
             // Format the data
             while ($row = $result->fetch_row()) :
-                $schema_insert = '';
-                for ($j = 0; $j < $fields_cnt; $j++) :
-                    if ($row[$j] == '0' || $row[$j] != '') :
-                        if ($csv_enclosed == '') :
-                            $schema_insert .= $row[$j];
-                        else :
-                            $schema_insert .= $csv_enclosed .
-                            str_replace($csv_enclosed, $csv_escaped . $csv_enclosed, $row[$j]) . $csv_enclosed;
-                        endif;
-                    else :
-                        $schema_insert .= '';
-                    endif;
-                    if ($j < $fields_cnt - 1) :
-                        $schema_insert .= $csv_separator;
-                    endif;
-                endfor;
-                $out .= $schema_insert;
-                $out .= $csv_terminated;
+                $out .= self::formatCsvRow(array_slice($row, 0, $fieldsCount));
             endwhile;
-            $out .= $csv_terminated;
+            $out .= "\n";
         endif;
 
         return $out;
+    }
+
+    /**
+     * @param array<int, mixed> $values
+     */
+    private static function formatCsvRow(array $values): string
+    {
+        $cells = [];
+        foreach ($values as $value) :
+            if ($value === null || $value === '') :
+                $cells[] = '';
+            else :
+                $cells[] = '"' . str_replace('"', '\\"', (string) $value) . '"';
+            endif;
+        endforeach;
+
+        return implode(',', $cells) . "\n";
     }
 
     /**
@@ -304,6 +356,10 @@ class ImportExport
             $fields = str_getcsv($line, ',', '"', '\\');
             $qtyFields = count($fields);
 
+            if (strtolower(trim((string) ($fields[0] ?? ''))) === 'exported_at') :
+                return 'header';
+            endif;
+
             // Header checks
             $mtgcHeaderKeywords = ['set', 'number', 'name'];
             $manaboxHeaderKeywords = ['name', 'set code', 'collector number', 'foil', 'quantity', 'scryfall id'];
@@ -321,7 +377,7 @@ class ImportExport
                     break;
                 endif;
             endforeach;
-            if ($isMtgcHeader && ($qtyFields === 6 || $qtyFields === 8)) :
+            if ($isMtgcHeader && ($qtyFields === 6 || $qtyFields >= 8)) :
                 return 'header';
             endif;
 
@@ -344,6 +400,15 @@ class ImportExport
             endif;
 
             // Validate and determine CSV format
+            $isMtgcRow = $qtyFields >= 8
+                && Validation::isValidSetcode($fields[0])
+                && Validation::isValidCardName($fields[2])
+                && Validation::isValidLanguageCode($fields[3])
+                && (is_numeric($fields[4]) || empty($fields[4]))
+                && (is_numeric($fields[5]) || empty($fields[5]))
+                && (is_numeric($fields[6]) || empty($fields[6]))
+                && (Validation::validUUID($fields[7], $appConfig) || empty($fields[7]));
+
             if ($qtyFields === 6) :
                 if (
                     !Validation::isValidSetcode($fields[0])
@@ -356,20 +421,10 @@ class ImportExport
                 else :
                     $csvFormat = 'delver';
                 endif;
-            elseif ($qtyFields === 8) :
-                if (
-                    !Validation::isValidSetcode($fields[0])
-                    || !Validation::isValidCardName($fields[2])
-                    || !Validation::isValidLanguageCode($fields[3])
-                    || !(is_numeric($fields[4]) || empty($fields[4]))
-                    || !(is_numeric($fields[5]) || empty($fields[5]))
-                    || !(is_numeric($fields[6]) || empty($fields[6]))
-                    || !(Validation::validUUID($fields[7], $appConfig) || empty($fields[7]))
-                ) :
-                    $csvFormat = 'invalid';
-                else :
-                    $csvFormat = 'mtgc';
-                endif;
+            elseif ($qtyFields === 8 || $qtyFields === 17) :
+                $csvFormat = $isMtgcRow ? 'mtgc' : 'invalid';
+            elseif ($isMtgcRow) :
+                $csvFormat = 'mtgc';
             elseif ($qtyFields >= 15) :
                 $csvFormat = 'manabox';
             else :

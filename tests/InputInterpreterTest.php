@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        28/04/26
+Version:     1.1
+Date:        26/08/26
 Name:        InputInterpreterTest.php
 Purpose:     Tests import input interpretation.
 Notes:       -
@@ -193,6 +193,44 @@ class InputInterpreterTest extends TestCase
 
         $this->assertSame('', $result['uuid']);
         $this->assertSame(1, $result['normal']);
+    }
+
+    public function testEnrichedMtgcExportMetadataAndHeaderAreIgnored(): void
+    {
+        $metadata = 'exported_at,2026-08-26 18:42:10,timezone,Australia/Hobart,currency,USD,'
+            . 'pricing_source,"TCGplayer Near Mint market price, via Scryfall"';
+        $header = 'setcode,number_import,name,lang,normal,foil,etched,scryfall_id,rarity,type_line,'
+            . 'normal_price_usd,normal_value_usd,foil_price_usd,foil_value_usd,etched_price_usd,'
+            . 'etched_value_usd,row_value_usd';
+
+        $this->assertSame('header', ImportExport::inputInterpreter($metadata, $this->appConfig, $this->gameRules));
+        $this->assertSame('header', ImportExport::inputInterpreter($header, $this->appConfig, $this->gameRules));
+    }
+
+    public function testEnrichedMtgcExportRowUsesOriginalImportColumns(): void
+    {
+        $line = 'MH3,304,Plains,en,1,2,3,123e4567-e89b-12d3-a456-426614174000,common,'
+            . 'Basic Land - Plains,1.00,1.00,2.00,4.00,3.00,9.00,14.00';
+
+        $result = ImportExport::inputInterpreter($line, $this->appConfig, $this->gameRules);
+
+        $this->assertIsArray($result);
+        $this->assertSame('MH3', $result['set']);
+        $this->assertSame('304', $result['number']);
+        $this->assertSame('Plains', $result['name']);
+        $this->assertSame('en', $result['lang']);
+        $this->assertSame(1, $result['normal']);
+        $this->assertSame(2, $result['foil']);
+        $this->assertSame(3, $result['etched']);
+        $this->assertSame('123e4567-e89b-12d3-a456-426614174000', $result['uuid']);
+    }
+
+    public function testInvalidEnrichedMtgcExportRowIsNotTreatedAsManaBox(): void
+    {
+        $line = 'MH3,304,Plains,en,not-a-quantity,2,3,123e4567-e89b-12d3-a456-426614174000,common,'
+            . 'Basic Land - Plains,1.00,1.00,2.00,4.00,3.00,9.00,14.00';
+
+        $this->assertFalse(ImportExport::inputInterpreter($line, $this->appConfig, $this->gameRules));
     }
 
     public function testManaBoxCsvHeader()

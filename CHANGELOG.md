@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
   root-owned bare-metal installations and persistent container vendor volumes.
 - Admin set-image reloads now require an explicit choice between primary-language images and all-language images;
   all-language reloads also require confirmation.
+- Collection CSV exports now include export provenance, rarity, card type, strict per-finish USD prices and values,
+  and a row value while remaining compatible with collection re-imports.
 
 ### Fixed
 -
