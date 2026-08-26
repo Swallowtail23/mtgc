@@ -11,6 +11,7 @@ RUN apt-get update \
        git unzip \
        libpng-dev \
        libjpeg62-turbo-dev \
+       libwebp-dev \
        tzdata \
        default-mysql-client \
        mailutils \
@@ -55,8 +56,8 @@ RUN sed -i 's/\r$//' /usr/local/bin/wait-for-mysql.sh \
 # Final working directory
 WORKDIR /var/www/mtgnew
 
-# Build GD with JPEG support, then install required PHP extensions
-RUN docker-php-ext-configure gd --with-jpeg \
+# Build GD with JPEG and WebP support, then install required PHP extensions
+RUN docker-php-ext-configure gd --with-jpeg --with-webp \
  && docker-php-ext-install exif gd mysqli
 
 # Optional: Set fallback ownership of important mount targets

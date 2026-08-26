@@ -1,6 +1,6 @@
 /*
-Version:     1.7
-Date:        23/02/26
+Version:     1.8
+Date:        26/08/26
 Name:        carddetail.js
 Purpose:     Card detail page JS handlers.
 Notes:       -
@@ -700,10 +700,9 @@ To do:       -
         if (!ImageId) {
             return;
         }
-        var FrontImg = card_id + '.jpg';
-        var BackImg = card_id + '_b.jpg';
+        var showingBack = ImageId.src.indexOf(card_id + '_b.') !== -1;
 
-        if (ImageId.src.match(FrontImg)) {
+        if (!showingBack) {
             ImageId.classList.add('flipped');
             setTimeout(function () {
                 ImageId.src = imagebackurl;

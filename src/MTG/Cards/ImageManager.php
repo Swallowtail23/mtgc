@@ -1,20 +1,14 @@
 <?php
 
 /*
-Version:     1.25
-Date:        29/04/26
+Version:     1.26
+Date:        26/08/26
 Name:        ImageManager.php
-Purpose:     Local image management class.
-Notes:       -
+Purpose:     Resolves and downloads locally cached Scryfall card images.
+Notes:       Prefers WebP, retains JPEG fallback, and fills missing UI cache entries on demand.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-*/
-
-/*
-Example usage:
-    $obj = new ImageManager($db, $appConfig, $gameRules);
-    $result = $obj->getImage($setcode, $cardId, $layout);
 */
 
 namespace MTG\Cards;
@@ -28,21 +22,18 @@ use MTG\Core\UserAgent;
 
 class ImageManager
 {
-    // Skip remote checks for images newer than this (in seconds)
-    private const IMAGE_MAX_AGE = 604800; // 7 days
+    private const WEBP_EXTENSION = '.webp';
+    private const JPEG_EXTENSION = '.jpg';
+    private const PLACEHOLDER_IMAGE = '/images/back.jpg';
 
-    /**
-    * @var \mysqli|object
-    */
+    /** @var \mysqli|object */
     private $db;
     private string $adminEmail;
     private Message $message;
     private AppConfig $appConfig;
     private GameRules $gameRules;
 
-    /**
-    * @param \mysqli|object $db
-    */
+    /** @param \mysqli|object $db */
     public function __construct($db, AppConfig $appConfig, GameRules $gameRules)
     {
         $this->db = $db;
@@ -52,305 +43,228 @@ class ImageManager
         $this->message = new Message($this->appConfig);
     }
 
-    /**
-    * @return array{front: string, back: string}
-    */
+    /** @return array{front: string, back: string} */
     public function getImage(string $setcode, string $cardId, string $layout, bool $allowFetch = true): array
     {
-        $allowFetchLabel = ($allowFetch) ? 'true' : 'false';
         $imgLocation = (string) $this->appConfig->general('imageBaseDir', '');
-        $twoCardDetailSections = $this->gameRules->get('twoCardDetailSections', []);
-        if (!is_array($twoCardDetailSections)) :
-            $twoCardDetailSections = [];
-        endif;
+        $allowFetchLabel = $allowFetch ? 'true' : 'false';
         $this->message->logMessage(
             '[DEBUG]',
-            "Called for $setcode, $cardId, $imgLocation, $layout (fetch $allowFetchLabel)"
+            "Image lookup for $setcode, $cardId, $layout (fetch $allowFetchLabel)"
         );
 
         $cardImages = $this->getCardImageUris($cardId);
-        $localfile = $imgLocation . $setcode . '/' . $cardId . '.jpg';
-        $backImg = '';
-        $this->message->logMessage('[DEBUG]', "File should be at $localfile");
+        $front = $this->resolveImageFace(
+            $cardImages['front'],
+            $imgLocation,
+            $setcode,
+            $cardId,
+            $allowFetch
+        );
+        $back = '';
 
-        if (in_array($layout, $twoCardDetailSections)) :
-            $localFileB = $imgLocation . $setcode . '/' . $cardId . '_b.jpg';
-            $this->message->logMessage('[DEBUG]', "Back file should be at $localFileB");
-        endif;
-
-        // Front face
-        if (!$this->isReadable($localfile)) :
-            if ($this->fileExists($localfile)) :
-                $this->message->logMessage('[DEBUG]', "File exists but is not readable at $localfile");
-            endif;
-            if ($allowFetch) :
-                $this->message->logMessage('[DEBUG]', "$localfile missing, running get image function");
-                $frontImg = $this->fetchAndStoreImage($cardImages['front'], $imgLocation, $setcode, $localfile);
-            else :
-                $this->message->logMessage('[DEBUG]', "$localfile missing, using placeholder");
-                $frontImg = '/images/back.jpg';
-            endif;
-        else :
-            $this->message->logMessage('[DEBUG]', "File readable already at $localfile");
-            $relativePath = strpos($localfile, 'cardimg');
-            $frontImg = substr($localfile, $relativePath);
-        endif;
-
-        $imageUrl = [
-            'front' => $frontImg,
-            'back' => '',
-        ];
-
-        // Back face
-        if (isset($localFileB)) :
-            if (!$this->isReadable($localFileB)) :
-                if ($this->fileExists($localFileB)) :
-                    $this->message->logMessage('[DEBUG]', "File exists but is not readable at $localFileB");
-                endif;
-                if ($allowFetch) :
-                    $this->message->logMessage('[DEBUG]', "$localFileB missing, running get image function");
-                    $backImg = $this->fetchAndStoreImage($cardImages['back'], $imgLocation, $setcode, $localFileB);
-                else :
-                    $this->message->logMessage('[DEBUG]', "$localFileB missing, using placeholder");
-                    $backImg = '/images/back.jpg';
-                endif;
-            elseif ($this->isReadable($localFileB)) :
-                $this->message->logMessage('[DEBUG]', "File readable already at $localFileB");
-                $relativePath2 = strpos($localFileB, 'cardimg');
-                $backImg = substr($localFileB, $relativePath2);
-            endif;
-
-            $imageUrl = array('front' => $frontImg,
-                              'back' => $backImg);
-        endif;
-        return $imageUrl;
-    }
-
-    public function diffImage(string $remoteUrl, string $localFilePath): bool
-    {
-        $this->message->logMessage('[DEBUG]', "Comparing $remoteUrl with $localFilePath");
-
-        $headers = @get_headers($remoteUrl, 1);
-        if ($headers === false || stripos($headers[0], '200') === false) :
-            $this->message->logMessage('[ERROR]', "Unable to fetch headers for $remoteUrl");
-            return false;
-        endif;
-
-        $remoteSize = isset($headers['Content-Length']) ? (int) $headers['Content-Length'] : null;
-        if ($remoteSize === null) :
-            $this->message->logMessage('[DEBUG]', "No comparable headers on $remoteUrl");
-            return false;
-        endif;
-
-        $localSize = filesize($localFilePath);
-        $sizeDiffers = ($remoteSize !== $localSize);
-
-        if ($sizeDiffers) :
-            $this->message->logMessage(
-                '[NOTICE]',
-                "Image differs (size? yes)"
+        if ($this->layoutHasSeparateBack($layout)) :
+            $back = $this->resolveImageFace(
+                $cardImages['back'],
+                $imgLocation,
+                $setcode,
+                $cardId . '_b',
+                $allowFetch
             );
-            return true;
         endif;
 
-        $this->message->logMessage('[DEBUG]', "Image matches remote headers");
-        @touch($localFilePath); // bump mtime to avoid immediate rechecks
-        return false;
+        return ['front' => $front, 'back' => $back];
     }
 
-    /**
-    * @return array{success: bool, front: string, back: string}
-    */
+    /** @return array{success: bool, front: string, back: string} */
     public function refreshImage(string $cardId): array
     {
+        $this->message->logMessage('[DEBUG]', "Explicit image refresh called for $cardId");
+
+        try {
+            $cardData = $this->getCardImageUris($cardId);
+        } catch (\Throwable $exception) {
+            $this->message->logMessage('[ERROR]', "Unable to load image data for $cardId: {$exception->getMessage()}");
+            return ['success' => false, 'front' => '', 'back' => ''];
+        }
+
         $imgLocation = (string) $this->appConfig->general('imageBaseDir', '');
-        $twoCardDetailSections = $this->gameRules->get('twoCardDetailSections', []);
-        if (!is_array($twoCardDetailSections)) :
-            $twoCardDetailSections = [];
-        endif;
-        $this->message->logMessage('[DEBUG]', "Refresh image called for $cardId");
+        $front = $this->refreshImageFace(
+            $cardData['front'],
+            $imgLocation,
+            $cardData['setcode'],
+            $cardId
+        );
+        $back = '';
+        $backRequired = $this->layoutHasSeparateBack($cardData['layout']) && $cardData['back'] !== '';
 
-        set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline): void {
-            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
-        });
+        if ($backRequired) :
+            $back = $this->refreshImageFace(
+                $cardData['back'],
+                $imgLocation,
+                $cardData['setcode'],
+                $cardId . '_b'
+            );
+        endif;
 
-        $sql = "SELECT id,setcode,layout FROM cards_scry WHERE id = ? LIMIT 1";
-        $result = $this->db->execute_query($sql, [$cardId]);
-        if ($result === false) :
-            restore_error_handler();
-            return array(
-                'success' => false,
-                'front' => '',
-                'back' => ''
-            );
-        else :
-            $imagebackdelete = $imagedelete = '';
-            $imageUrl = '';
-            $row = $result->fetch_assoc();
-            // $imgLocation is set in ini
-            $imageFunction = $this->getImage(
-                $row['setcode'],
-                $cardId,
-                $row['layout']
-            );
-            if ($imageFunction['front'] != 'error') :
-                $imagename = substr($imageFunction['front'], strrpos($imageFunction['front'], '/') + 1);
-                $imageUrl = $imgLocation . $row['setcode'] . "/" . $imagename;
-                try {
-                    if (!unlink($imageUrl)) :
-                        $this->message->logMessage('[ERROR]', "Failed to unlink $imageUrl");
-                        mtgError(E_USER_ERROR, 'Failed to unlink image', __FILE__, __LINE__, $this->appConfig);
-                    endif;
-                    $imagedelete = 'success';
-                } catch (\Exception $e) {
-                    $this->message->logMessage('[ERROR]', "Failed to unlink $imageUrl");
-                    $imagedelete = 'failure';
-                } finally {
-                    restore_error_handler();
-                }
-            endif;
-            if (
-                $imageFunction['back'] != ''
-                and $imageFunction['back'] != 'error'
-                and $imageFunction['back'] != 'empty'
-            ) :
-                $imagebackname = substr($imageFunction['back'], strrpos($imageFunction['back'], '/') + 1);
-                $imagebackurl = $imgLocation . $row['setcode'] . "/" . $imagebackname;
-                try {
-                    if (!unlink($imagebackurl)) :
-                        $this->message->logMessage('[ERROR]', "Failed to unlink $imagebackurl");
-                        mtgError(E_USER_ERROR, 'Failed to unlink back image', __FILE__, __LINE__, $this->appConfig);
-                    endif;
-                    $imagebackdelete = 'success';
-                } catch (\Exception $e) {
-                    $this->message->logMessage('[ERROR]', "Failed to unlink $imagebackurl");
-                    $imagebackdelete = 'failure';
-                    restore_error_handler();
-                }
-            endif;
+        $success = $this->isCachedImageResult($front)
+            && (!$backRequired || $this->isCachedImageResult($back));
+        if (!$success) :
+            $this->sendRefreshFailureNotice($cardId, $front, $back);
+            return ['success' => false, 'front' => '', 'back' => ''];
         endif;
-        //Refresh image
-        if ($imagebackdelete === 'failure' || $imagedelete === 'failure') :
-            $subject = "Image unlink failure";
-            $message = "Failed image unlink: $imageUrl. Front: $imagedelete; Back: $imagebackdelete";
-            if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
-                $mail = new MyPHPMailer(true, $this->appConfig);
-                $mail->sendEmail($this->adminEmail, false, $subject, $message);
-            else :
-                $this->message->logMessage(
-                    '[NOTICE]',
-                    "Email disabled; image unlink failure alert not sent for "
-                    . "Front: $imagedelete; Back: $imagebackdelete"
-                );
-            endif;
-            return array(
-                'success' => false,
-                'front' => '',
-                'back' => ''
-            );
-        else :
-            $this->message->logMessage('[DEBUG]', "Re-fetching image for $cardId");
-            // $imgLocation is set in ini
-            $imageFunction = $this->getImage(
-                $row['setcode'],
-                $cardId,
-                $row['layout']
-            );
-            $this->message->logMessage(
-                '[DEBUG]',
-                "Refresh image complete for $cardId. Front: {$imageFunction['front']}; Back: {$imageFunction['back']}"
-            );
-            return array(
-                'success' => true,
-                'front' => $imageFunction['front'],
-                'back' => $imageFunction['back']
-            );
-        endif;
+
+        $this->message->logMessage(
+            '[DEBUG]',
+            "Explicit image refresh complete for $cardId. Front: $front; Back: $back"
+        );
+        return ['success' => true, 'front' => $front, 'back' => $back];
     }
 
-
-    /**
-    * @return array{front: string, front_changed: bool, back: string, back_changed: bool}
-    */
+    /** @return array{front: string, front_changed: bool, back: string, back_changed: bool} */
     public function checkAndRefreshImage(string $cardId): array
     {
         $imgLocation = (string) $this->appConfig->general('imageBaseDir', '');
-        $twoCardDetailSections = $this->gameRules->get('twoCardDetailSections', []);
-        if (!is_array($twoCardDetailSections)) :
-            $twoCardDetailSections = [];
-        endif;
-
         $cardData = $this->getCardImageUris($cardId);
-        $setcode = $cardData['setcode'];
 
-        $frontPath = $imgLocation . $setcode . '/' . $cardId . '.jpg';
-        $backPath = $imgLocation . $setcode . '/' . $cardId . '_b.jpg';
-
-        $frontResult = $this->processImageFaceRefresh($cardData['front'], $frontPath, $imgLocation, $setcode);
-        $backResult = array('path' => '', 'changed' => false);
-
-        if (in_array($cardData['layout'], $twoCardDetailSections)) :
-            $backResult = $this->processImageFaceRefresh($cardData['back'], $backPath, $imgLocation, $setcode);
-        endif;
-
-        return array(
-            'front' => $frontResult['path'],
-            'front_changed' => $frontResult['changed'],
-            'back' => $backResult['path'],
-            'back_changed' => $backResult['changed'],
+        $front = $this->resolveImageFaceResult(
+            $cardData['front'],
+            $imgLocation,
+            $cardData['setcode'],
+            $cardId,
+            true
         );
-    }
 
-    /**
-    * @return array{front: string, back: string, setcode: string, layout: string}
-    */
-    private function getCardImageUris(string $cardId): array
-    {
-        $sql = "SELECT image_uri, f1_image_uri, f2_image_uri, setcode, layout FROM cards_scry WHERE id like ? LIMIT 1";
-        $result = $this->db->execute_query($sql, [$cardId]);
-
-        if ($result === false) :
-            throw new \Exception(
-                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                    . ": SQL error: " . $this->db->error
+        $back = ['path' => '', 'changed' => false];
+        if ($this->layoutHasSeparateBack($cardData['layout'])) :
+            $back = $this->resolveImageFaceResult(
+                $cardData['back'],
+                $imgLocation,
+                $cardData['setcode'],
+                $cardId . '_b',
+                true
             );
         endif;
 
-        $row = $result->fetch_array(MYSQLI_ASSOC);
-
-        $front = '';
-        $back = '';
-
-        if (isset($row['image_uri']) && !is_null($row['image_uri'])) :
-            $front = strtolower($row['image_uri']);
-        elseif (isset($row['f1_image_uri']) && !is_null($row['f1_image_uri'])) :
-            $front = strtolower($row['f1_image_uri']);
-        endif;
-
-        if (isset($row['f2_image_uri']) && !is_null($row['f2_image_uri'])) :
-            $back = strtolower($row['f2_image_uri']);
-        endif;
-
-        $front = $this->normaliseImageUrl($front);
-        $back = $this->normaliseImageUrl($back);
-
-        return array(
-            'front' => $front,
-            'back' => $back,
-            'setcode' => $row['setcode'],
-            'layout' => $row['layout']
-        );
+        return [
+            'front' => $front['path'],
+            'front_changed' => $front['changed'],
+            'back' => $back['path'],
+            'back_changed' => $back['changed'],
+        ];
     }
 
-    private function normaliseImageUrl(string $url): string
+    /** @return array{front: string, back: string, setcode: string, layout: string} */
+    private function getCardImageUris(string $cardId): array
     {
-        if ($url === '') :
-            return '';
+        $sql = "SELECT image_uri, f1_image_uri, f2_image_uri, setcode, layout
+                FROM cards_scry
+                WHERE id = ?
+                LIMIT 1";
+        $result = $this->db->execute_query($sql, [$cardId]);
+
+        if ($result === false) :
+            $databaseError = (string) ($this->db->error ?? 'unknown database error');
+            throw new \Exception("Unable to load image URIs for $cardId: $databaseError");
         endif;
-        if (strpos($url, '.jpg?') !== false) :
-            return substr($url, 0, (strpos($url, ".jpg?") + 5));
+
+        $row = $result->fetch_array(MYSQLI_ASSOC);
+        if (!is_array($row)) :
+            throw new \Exception("No image record found for $cardId");
         endif;
-        return $url;
+
+        $front = '';
+        if (isset($row['image_uri']) && $row['image_uri'] !== null) :
+            $front = (string) $row['image_uri'];
+        elseif (isset($row['f1_image_uri']) && $row['f1_image_uri'] !== null) :
+            $front = (string) $row['f1_image_uri'];
+        endif;
+
+        $back = isset($row['f2_image_uri']) && $row['f2_image_uri'] !== null
+            ? (string) $row['f2_image_uri']
+            : '';
+
+        return [
+            'front' => trim($front),
+            'back' => trim($back),
+            'setcode' => (string) $row['setcode'],
+            'layout' => (string) $row['layout'],
+        ];
+    }
+
+    private function resolveImageFace(
+        string $remoteUrl,
+        string $imgLocation,
+        string $setcode,
+        string $fileStem,
+        bool $allowFetch
+    ): string {
+        $result = $this->resolveImageFaceResult($remoteUrl, $imgLocation, $setcode, $fileStem, $allowFetch);
+        return $result['path'];
+    }
+
+    /** @return array{path: string, changed: bool} */
+    private function resolveImageFaceResult(
+        string $remoteUrl,
+        string $imgLocation,
+        string $setcode,
+        string $fileStem,
+        bool $allowFetch
+    ): array {
+        $basePath = $imgLocation . $setcode . '/' . $fileStem;
+        foreach ($this->cacheCandidates($basePath) as $candidate) :
+            if ($this->isReadable($candidate)) :
+                $this->message->logMessage('[DEBUG]', "Using cached image $candidate");
+                return ['path' => $this->relativeImagePath($candidate), 'changed' => false];
+            endif;
+            if ($this->fileExists($candidate)) :
+                $this->message->logMessage('[DEBUG]', "Cached image is not readable at $candidate");
+            endif;
+        endforeach;
+
+        if (!$allowFetch) :
+            $this->message->logMessage(
+                '[DEBUG]',
+                "Image cache miss for $fileStem; returning placeholder before asynchronous resolution"
+            );
+            return ['path' => self::PLACEHOLDER_IMAGE, 'changed' => false];
+        endif;
+
+        $destination = $basePath . $this->extensionForRemoteUrl($remoteUrl);
+        $this->message->logMessage('[DEBUG]', "Image cache miss for $fileStem; downloading $remoteUrl");
+        $path = $this->fetchAndStoreImage($remoteUrl, $imgLocation, $setcode, $destination);
+        return ['path' => $path, 'changed' => $this->isCachedImageResult($path)];
+    }
+
+    private function refreshImageFace(
+        string $remoteUrl,
+        string $imgLocation,
+        string $setcode,
+        string $fileStem
+    ): string {
+        if ($remoteUrl === '') :
+            return 'empty';
+        endif;
+
+        $basePath = $imgLocation . $setcode . '/' . $fileStem;
+        $destination = $basePath . $this->extensionForRemoteUrl($remoteUrl);
+        $result = $this->fetchAndStoreImage($remoteUrl, $imgLocation, $setcode, $destination);
+        if (!$this->isCachedImageResult($result)) :
+            return $result;
+        endif;
+
+        foreach ($this->cacheCandidates($basePath) as $candidate) :
+            if ($candidate === $destination || !$this->fileExists($candidate)) :
+                continue;
+            endif;
+            if (!@unlink($candidate)) :
+                $this->message->logMessage('[ERROR]', "Unable to remove superseded image $candidate");
+            else :
+                $this->message->logMessage('[DEBUG]', "Removed superseded image $candidate");
+            endif;
+        endforeach;
+
+        return $result;
     }
 
     private function fetchAndStoreImage(
@@ -363,95 +277,86 @@ class ImageManager
             return 'empty';
         endif;
 
-        if (RemoteFileChecker::exists($remoteUrl, $this->appConfig, $this->message) == false) :
-            $subject = "Invalid image from Scryfall API";
-            $message = "$remoteUrl does not exist - check database entry against API, has it been deleted?";
-            if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
-                $mail = new MyPHPMailer(true, $this->appConfig);
-                $mail->sendEmail($this->adminEmail, false, $subject, $message);
-            else :
-                $this->message->logMessage(
-                    '[NOTICE]',
-                    "Email disabled; image unlink failure alert not sent for $remoteUrl"
-                );
-            endif;
+        if (!RemoteFileChecker::exists($remoteUrl, $this->appConfig, $this->message)) :
+            $this->message->logMessage('[ERROR]', "Scryfall image does not exist: $remoteUrl");
             return 'error';
         endif;
 
         $userAgent = UserAgent::buildFromConfig($this->appConfig, null, $this->message);
-        $this->message->logMessage('[DEBUG]', "Image fetch user agent set to $userAgent");
-        $options = array('http' => array('user_agent' => $userAgent));
+        $options = ['http' => ['user_agent' => $userAgent]];
         $context = stream_context_create($options);
-        $image = file_get_contents($remoteUrl, false, $context);
-
-        if (!file_exists($imgLocation . $setcode)) :
-            $this->message->logMessage('[DEBUG]', "Creating new directory $setcode");
-            mkdir($imgLocation . $setcode);
+        $image = @file_get_contents($remoteUrl, false, $context);
+        if ($image === false) :
+            $this->message->logMessage('[ERROR]', "Unable to download Scryfall image $remoteUrl");
+            return 'error';
         endif;
 
-        file_put_contents($destination, $image);
-        $relativePath = strpos($destination, 'cardimg');
-        return substr($destination, $relativePath);
+        $directory = $imgLocation . $setcode;
+        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) :
+            $this->message->logMessage('[ERROR]', "Unable to create image directory $directory");
+            return 'error';
+        endif;
+
+        $temporary = $destination . '.tmp.' . bin2hex(random_bytes(6));
+        if (file_put_contents($temporary, $image, LOCK_EX) === false || !rename($temporary, $destination)) :
+            @unlink($temporary);
+            $this->message->logMessage('[ERROR]', "Unable to write Scryfall image $destination");
+            return 'error';
+        endif;
+
+        $this->message->logMessage('[DEBUG]', "Stored Scryfall image $destination");
+        return $this->relativeImagePath($destination);
     }
 
-    private function processImageFace(
-        string $remoteUrl,
-        string $localPath,
-        string $imgLocation,
-        string $setcode
-    ): string {
-        $relativePath = strpos($localPath, 'cardimg');
-        $currentPath = substr($localPath, $relativePath);
-
-        if (!file_exists($localPath)) :
-            return $this->fetchAndStoreImage($remoteUrl, $imgLocation, $setcode, $localPath);
-        endif;
-
-        $age = time() - filemtime($localPath);
-        if ($age < self::IMAGE_MAX_AGE) :
-            return $currentPath;
-        endif;
-
-        if ($remoteUrl !== '' && $this->diffImage($remoteUrl, $localPath)) :
-            $this->message->logMessage('[DEBUG]', "Refreshing local image $localPath from $remoteUrl");
-            return $this->fetchAndStoreImage($remoteUrl, $imgLocation, $setcode, $localPath);
-        endif;
-
-        return $currentPath;
+    /** @return array{0: string, 1: string} */
+    private function cacheCandidates(string $basePath): array
+    {
+        return [
+            $basePath . self::WEBP_EXTENSION,
+            $basePath . self::JPEG_EXTENSION,
+        ];
     }
 
-    /**
-    * @return array{path: string, changed: bool}
-    */
-    private function processImageFaceRefresh(
-        string $remoteUrl,
-        string $localPath,
-        string $imgLocation,
-        string $setcode
-    ): array {
-        $relativePath = strpos($localPath, 'cardimg');
-        $currentPath = substr($localPath, $relativePath);
+    private function extensionForRemoteUrl(string $remoteUrl): string
+    {
+        $path = parse_url($remoteUrl, PHP_URL_PATH);
+        if (is_string($path) && strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'webp') :
+            return self::WEBP_EXTENSION;
+        endif;
+        return self::JPEG_EXTENSION;
+    }
 
-        if (!file_exists($localPath)) :
-            $this->message->logMessage('[DEBUG]', "Image missing, fetching $localPath");
-            $path = $this->fetchAndStoreImage($remoteUrl, $imgLocation, $setcode, $localPath);
-            return array('path' => $path, 'changed' => true);
+    private function relativeImagePath(string $path): string
+    {
+        $relativeStart = strpos($path, 'cardimg/');
+        return $relativeStart === false ? $path : substr($path, $relativeStart);
+    }
+
+    private function layoutHasSeparateBack(string $layout): bool
+    {
+        $twoCardDetailSections = $this->gameRules->get('twoCardDetailSections', []);
+        return is_array($twoCardDetailSections) && in_array($layout, $twoCardDetailSections, true);
+    }
+
+    private function isCachedImageResult(string $result): bool
+    {
+        return $result !== ''
+            && $result !== 'empty'
+            && $result !== 'error'
+            && $result !== self::PLACEHOLDER_IMAGE;
+    }
+
+    private function sendRefreshFailureNotice(string $cardId, string $front, string $back): void
+    {
+        $subject = 'Image refresh failure';
+        $body = "Failed image refresh for $cardId. Front: $front; Back: $back";
+        if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
+            $mail = new MyPHPMailer(true, $this->appConfig);
+            $mail->sendEmail($this->adminEmail, false, $subject, $body);
+            return;
         endif;
 
-        $age = time() - filemtime($localPath);
-        if ($age < self::IMAGE_MAX_AGE) :
-            $this->message->logMessage('[DEBUG]', "Image fresh, skipping refresh for $localPath");
-            return array('path' => $currentPath, 'changed' => false);
-        endif;
-
-        if ($remoteUrl !== '' && $this->diffImage($remoteUrl, $localPath)) :
-            $this->message->logMessage('[DEBUG]', "Refreshing local image $localPath from $remoteUrl");
-            $path = $this->fetchAndStoreImage($remoteUrl, $imgLocation, $setcode, $localPath);
-            return array('path' => $path, 'changed' => true);
-        endif;
-
-        $this->message->logMessage('[DEBUG]', "Image unchanged for $localPath");
-        return array('path' => $currentPath, 'changed' => false);
+        $this->message->logMessage('[NOTICE]', "Email disabled; $body");
     }
 
     protected function isReadable(string $path): bool
@@ -464,4 +369,3 @@ class ImageManager
         return file_exists($path);
     }
 }
-// phpcs:enable

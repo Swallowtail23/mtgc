@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        08/07/26
+Version:     1.1
+Date:        26/08/26
 Name:        ScryfallCardRecordMapperTest.php
 Purpose:     Tests Scryfall card record normalisation before database import.
 Notes:       -
@@ -23,7 +23,7 @@ class ScryfallCardRecordMapperTest extends TestCase
         $this->assertSame('card-1', $mapped['id']);
         $this->assertSame('oracle-1', $mapped['oracle_id']);
         $this->assertSame('main-art', $mapped['illustration_id']);
-        $this->assertSame('https://img/main.jpg', $mapped['image_uri']);
+        $this->assertSame('https://img/main.webp', $mapped['image_uri']);
         $this->assertSame('Face One', $mapped['name_1']);
         $this->assertSame('Face Two', $mapped['name_2']);
         $this->assertSame('face-one-art', $mapped['illustration_id_1']);
@@ -38,6 +38,20 @@ class ScryfallCardRecordMapperTest extends TestCase
         $this->assertSame(111, $mapped['multi_1']);
         $this->assertSame(222, $mapped['multi_2']);
         $this->assertSame(123456, $mapped['time']);
+    }
+
+    public function testFallsBackToNormalJpegWhenGridWebpIsUnavailable(): void
+    {
+        $card = $this->buildCard();
+        unset($card['image_uris']['grid']);
+        unset($card['card_faces'][0]['image_uris']['grid']);
+        unset($card['card_faces'][1]['image_uris']['grid']);
+
+        $mapped = ScryfallCardRecordMapper::map($card);
+
+        $this->assertSame('https://img/main.jpg', $mapped['image_uri']);
+        $this->assertSame('https://img/face-one.jpg', $mapped['image_1']);
+        $this->assertSame('https://img/face-two.jpg', $mapped['image_2']);
     }
 
     public function testMapsJsonLegalitiesStatsAndCollectorNumber(): void
@@ -111,7 +125,10 @@ class ScryfallCardRecordMapperTest extends TestCase
             'uri' => 'https://api.example/card-1',
             'scryfall_uri' => 'https://scryfall.example/card-1',
             'layout' => 'transform',
-            'image_uris' => ['normal' => 'https://img/main.jpg'],
+            'image_uris' => [
+                'grid' => 'https://img/main.webp',
+                'normal' => 'https://img/main.jpg',
+            ],
             'illustration_id' => 'main-art',
             'mana_cost' => '{3}{U}',
             'cmc' => 4,
@@ -176,7 +193,10 @@ class ScryfallCardRecordMapperTest extends TestCase
                     'colors' => ['U'],
                     'artist' => 'Face Artist',
                     'flavor_text' => 'Face flavor.',
-                    'image_uris' => ['normal' => 'https://img/face-one.jpg'],
+                    'image_uris' => [
+                        'grid' => 'https://img/face-one.webp',
+                        'normal' => 'https://img/face-one.jpg',
+                    ],
                     'illustration_id' => 'face-one-art',
                     'cmc' => 2,
                 ],
@@ -186,7 +206,10 @@ class ScryfallCardRecordMapperTest extends TestCase
                     'defense' => '5',
                     'type_line' => 'Battle Face',
                     'oracle_text' => 'Back face text.',
-                    'image_uris' => ['normal' => 'https://img/face-two.jpg'],
+                    'image_uris' => [
+                        'grid' => 'https://img/face-two.webp',
+                        'normal' => 'https://img/face-two.jpg',
+                    ],
                     'illustration_id' => 'face-two-art',
                 ],
                 [

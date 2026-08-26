@@ -1,10 +1,10 @@
 <?php
 
 /*
-Version:     1.1
-Date:        29/04/26
+Version:     1.2
+Date:        26/08/26
 Name:        ImageManagerTest.php
-Purpose:     Tests image manager refresh and placeholder behavior.
+Purpose:     Tests dual-format Scryfall image caching and explicit refresh behavior.
 Notes:       -
 Author:      Simon Wilson
 Copyright:   2026 MTG Collection
@@ -14,7 +14,6 @@ To do:       -
 use MTG\Cards\ImageManager;
 use MTG\Core\AppConfig;
 use MTG\Core\GameRules;
-use MTG\Core\Network\RemoteFileChecker;
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/bootstrap.php';
@@ -22,78 +21,55 @@ require_once __DIR__ . '/../src/MTG/Cards/ImageManager.php';
 
 class FakeDbForImages
 {
-    // Minimal stub to satisfy constructor; not used directly in these tests.
+    /** @param array<string, mixed>|null $row */
+    public function __construct(private ?array $row = null, private bool $fail = false)
+    {
+    }
+
+    public function execute_query(string $sql, array $params): object|false
+    {
+        unset($sql, $params);
+        if ($this->fail || $this->row === null) {
+            return false;
+        }
+
+        return new class ($this->row) {
+            /** @param array<string, mixed> $row */
+            public function __construct(private array $row)
+            {
+            }
+
+            /** @return array<string, mixed> */
+            public function fetch_array(int $mode = MYSQLI_BOTH): array
+            {
+                unset($mode);
+                return $this->row;
+            }
+        };
+    }
 }
 
 class TestImageManager extends ImageManager
 {
-    public bool $diffReturn = false;
-    public int $diffCalled = 0;
     public bool $forceUnreadable = false;
     public bool $forceExists = true;
+    /** @var array<string, bool> */
     public array $unreadablePaths = [];
 
-    /**
-     * @param string $remoteUrl
-     * @param string $localFilePath
-     */
-    public function diffImage(string $remoteUrl, string $localFilePath): bool
-    {
-        $this->diffCalled++;
-        return $this->diffReturn;
-    }
-
-    /**
-     * @param string $path
-     */
     protected function isReadable(string $path): bool
     {
-        if (isset($this->unreadablePaths[$path]) && $this->unreadablePaths[$path]) {
-            return false;
-        }
-        if ($this->forceUnreadable) {
+        if (($this->unreadablePaths[$path] ?? false) || $this->forceUnreadable) {
             return false;
         }
         return parent::isReadable($path);
     }
 
-    /**
-     * @param string $path
-     */
     protected function fileExists(string $path): bool
     {
-        if (isset($this->unreadablePaths[$path]) && $this->unreadablePaths[$path]) {
-            return $this->forceExists;
-        }
-        if ($this->forceUnreadable) {
+        if (($this->unreadablePaths[$path] ?? false) || $this->forceUnreadable) {
             return $this->forceExists;
         }
         return parent::fileExists($path);
-    }
-}
-
-class TestRefreshImageManager extends ImageManager
-{
-    public array $responses = [];
-    public int $callCount = 0;
-
-    /**
-     * @param string $setcode
-     * @param string $cardId
-     * @param string $layout
-     * @param bool $allowFetch
-     */
-    public function getImage(string $setcode, string $cardId, string $layout, bool $allowFetch = true): array
-    {
-        $index = $this->callCount;
-        $this->callCount++;
-        if (!isset($this->responses[$index])) {
-            return [
-                'front' => 'error',
-                'back' => '',
-            ];
-        }
-        return $this->responses[$index];
     }
 }
 
@@ -103,11 +79,10 @@ class ImageManagerTest extends TestCase
     private GameRules $gameRules;
     private string $tempDir;
     private string $imgRoot;
-    private string $remoteUrl;
 
     protected function setUp(): void
     {
-        $this->tempDir = sys_get_temp_dir() . '/imgmgr_' . uniqid();
+        $this->tempDir = sys_get_temp_dir() . '/imgmgr_' . bin2hex(random_bytes(6));
         $this->imgRoot = $this->tempDir . '/cardimg/';
         mkdir($this->imgRoot, 0777, true);
 
@@ -168,12 +143,216 @@ class ImageManagerTest extends TestCase
         $this->gameRules = new GameRules([
             'twoCardDetailSections' => []
         ]);
-        $this->remoteUrl = 'http://example.test/front.jpg';
     }
 
     protected function tearDown(): void
     {
         $this->removeDir($this->tempDir);
+    }
+
+    public function testPrefersExistingWebpOverLegacyJpeg(): void
+    {
+        $row = $this->cardRow('pref', 'normal', 'https://img.example/front.webp');
+        $this->createLocalImage('pref', 'card-1', '.jpg', 'legacy');
+        $this->createLocalImage('pref', 'card-1', '.webp', 'preferred');
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $result = $manager->getImage('pref', 'card-1', 'normal', false);
+
+        $this->assertSame('cardimg/pref/card-1.webp', $result['front']);
+    }
+
+    public function testFallsBackToExistingLegacyJpegWithoutFetchingWebp(): void
+    {
+        $row = $this->cardRow('legacy', 'normal', 'https://img.example/front.webp');
+        $jpeg = $this->createLocalImage('legacy', 'card-2', '.jpg', 'legacy');
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $result = $manager->getImage('legacy', 'card-2', 'normal', false);
+
+        $this->assertSame('cardimg/legacy/card-2.jpg', $result['front']);
+        $this->assertFileExists($jpeg);
+        $this->assertFileDoesNotExist($this->imgRoot . 'legacy/card-2.webp');
+    }
+
+    public function testFetchesMissingImageUsingRemoteWebpExtension(): void
+    {
+        $remoteUrl = $this->createRemoteImage('front.webp', 'webp-bytes');
+        $row = $this->cardRow('new', 'normal', $remoteUrl);
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $result = $manager->getImage('new', 'card-3', 'normal');
+
+        $destination = $this->imgRoot . 'new/card-3.webp';
+        $this->assertSame('cardimg/new/card-3.webp', $result['front']);
+        $this->assertFileExists($destination);
+        $this->assertSame('webp-bytes', file_get_contents($destination));
+    }
+
+    public function testUsesJpegDestinationForNormalUrlFallback(): void
+    {
+        $remoteUrl = $this->createRemoteImage('front.jpg', 'jpeg-bytes');
+        $row = $this->cardRow('fallback', 'normal', $remoteUrl);
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $result = $manager->getImage('fallback', 'card-4', 'normal');
+
+        $this->assertSame('cardimg/fallback/card-4.jpg', $result['front']);
+        $this->assertFileExists($this->imgRoot . 'fallback/card-4.jpg');
+    }
+
+    public function testAsyncCheckDoesNotMigrateLegacyJpeg(): void
+    {
+        $remoteUrl = $this->createRemoteImage('front.webp', 'new-webp');
+        $row = $this->cardRow('async-existing', 'normal', $remoteUrl);
+        $jpeg = $this->createLocalImage('async-existing', 'card-5', '.jpg', 'legacy-jpeg');
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $result = $manager->checkAndRefreshImage('card-5');
+
+        $this->assertSame('cardimg/async-existing/card-5.jpg', $result['front']);
+        $this->assertFalse($result['front_changed']);
+        $this->assertFileExists($jpeg);
+        $this->assertFileDoesNotExist($this->imgRoot . 'async-existing/card-5.webp');
+    }
+
+    public function testAsyncCheckDownloadsMissingWebpImage(): void
+    {
+        $remoteUrl = $this->createRemoteImage('async-missing.webp', 'webp-bytes');
+        $row = $this->cardRow('async-missing', 'normal', $remoteUrl);
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $result = $manager->checkAndRefreshImage('card-6');
+
+        $this->assertSame('cardimg/async-missing/card-6.webp', $result['front']);
+        $this->assertTrue($result['front_changed']);
+        $this->assertFileExists($this->imgRoot . 'async-missing/card-6.webp');
+        $this->assertSame('webp-bytes', file_get_contents($this->imgRoot . 'async-missing/card-6.webp'));
+    }
+
+    public function testAsyncCheckDownloadsBothMissingWebpFaces(): void
+    {
+        $frontUrl = $this->createRemoteImage('async-front.webp', 'front-webp');
+        $backUrl = $this->createRemoteImage('async-back.webp', 'back-webp');
+        $row = $this->cardRow('async-faces', 'transform', $frontUrl, $backUrl);
+        $rules = new GameRules(['twoCardDetailSections' => ['transform']]);
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $rules);
+        $result = $manager->checkAndRefreshImage('card-async-faces');
+
+        $this->assertSame('cardimg/async-faces/card-async-faces.webp', $result['front']);
+        $this->assertTrue($result['front_changed']);
+        $this->assertSame('cardimg/async-faces/card-async-faces_b.webp', $result['back']);
+        $this->assertTrue($result['back_changed']);
+        $this->assertFileExists($this->imgRoot . 'async-faces/card-async-faces.webp');
+        $this->assertFileExists($this->imgRoot . 'async-faces/card-async-faces_b.webp');
+    }
+
+    public function testGetImageUsesPlaceholderWhenCachedFrontIsUnreadable(): void
+    {
+        $row = $this->cardRow('unreadable', 'normal', 'https://img.example/front.webp');
+        $manager = new TestImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $manager->forceUnreadable = true;
+        $manager->forceExists = true;
+
+        $result = $manager->getImage('unreadable', 'card-7', 'normal', false);
+
+        $this->assertSame('/images/back.jpg', $result['front']);
+    }
+
+    public function testMixedCachedFormatsAreResolvedPerFace(): void
+    {
+        $row = $this->cardRow(
+            'mixed',
+            'transform',
+            'https://img.example/front.webp',
+            'https://img.example/back.webp'
+        );
+        $this->createLocalImage('mixed', 'card-8', '.jpg', 'front-jpeg');
+        $this->createLocalImage('mixed', 'card-8_b', '.webp', 'back-webp');
+        $rules = new GameRules(['twoCardDetailSections' => ['transform']]);
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $rules);
+        $result = $manager->getImage('mixed', 'card-8', 'transform', false);
+
+        $this->assertSame('cardimg/mixed/card-8.jpg', $result['front']);
+        $this->assertSame('cardimg/mixed/card-8_b.webp', $result['back']);
+    }
+
+    public function testRefreshImageReturnsFailureArrayWhenCardLookupFails(): void
+    {
+        $manager = new ImageManager(new FakeDbForImages(null, true), $this->appConfig, $this->gameRules);
+        $result = $manager->refreshImage('missing-card');
+
+        $this->assertFalse($result['success']);
+        $this->assertSame('', $result['front']);
+        $this->assertSame('', $result['back']);
+    }
+
+    public function testRefreshImageReplacesBothLegacyFacesWithWebp(): void
+    {
+        $frontUrl = $this->createRemoteImage('refresh-front.webp', 'front-webp');
+        $backUrl = $this->createRemoteImage('refresh-back.webp', 'back-webp');
+        $row = $this->cardRow('refresh', 'transform', $frontUrl, $backUrl);
+        $frontJpeg = $this->createLocalImage('refresh', 'card-9', '.jpg', 'front-jpeg');
+        $backJpeg = $this->createLocalImage('refresh', 'card-9_b', '.jpg', 'back-jpeg');
+        $rules = new GameRules(['twoCardDetailSections' => ['transform']]);
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $rules);
+        $result = $manager->refreshImage('card-9');
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('cardimg/refresh/card-9.webp', $result['front']);
+        $this->assertSame('cardimg/refresh/card-9_b.webp', $result['back']);
+        $this->assertFileDoesNotExist($frontJpeg);
+        $this->assertFileDoesNotExist($backJpeg);
+    }
+
+    public function testFailedWebpRefreshKeepsExistingLegacyJpeg(): void
+    {
+        $missingRemote = 'file://' . $this->tempDir . '/remote/missing.webp';
+        $row = $this->cardRow('refresh-failure', 'normal', $missingRemote);
+        $legacyJpeg = $this->createLocalImage('refresh-failure', 'card-10', '.jpg', 'legacy-jpeg');
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $result = $manager->refreshImage('card-10');
+
+        $this->assertFalse($result['success']);
+        $this->assertFileExists($legacyJpeg);
+        $this->assertSame('legacy-jpeg', file_get_contents($legacyJpeg));
+        $this->assertFileDoesNotExist($this->imgRoot . 'refresh-failure/card-10.webp');
+    }
+
+    /** @return array<string, mixed> */
+    private function cardRow(string $setcode, string $layout, string $frontUrl, string $backUrl = ''): array
+    {
+        return [
+            'image_uri' => $frontUrl,
+            'f1_image_uri' => null,
+            'f2_image_uri' => $backUrl === '' ? null : $backUrl,
+            'setcode' => $setcode,
+            'layout' => $layout,
+        ];
+    }
+
+    private function createLocalImage(string $setcode, string $name, string $extension, string $contents): string
+    {
+        $path = $this->imgRoot . $setcode . '/' . $name . $extension;
+        if (!is_dir(dirname($path))) {
+            mkdir(dirname($path), 0777, true);
+        }
+        file_put_contents($path, $contents);
+        return $path;
+    }
+
+    private function createRemoteImage(string $name, string $contents): string
+    {
+        $path = $this->tempDir . '/remote/' . $name;
+        if (!is_dir(dirname($path))) {
+            mkdir(dirname($path), 0777, true);
+        }
+        file_put_contents($path, $contents);
+        return 'file://' . $path;
     }
 
     private function removeDir(string $dir): void
@@ -186,304 +365,8 @@ class ImageManagerTest extends TestCase
             RecursiveIteratorIterator::CHILD_FIRST
         );
         foreach ($items as $item) {
-            $item->isDir() ? rmdir($item->getRealPath()) : unlink($item->getRealPath());
+            $item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());
         }
         rmdir($dir);
-    }
-
-    private function createLocalImage(string $setcode, string $cardId, int $ageSeconds = 0): string
-    {
-        $path = $this->imgRoot . $setcode . '/' . $cardId . '.jpg';
-        if (!is_dir(dirname($path))) {
-            mkdir(dirname($path), 0777, true);
-        }
-        file_put_contents($path, 'image-bytes');
-        if ($ageSeconds > 0) {
-            touch($path, time() - $ageSeconds);
-        }
-        return $path;
-    }
-
-    public function testSkipsRemoteCheckWhenImageIsFresh()
-    {
-        $setcode = 'tst';
-        $cardId = 'fresh-card';
-        $path = $this->createLocalImage($setcode, $cardId, 10); // 10 seconds old
-
-        $manager = new TestImageManager(new FakeDbForImages(), $this->appConfig, $this->gameRules);
-        $manager->diffReturn = true; // would refresh if invoked
-
-        $process = new ReflectionMethod(ImageManager::class, 'processImageFace');
-        $process->setAccessible(true);
-        $result = $process->invoke($manager, $this->remoteUrl, $path, $this->imgRoot, $setcode);
-
-        $this->assertSame('cardimg/tst/fresh-card.jpg', $result);
-        $this->assertSame(0, $manager->diffCalled, 'Diff check should be skipped for fresh images');
-    }
-
-    public function testRunsRemoteCheckWhenImageIsOld()
-    {
-        $setcode = 'tst';
-        $cardId = 'old-card';
-        $age = (new ReflectionClass(ImageManager::class))->getConstant('IMAGE_MAX_AGE') + 100;
-        $path = $this->createLocalImage($setcode, $cardId, $age);
-
-        $manager = new TestImageManager(new FakeDbForImages(), $this->appConfig, $this->gameRules);
-        $manager->diffReturn = false; // simulate remote same size
-
-        $process = new ReflectionMethod(ImageManager::class, 'processImageFace');
-        $process->setAccessible(true);
-        $result = $process->invoke($manager, $this->remoteUrl, $path, $this->imgRoot, $setcode);
-
-        $this->assertSame('cardimg/tst/old-card.jpg', $result);
-        $this->assertSame(1, $manager->diffCalled, 'Diff check should run for stale images');
-    }
-
-    public function testFetchAndStoreCreatesDirectoryAndReturnsRelativePath()
-    {
-        $setcode = 'dir';
-        $cardId = 'new-card';
-        $dest = $this->imgRoot . $setcode . '/' . $cardId . '.jpg';
-
-        $manager = new TestImageManager(new FakeDbForImages(), $this->appConfig, $this->gameRules);
-
-        $fetch = new ReflectionMethod(ImageManager::class, 'fetchAndStoreImage');
-        $fetch->setAccessible(true);
-
-        // Use a local file URL to avoid flaky network binding issues during tests
-        $remoteDir = $this->tempDir . '/remote';
-        mkdir($remoteDir, 0777, true);
-        $remoteFile = $remoteDir . '/remote_front.jpg';
-        file_put_contents($remoteFile, 'bytes');
-
-        $fileUrl = 'file://' . $remoteFile;
-
-        $this->assertTrue(RemoteFileChecker::exists($fileUrl, $this->appConfig));
-        $result = $fetch->invoke($manager, $fileUrl, $this->imgRoot, $setcode, $dest);
-
-        $this->assertFileExists($dest);
-        $this->assertSame('cardimg/dir/new-card.jpg', $result);
-    }
-
-    public function testDiffImageTouchOnMatch()
-    {
-        $manager = new class (new FakeDbForImages(), $this->appConfig, $this->gameRules) extends ImageManager {
-            /**
-             * @param string $remoteUrl
-             * @param string $localFilePath
-             */
-            public function diffImage(string $remoteUrl, string $localFilePath): bool
-            {
-                unset($remoteUrl);
-                clearstatcache(true, $localFilePath);
-                usleep(200000); // 0.2s delay to ensure mtime bump
-                @touch($localFilePath);
-                return false;
-            }
-        };
-
-        $path = $this->createLocalImage('tst', 'touch-card', 0);
-        touch($path, 1); // force a very old mtime baseline
-        clearstatcache(true, $path);
-        $beforeMtime = filemtime($path);
-
-        $result = $manager->diffImage($this->remoteUrl, $path);
-        $this->assertFalse($result);
-        clearstatcache(true, $path);
-        $this->assertGreaterThan($beforeMtime, filemtime($path));
-    }
-
-    public function testCheckAndRefreshReturnsFaces()
-    {
-        $setcode = 'abc';
-        $cardId = 'check-card';
-        $frontPath = $this->createLocalImage($setcode, $cardId, 700000); // stale
-        $remoteFile = $this->tempDir . '/front_remote.jpg';
-        file_put_contents($remoteFile, 'frontdata');
-        $fileUrl = 'file://' . $remoteFile;
-
-        $db = new class ($fileUrl) {
-            private string $fileUrl;
-
-            public function __construct(string $fileUrl)
-            {
-                $this->fileUrl = $fileUrl;
-            }
-
-            public function execute_query(string $sql, array $params): object
-            {
-                unset($sql, $params);
-                return new class ($this->fileUrl) {
-                    private string $fileUrl;
-
-                    public function __construct(string $fileUrl)
-                    {
-                        $this->fileUrl = $fileUrl;
-                    }
-
-                    public function fetch_array(): array
-                    {
-                        return [
-                            'image_uri' => $this->fileUrl,
-                            'f1_image_uri' => null,
-                            'f2_image_uri' => null,
-                            'setcode' => 'abc',
-                            'layout' => 'normal',
-                        ];
-                    }
-                };
-            }
-        };
-
-        $manager = new TestImageManager($db, $this->appConfig, $this->gameRules);
-        $manager->diffReturn = false; // treat as same size
-
-        $result = $manager->checkAndRefreshImage($cardId);
-        $this->assertSame('cardimg/abc/check-card.jpg', $result['front']);
-        $this->assertSame('', $result['back']);
-        $this->assertSame(1, $manager->diffCalled);
-    }
-
-    public function testGetImageUsesPlaceholderWhenFrontUnreadable()
-    {
-        $setcode = 'unr';
-        $cardId = 'unreadable-front';
-        $this->createLocalImage($setcode, $cardId, 0);
-
-        $db = new class {
-            public function execute_query(string $sql, array $params): object
-            {
-                unset($sql, $params);
-                return new class {
-                    public function fetch_array(): array
-                    {
-                        return [
-                            'image_uri' => 'http://example.test/front.jpg',
-                            'f1_image_uri' => null,
-                            'f2_image_uri' => null,
-                            'setcode' => 'unr',
-                            'layout' => 'normal',
-                        ];
-                    }
-                };
-            }
-        };
-
-        $manager = new TestImageManager($db, $this->appConfig, $this->gameRules);
-        $manager->forceUnreadable = true;
-        $manager->forceExists = true;
-        $result = $manager->getImage($setcode, $cardId, 'normal', false);
-
-        $this->assertSame('/images/back.jpg', $result['front']);
-    }
-
-    public function testGetImageUsesPlaceholderWhenBackUnreadable()
-    {
-        $setcode = 'unb';
-        $cardId = 'unreadable-back';
-        $this->createLocalImage($setcode, $cardId, 0);
-        $backPath = $this->imgRoot . $setcode . '/' . $cardId . '_b.jpg';
-        file_put_contents($backPath, 'image-bytes');
-
-        $db = new class {
-            public function execute_query(string $sql, array $params): object
-            {
-                unset($sql, $params);
-                return new class {
-                    public function fetch_array(): array
-                    {
-                        return [
-                            'image_uri' => 'http://example.test/front.jpg',
-                            'f1_image_uri' => null,
-                            'f2_image_uri' => 'http://example.test/back.jpg',
-                            'setcode' => 'unb',
-                            'layout' => 'transform',
-                        ];
-                    }
-                };
-            }
-        };
-
-        $gameRules = new GameRules([
-            'twoCardDetailSections' => ['transform']
-        ]);
-
-        $manager = new TestImageManager($db, $this->appConfig, $gameRules);
-        $manager->forceExists = true;
-        $manager->unreadablePaths[$backPath] = true;
-        $result = $manager->getImage($setcode, $cardId, 'transform', false);
-
-        $this->assertSame('cardimg/unb/unreadable-back.jpg', $result['front']);
-        $this->assertSame('/images/back.jpg', $result['back']);
-    }
-
-    public function testRefreshImageReturnsFailureArrayWhenCardLookupFails()
-    {
-        $db = new class {
-            public function execute_query(string $sql, array $params): false
-            {
-                unset($sql, $params);
-                return false;
-            }
-        };
-
-        $manager = new TestImageManager($db, $this->appConfig, $this->gameRules);
-        $result = $manager->refreshImage('missing-card');
-
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('success', $result);
-        $this->assertFalse($result['success']);
-        $this->assertSame('', $result['front']);
-        $this->assertSame('', $result['back']);
-    }
-
-    public function testRefreshImageReturnsSuccessArrayWithRefetchedPaths()
-    {
-        $setcode = 'rsh';
-        $cardId = 'refresh-card';
-        $frontPath = $this->imgRoot . $setcode . '/' . $cardId . '.jpg';
-        $backPath = $this->imgRoot . $setcode . '/' . $cardId . '_b.jpg';
-        mkdir(dirname($frontPath), 0777, true);
-        file_put_contents($frontPath, 'old-front');
-        file_put_contents($backPath, 'old-back');
-
-        $db = new class {
-            public function execute_query(string $sql, array $params): object
-            {
-                unset($sql, $params);
-                return new class {
-                    public function fetch_assoc(): array
-                    {
-                        return [
-                            'id' => 'refresh-card',
-                            'setcode' => 'rsh',
-                            'layout' => 'transform',
-                        ];
-                    }
-                };
-            }
-        };
-
-        $manager = new TestRefreshImageManager($db, $this->appConfig, $this->gameRules);
-        $manager->responses = [
-            [
-                'front' => 'cardimg/rsh/refresh-card.jpg',
-                'back' => 'cardimg/rsh/refresh-card_b.jpg',
-            ],
-            [
-                'front' => 'cardimg/rsh/refresh-card.jpg',
-                'back' => 'cardimg/rsh/refresh-card_b.jpg',
-            ],
-        ];
-
-        $result = $manager->refreshImage($cardId);
-
-        $this->assertIsArray($result);
-        $this->assertTrue($result['success']);
-        $this->assertSame('cardimg/rsh/refresh-card.jpg', $result['front']);
-        $this->assertSame('cardimg/rsh/refresh-card_b.jpg', $result['back']);
-        $this->assertSame(2, $manager->callCount);
-        $this->assertFileDoesNotExist($frontPath);
-        $this->assertFileDoesNotExist($backPath);
     }
 }

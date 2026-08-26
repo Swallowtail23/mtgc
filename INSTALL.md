@@ -244,6 +244,152 @@ sudo systemctl reload crond    # or the cron service on your distro
 Ensure the cron user can execute PHP, access the configured `MTG_APP_ROOT`, and write to the log directory referenced
 in the cron file.
 
+## Existing bare-metal WebP upgrade
+
+Use this checklist on every existing development, staging, and production
+bare-metal host. It upgrades image handling without deleting card data or
+converting the existing JPEG cache in bulk.
+
+### 1. Verify the PHP runtime
+
+Confirm that the PHP installation used by the application has GD WebP support:
+
+```bash
+php -r '$info = gd_info(); var_export($info["WebP Support"] ?? false); echo PHP_EOL;'
+```
+
+The result must be `true`. On a RHEL-family host, install the GD and WebP
+packages that match the configured PHP or Remi stream if support is absent, then
+restart PHP-FPM. Do not mix packages from a different PHP stream.
+
+```bash
+sudo dnf install php-gd libwebp
+sudo systemctl restart php-fpm
+```
+
+### 2. Merge the Apache changes
+
+Do not copy `setup/mtgc.conf` wholesale over an existing vhost: its addresses,
+hostnames, certificates, and paths are examples. Merge these directives into
+the active vhost, substituting the host's actual image and application paths.
+
+Add WebP MIME handling to the aliased card-image directory:
+
+```apache
+<Directory /mnt/data/cardimg/>
+    AddType image/webp .webp
+    Require all granted
+</Directory>
+```
+
+Inside the application document-root `<Directory>` block, add:
+
+```apache
+AddType image/webp .webp
+ExpiresByType image/webp "access plus 1 months"
+```
+
+Add `webp` to the existing image compression exclusion:
+
+```apache
+SetEnvIfNoCase Request_URI \.(?:exe|t?gz|zip|iso|tar|bz2|sit|rar|png|jpg|gif|jpeg|webp|flv|swf|mp3)$ no-gzip dont-vary
+```
+
+Validate the required modules and configuration before reloading Apache:
+
+```bash
+sudo httpd -M | grep -E '(mime|expires|deflate|headers)_module'
+sudo apachectl configtest
+sudo systemctl reload httpd
+```
+
+Existing image-directory ownership and SELinux rules do not depend on the file
+extension. If the application can already create JPEGs there, no WebP-specific
+permission change is required.
+
+### 3. Deploy and restart the application runtime
+
+Deploy the PHP, JavaScript, `service-worker.js`, and documentation changes
+together. Ensure the deployed `VERSION` differs from the previous release so
+trusted browsers request the new static assets and service worker. For repeated
+deployments using the same development version, disable the browser cache and
+hard reload.
+
+```bash
+sudo systemctl restart php-fpm
+```
+
+An untrusted development HTTPS origin cannot run a service worker. Missing-image
+downloads still work through AJAX there; test service-worker cache replacement
+on a trusted HTTPS staging/production origin or on `localhost`.
+
+### 4. Remap existing database image URLs
+
+Existing rows retain the previously imported `normal` JPEG URLs until the card
+mapper runs again. Mark only the two card sources for re-import:
+
+```sql
+USE mtg_new;
+UPDATE scryfall_bulk_sources
+SET status = 'failed'
+WHERE source_type IN ('all_cards', 'default_cards');
+```
+
+Then run the focused card refresh as the normal application or scheduled-task
+account:
+
+```bash
+cd /var/www/mtgnew
+php bulk/scryfall_bulk.php refresh
+```
+
+This direct command is non-destructive. It runs the All Cards pass followed by
+the Default Cards pass automatically, so do not run a separate default pass.
+The All Cards pass does not download images, and the following Default Cards
+pass updates rows that already exist, so this operation does not bulk-download
+the image catalogue.
+
+Do **not** run `setup/data_updates.sh refresh --confirm` for this upgrade. That
+workflow deliberately resets Scryfall-managed data before repopulating it.
+
+### 5. Verify the host
+
+Confirm both imports completed and that WebP URLs were mapped:
+
+```sql
+SELECT source_type, status, last_import_completed_at
+FROM scryfall_bulk_sources
+WHERE source_type IN ('all_cards', 'default_cards');
+
+SELECT id, setcode, COALESCE(image_uri, f1_image_uri) AS image_uri
+FROM cards_scry
+WHERE COALESCE(image_uri, f1_image_uri) LIKE '%.webp%'
+LIMIT 10;
+```
+
+Exercise these UI cases:
+
+- A missing search/index image downloads as WebP and replaces its placeholder.
+- An existing JPEG loads without being converted.
+- Explicit Card Detail refresh replaces the applicable JPEG face or faces with
+  WebP.
+- Primary-language and all-language set reloads retain their selected scope.
+
+Verify a downloaded response:
+
+```bash
+curl -sI --compressed https://host/cardimg/set-code/card-id.webp
+```
+
+Expect `Content-Type: image/webp`, the configured cache headers, and no gzip
+`Content-Encoding`. On a trusted origin, also confirm browser Cache Storage uses
+`mtg-images-webp1-<VERSION>` and does not retain an alternate JPEG after an
+explicit refresh.
+
+Keep the existing `.jpg` files. Phase one has no bulk conversion or deletion
+step; WebP files are added for cache misses and replace JPEGs only during an
+explicit refresh of the affected card or set.
+
 ## Final checks
 
 - Confirm the application account can read `/opt/mtg/mtg_new.ini`; it requires
@@ -259,8 +405,17 @@ in the cron file.
   pass. The first bulk pass avoids downloading the full image catalogue; the
   second pass marks the primary language and only downloads images for truly new
   rows.
-  Subsequent bulk runs download images as new cards appear.
-- Image sets can be downloaded for specific sets from the Sets page.
+  Subsequent bulk runs download WebP images as new cards appear.
+- Cached Scryfall images are resolved as WebP first and legacy JPEG second.
+  A missing image encountered through the UI is downloaded as WebP where
+  available. Existing JPEGs remain usable and normal page/deck checks do not
+  replace them.
+- Card Detail image refresh and set downloads from the Sets page explicitly
+  replace affected cache entries using Scryfall WebP where available.
+- Ensure GD has JPEG and WebP support and that Apache serves `image/webp` without
+  applying compression. The supplied `setup/mtgc.conf` contains the expected
+  MIME, expiry, and compression exclusions.
 - Bare metal installs should use `data_updates.sh new` for first load to avoid
   triggering a full image download. If you run only `php bulk/scryfall_bulk.php default`
   on an empty database, it will download images for all cards inserted during that run.
+- See `docs/scryfall_images.md` before changing cache naming or download triggers.

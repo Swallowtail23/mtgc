@@ -1,6 +1,6 @@
 /*
-Version:     1.22
-Date:        24/03/26
+Version:     1.23
+Date:        26/08/26
 Name:        asyncImageRefresh.js
 Purpose:     Shared async image refresh helpers.
 Notes:       -
@@ -16,7 +16,7 @@ To do:       -
     const mtgAsyncImageSeen = window.mtgAsyncImageSeen || {};
     const mtgAsyncImageErrorInFlight = window.mtgAsyncImageErrorInFlight || {};
     const mtgResolvedFrontImages = window.mtgResolvedFrontImages || {};
-    const mtgImageCacheName = window.mtgImageCacheName || 'mtg-images-v1';
+    const mtgImageCacheName = window.mtgImageCacheName || 'mtg-images-webp1-v1';
 
     window.mtgAsyncImage = mtgAsyncImage;
     window.mtgAsyncImageSeen = mtgAsyncImageSeen;
@@ -32,6 +32,17 @@ To do:       -
 
     function stripCache(src) {
         return src ? src.replace(/\?.*$/, '') : '';
+    }
+
+    function alternateCachedImage(src) {
+        const cleanSrc = stripCache(src);
+        if (/\.webp$/i.test(cleanSrc)) {
+            return cleanSrc.replace(/\.webp$/i, '.jpg');
+        }
+        if (/\.jpe?g$/i.test(cleanSrc)) {
+            return cleanSrc.replace(/\.jpe?g$/i, '.webp');
+        }
+        return '';
     }
 
     function swapImageWithFade($img, newSrc, forceSwap, options) {
@@ -85,9 +96,17 @@ To do:       -
                 }
                 return caches.open(mtgImageCacheName)
                     .then(function (cache) {
-                        return cache.put(baseUrl, response.clone()).then(function () {
-                            return true;
-                        });
+                        const alternateUrl = alternateCachedImage(baseUrl);
+                        const removeAlternate = alternateUrl
+                            ? cache.delete(alternateUrl)
+                            : Promise.resolve(false);
+                        return removeAlternate
+                            .then(function () {
+                                return cache.put(baseUrl, response.clone());
+                            })
+                            .then(function () {
+                                return true;
+                            });
                     });
             })
             .catch(function () {
@@ -143,8 +162,34 @@ To do:       -
             if (!frontSrc) {
                 return;
             }
-            queue.push({ cardId: cardId, $img: $img, frontSrc: frontSrc });
+            const fallbackSrc = $img.attr('data-front-fallback-src') || '';
+            queue.push({
+                cardId: cardId,
+                $img: $img,
+                candidates: [frontSrc, fallbackSrc].filter(function (src, index, candidates) {
+                    return src && candidates.indexOf(src) === index;
+                })
+            });
         });
+
+        function probePlaceholderCandidate(item, index) {
+            if (index >= item.candidates.length) {
+                return Promise.resolve(false);
+            }
+            const candidate = item.candidates[index];
+            return fetch(candidate, { method: 'HEAD', cache: 'no-store' })
+                .then(function (response) {
+                    if (!response || !response.ok) {
+                        return probePlaceholderCandidate(item, index + 1);
+                    }
+                    item.$img.attr('data-front-src', candidate);
+                    swapImageWithFade(item.$img, buildBustUrl(candidate), true);
+                    return true;
+                })
+                .catch(function () {
+                    return probePlaceholderCandidate(item, index + 1);
+                });
+        }
 
         function scheduleNext() {
             if (inFlight >= maxConcurrent || queue.length === 0) {
@@ -152,15 +197,7 @@ To do:       -
             }
             const item = queue.shift();
             inFlight += 1;
-            fetch(item.frontSrc, { method: 'HEAD', cache: 'no-store' })
-                .then(function (response) {
-                    if (response && response.ok) {
-                        swapImageWithFade(item.$img, buildBustUrl(item.frontSrc), true);
-                    }
-                })
-                .catch(function () {
-                    return;
-                })
+            probePlaceholderCandidate(item, 0)
                 .finally(function () {
                     inFlight -= 1;
                     setTimeout(scheduleNext, 0);
@@ -289,7 +326,7 @@ To do:       -
         $(selector).each(function () {
             const $img = $(this);
             const src = $img.attr('src') || '';
-            const match = src.match(/cardimg\/[^/]+\/([a-f0-9-]+)(?:_b)?\.jpg/i);
+            const match = src.match(/cardimg\/[^/]+\/([a-f0-9-]+)(?:_b)?\.(?:webp|jpe?g)/i);
             const cardId = match ? match[1] : $img.data('cardid');
             if (!cardId) {
                 return;
@@ -370,7 +407,7 @@ To do:       -
         $img.data('errorRefresh', 1);
         mtgAsyncImageErrorInFlight[cardId] = true;
         if (window.console && console.debug) {
-            console.debug('[DEBUG] Image load error; forcing async refresh for', cardId);
+            console.debug('[DEBUG] Image load error; resolving cache fallback or missing image for', cardId);
         }
         $img.attr('src', '/images/back.jpg');
         $.ajax({

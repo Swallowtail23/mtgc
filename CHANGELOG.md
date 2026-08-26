@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Changed
+- Scryfall card and face images now prefer WebP `grid` sources with `normal`
+  JPEG fallback. Existing JPEG caches remain readable, while missing images,
+  new cards, and explicitly refreshed cards or sets are stored as WebP.
 - Documented the Composer dependency maintenance and deployment process for
   root-owned bare-metal installations and persistent container vendor volumes.
 - Admin set-image reloads now require an explicit choice between primary-language images and all-language images;
@@ -24,6 +27,8 @@ All notable changes to this project will be documented in this file.
 ### Infrastructure
 - The container backup helper now detects whether the running database container is managed by Docker or Podman,
   with explicit environment overrides for ambiguous or non-default setups.
+- Apache, service-worker caching, and the container GD build now support WebP
+  card images alongside legacy JPEG cache files.
 
 ## [v0.6.6] - 26/08/2026
 

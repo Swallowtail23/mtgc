@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     25.99
-Date:        05/02/26
+Version:     26.0
+Date:        26/08/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
 Notes:       {none}
@@ -69,7 +69,7 @@ $uniquecard_ref = [];
     <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script type="text/javascript">
-        window.mtgImageCacheName = 'mtg-images-<?php echo $serviceWorkerVersion; ?>';
+        window.mtgImageCacheName = 'mtg-images-webp1-<?php echo $serviceWorkerVersion; ?>';
     </script>
     <script src="/js/asyncImageRefresh.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.85
-Date:        08/07/26
+Version:     14.86
+Date:        26/08/26
 Name:        index.php
 Purpose:     Main site page
 Notes:       -
@@ -435,7 +435,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
         <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
         <script type="text/javascript">
-            window.mtgImageCacheName = 'mtg-images-<?php echo $serviceWorkerVersion; ?>';
+            window.mtgImageCacheName = 'mtg-images-webp1-<?php echo $serviceWorkerVersion; ?>';
         </script>
         <script src="/js/asyncImageRefresh.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
         <script type="text/javascript">
@@ -1293,7 +1293,8 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                 endif;
                                 $setname = htmlspecialchars($row['set_name'], ENT_QUOTES, 'UTF-8');
                                 $number_import = $row['number_import'];
-                                $expectedFront = "cardimg/$setcode/$scryid.jpg";
+                                $expectedFront = "cardimg/$setcode/$scryid.webp";
+                                $expectedFrontFallback = "cardimg/$setcode/$scryid.jpg";
                                 if ($hasCardImage) :
                                     $gridLink = "<a class='gridlink' href='/carddetail.php?id=$scryid'>"
                                         . "<img id='$img_id' title='$uppercasesetcode ($setname / $displayLang) "
@@ -1315,6 +1316,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                         . "no. $number_import' class='card-image cardimg$in_collection "
                                         . "card-image-hidden' alt='$scryid' src='$placeholderImg' "
                                         . "data-cardid='$scryid' data-face='front' data-front-src='$expectedFront' "
+                                        . "data-front-fallback-src='$expectedFrontFallback' "
                                         . "data-back-src='$imagebackurl'></a>";
                                 endif;
                                 echo $gridLink;

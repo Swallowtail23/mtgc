@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     22.78
-Date:        25/08/26
+Version:     22.79
+Date:        26/08/26
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -102,7 +102,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     <?php include APP_ROOT . '/includes/googlefonts.php';?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script type="text/javascript">
-        window.mtgImageCacheName = 'mtg-images-<?php echo $serviceWorkerVersion; ?>';
+        window.mtgImageCacheName = 'mtg-images-webp1-<?php echo $serviceWorkerVersion; ?>';
     </script>
     <script src="/js/asyncImageRefresh.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script src="/js/ajaxUpdate.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
@@ -550,7 +550,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
 
                 $msg->logMessage('[DEBUG]', "Scryfall image location called by $userEmail: $scryfallimg");
                 $imgname = $cardId . ".jpg";
-                $imgname_2 = $cardId . "_b.jpg";
+                $webpCacheName = $cardId . ".webp";
                 $msg->logMessage(
                     '[DEBUG]',
                     "Call for getImage by $userEmail with $setcode,$id,$imgLocation, {$row['layout']}"
@@ -615,7 +615,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                                 <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                         </div> <?php
                     else :
-                            $upload_name = $imgLocation . strtolower($setcode) . "/" . $imgname;
+                        $upload_name = $imgLocation . strtolower($setcode) . "/" . $imgname;
                         if (!move_uploaded_file($_FILES['filename']['tmp_name'], $upload_name)) : ?>
                         <div class="msg-new error-new"><span>Image write failed</span>
                             <br>
@@ -623,10 +623,17 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                         </div> <?php
                         $msg->logMessage('[ERROR]', "Image upload for $cardId by $userEmail failed");
                         else :
+                            $webpCachePath = $imgLocation . strtolower($setcode) . "/" . $webpCacheName;
+                            if (is_file($webpCachePath) && !unlink($webpCachePath)) :
+                                $msg->logMessage(
+                                    '[ERROR]',
+                                    "Unable to remove WebP cache after JPEG upload for $cardId by $userEmail"
+                                );
+                            endif;
                             // Image upload successful. Set variable to load card page 'fresh' at completion
                             // (see end of script)
-                                $ctrlf5 = 1;
-                                $msg->logMessage('[NOTICE]', "Image upload for $cardId by $userEmail ok");
+                            $ctrlf5 = 1;
+                            $msg->logMessage('[NOTICE]', "Image upload for $cardId by $userEmail ok");
                         endif;
                     endif;
                 endif;
