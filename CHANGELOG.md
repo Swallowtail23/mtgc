@@ -2,21 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.6.6-dev] - Unreleased
+## [v0.6.6] - 26/08/2026
 
-### Added
--
-
-### Changed
--
-
-### Fixed
--
-
-### Security
--
-
-### Infrastructure
+### Fix - 26/08/2026
 
 - The data-update wrapper now resolves in-tree application paths automatically and supports an explicit
   `MTG_APP_ROOT` when installed separately, instead of embedding a deployment-specific path. Container installs use
