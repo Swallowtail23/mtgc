@@ -8,7 +8,8 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Changed
--
+- Documented the Composer dependency maintenance and deployment process for
+  root-owned bare-metal installations and persistent container vendor volumes.
 
 ### Fixed
 -

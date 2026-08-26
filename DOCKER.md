@@ -399,7 +399,6 @@ this setup provides automatic restarts with minimal configuration.
   ```
 
   Update the Apache config accordingly and reload the containers.
-- **Updates:** pull security patches regularly:
 
 ## Cloudflare cache rules
 
@@ -422,9 +421,15 @@ released:
 2. **Pull code** – `git pull` in the repo root.
 3. **Review config changes** – rerun `./docker/docker-init.sh` if prompts or
    template files changed; it preserves existing volumes/configs.
-4. **Refresh Composer deps** – remove `${BASE_DIR}/config/composer_installed.flag`
-   or answer “yes” when the init script asks to rerun Composer, ensuring new
-   vendor updates are applied on next container start.
+4. **Install locked Composer dependencies** – dependency updates must already
+   be resolved, tested, and committed to `composer.lock` using the maintenance
+   process in `INSTALL.md`. Do not run `composer update` in a deployed
+   container: a non-bind-mounted source change will be lost, and it bypasses
+   review of the lock file. Remove
+   `${BASE_DIR}/config/composer_installed.flag` or answer “yes” when the init
+   script asks to rerun Composer. The entrypoint will run
+   `composer install --no-dev` from the committed lock file on the next
+   container start and refresh the persistent `vendor-deps` volume.
 5. **Rebuild containers** –
 
    ```bash
@@ -441,7 +446,9 @@ released:
 
 Repeat after major releases. For bare-metal installs follow the same order:
 back up, pull, rerun `INSTALL.md` steps where configs changed, rerun Composer,
-then restart Apache/PHP-FPM.
+then restart Apache/PHP-FPM. Follow the Composer dependency maintenance section
+in `INSTALL.md` when producing dependency updates; deployments should only
+install the committed lock file.
 
 ## Email configuration (post-install)
 

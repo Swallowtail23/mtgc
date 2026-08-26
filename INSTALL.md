@@ -129,15 +129,70 @@ it (root crontab):
 
 ## Composer dependencies
 
-Install the required packages as the web user (example assumes Apache):
+Run Composer as the owner of the source checkout. Do not make the application
+root writable by the Apache/PHP service account solely so it can manage
+dependencies. For a root-owned production checkout, explicitly acknowledge
+Composer's superuser mode and install the versions recorded in `composer.lock`:
 
 ```bash
-sudo -Hu apache composer install
+cd /var/www/mtgnew
+COMPOSER_ALLOW_SUPERUSER=1 composer install \
+  --no-dev --no-interaction --prefer-dist --optimize-autoloader
 ```
 
 This pulls in JSONMachine (still used for Scryfall sets/migrations/manifest and
-legacy JSON reads), PHPMailer, Turnstile, FX API, OTPHP, QR code libs, and
-PHPUnit (dev).
+legacy JSON reads), PHPMailer, Turnstile, FX API, OTPHP, and QR code libs. On a
+development checkout, omit `--no-dev` to also install PHPUnit, PHPCS, and the
+PHP compatibility rules. A non-root source owner can run the same commands
+without `COMPOSER_ALLOW_SUPERUSER=1`.
+
+### Composer dependency maintenance
+
+Resolve dependency updates in a trusted source checkout, test them, and commit
+the resulting `composer.lock`. Production deployments should run
+`composer install`, never `composer update`, so every server receives the
+reviewed versions from the lock file.
+
+1. Check direct dependencies and audit both the complete development set and
+   the production-only set:
+
+   ```bash
+   COMPOSER_ALLOW_SUPERUSER=1 composer outdated --direct
+   COMPOSER_ALLOW_SUPERUSER=1 composer audit
+   COMPOSER_ALLOW_SUPERUSER=1 composer audit --no-dev
+   ```
+
+2. Update only the intended packages. Replace the example names with actual
+   package names reported by Composer:
+
+   ```bash
+   COMPOSER_ALLOW_SUPERUSER=1 composer update \
+     vendor/package-one vendor/package-two \
+     --with-all-dependencies --minimal-changes
+   ```
+
+   Use an unrestricted `composer update --with-all-dependencies` only for a
+   deliberate full dependency refresh. If a constraint in `composer.json`
+   must change, use `composer require vendor/package:^VERSION` (or add `--dev`
+   for a development-only dependency) and review both Composer files.
+
+3. Validate the resolved dependencies and run the quality gates:
+
+   ```bash
+   COMPOSER_ALLOW_SUPERUSER=1 composer validate --strict
+   COMPOSER_ALLOW_SUPERUSER=1 composer audit
+   COMPOSER_ALLOW_SUPERUSER=1 composer audit --no-dev
+   vendor/bin/phpunit --configuration phpunit.xml
+   vendor/bin/phpcs --report=summary
+   ```
+
+4. Review `git diff -- composer.json composer.lock`, add a changelog entry for
+   meaningful dependency or security changes, and commit `composer.lock` plus
+   `composer.json` when its constraints changed. Never commit `vendor/`.
+
+After pulling that commit on a root-owned production server, rerun the
+`composer install --no-dev` command above and restart Apache/PHP-FPM when the
+release or local deployment process requires it.
 
 ## Email / Disqus / Turnstile / FX setup
 
