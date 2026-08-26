@@ -2,12 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.6.7-dev] - Unreleased
+## [v0.6.7] - 26/08/2026
 
-### Added
+### Added - 26/08/2026 (2)
 -
 
-### Changed
+### Changed - 26/08/2026 (2)
 - Documented the Composer dependency maintenance and deployment process for
   root-owned bare-metal installations and persistent container vendor volumes.
 - Admin set-image reloads now require an explicit choice between primary-language images and all-language images;
@@ -15,13 +15,10 @@ All notable changes to this project will be documented in this file.
 - Collection CSV exports now include export provenance, rarity, card type, strict per-finish USD prices and values,
   and a row value while remaining compatible with collection re-imports.
 
-### Fixed
--
-
-### Security
+### Security - 26/08/2026 (2)
 - Updated composer dependencies for security vulnerabilities
 
-### Infrastructure
+### Infrastructure - 26/08/2026 (2)
 - The container backup helper now detects whether the running database container is managed by Docker or Podman,
   with explicit environment overrides for ambiguous or non-default setups.
 
