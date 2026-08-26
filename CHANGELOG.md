@@ -22,7 +22,8 @@ All notable changes to this project will be documented in this file.
 - Updated composer dependencies for security vulnerabilities
 
 ### Infrastructure
--
+- The container backup helper now detects whether the running database container is managed by Docker or Podman,
+  with explicit environment overrides for ambiguous or non-default setups.
 
 ## [v0.6.6] - 26/08/2026
 

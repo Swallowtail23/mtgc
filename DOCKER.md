@@ -293,21 +293,25 @@ Recommended artifacts:
 - Host directories under `${BASE_DIR}` (`cardimg`, `config`, `logs`).
 
 Use `docker/backup.sh`, executed on the host, as a starting point.
-It reads `docker/.env`, dumps the database via
-`podman exec mtgc_db_1 mysqldump`, and archives `${BASE_DIR}/config`
-and `${BASE_DIR}/logs` into `./backups/<gitref>_<timestamp>/` (it uses
-`git describe --tags` to label the snapshot). Customize the script to include
-`cardimg` if you want full image backups (large). Example run:
+It reads `docker/.env`, detects whether the running `mtgc_db_1` container is
+managed by Docker or Podman, dumps the database through that engine, and
+archives `${BASE_DIR}/config`, `${BASE_DIR}/secrets`, and `${BASE_DIR}/logs` into
+`./backups/<gitref>_<timestamp>/` (it uses `git describe --tags` to label the
+snapshot). Customize the script to include `cardimg` if you want full image
+backups (large). Example run:
 
 ```bash
 cd docker
 ./backup.sh
 ```
 
-For Docker Engine replace `podman exec mtgc_db_1` with `docker exec mtgc_db_1`
-inside the script. Automate backups via cron/systemd timers as needed. When
-restoring, recreate the volumes, copy `${BASE_DIR}` folders back, then import
-`mtgc.sql.gz` into MySQL.
+No script changes are required when moving between Docker and Podman. If the
+same container name is running under both engines, select one explicitly with
+`CONTAINER_ENGINE=docker ./backup.sh` or
+`CONTAINER_ENGINE=podman ./backup.sh`. Set `DB_CONTAINER=<name>` if the database
+container has a non-default name. Automate backups via cron/systemd timers as
+needed. When restoring, recreate the volumes, copy `${BASE_DIR}` folders back,
+then import `mtgc.sql.gz` into MySQL.
 
 ## Scheduled jobs
 
