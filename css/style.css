@@ -1,6 +1,6 @@
 /*
-Version:     2.33
-Date:        26/02/26
+Version:     2.34
+Date:        26/08/26
 Name:        style.css
 Purpose:     Provides global styling for the MTG Collection app.
 Notes:       Unminify in the site admin control panel before editing.
@@ -3720,6 +3720,77 @@ input:checked + .slider:before {
 .setcell
 {
     padding-right: 10px;
+}
+
+.set-image-reload-control
+{
+    display: inline-flex;
+    justify-content: center;
+    position: relative;
+}
+
+.set-image-reload-trigger
+{
+    align-items: center;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: #3f51b5;
+    cursor: pointer;
+    display: inline-flex;
+    height: 32px;
+    justify-content: center;
+    padding: 2px;
+    width: 32px;
+}
+
+.set-image-reload-trigger:hover,
+.set-image-reload-trigger:focus-visible
+{
+    color: #8c9eff;
+    outline: 2px solid currentColor;
+    outline-offset: 1px;
+}
+
+.set-image-reload-menu
+{
+    background: #ffffff;
+    border: 1px solid #c5cae9;
+    box-shadow: 1px 2px 5px rgba(0, 0, 0, 0.35);
+    min-width: 190px;
+    padding: 4px 0;
+    position: absolute;
+    right: 0;
+    text-align: left;
+    top: 100%;
+    z-index: 5001;
+}
+
+.set-image-reload-menu[hidden]
+{
+    display: none;
+}
+
+.set-image-reload-option
+{
+    appearance: none;
+    background: #ffffff;
+    border: 0;
+    color: rgba(0, 0, 0, 0.87);
+    cursor: pointer;
+    display: block;
+    font-family: "Roboto", sans-serif;
+    font-size: 14px;
+    padding: 8px 12px;
+    text-align: left;
+    width: 100%;
+}
+
+.set-image-reload-option:hover,
+.set-image-reload-option:focus-visible
+{
+    background: #e8eaf6;
+    outline: none;
 }
 
 #setlist

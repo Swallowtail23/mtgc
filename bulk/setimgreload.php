@@ -1,10 +1,10 @@
 <?php
 
 /*
-Version:     1.27
-Date:        28/04/26
+Version:     1.28
+Date:        26/08/26
 Name:        setimgreload.php
-Purpose:     Trigger reload all images for a set
+Purpose:     Reload images for a set within an explicit language scope
 Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
@@ -13,6 +13,7 @@ To do:       -
 
 
 use MTG\Cards\ImageManager;
+use MTG\Cards\SetImageReloadScope;
 use MTG\Core\MyPHPMailer;
 
 // Bootstrap
@@ -29,18 +30,31 @@ $emailEnabled       = (bool) $appConfig->email('enabled', false);
 // Content
 $obj  = new ImageManager($db, $appConfig, $gameRules);
 
-if (isset($argv[1])) :
+if (isset($argv[1], $argv[2])) :
     $setcode = $argv[1];
-    $msg->logMessage('[NOTICE]', "Called with set $setcode");
+    $scope = $argv[2];
+    if (!preg_match('/^[A-Za-z0-9_]+$/', $setcode)) :
+        $msg->logMessage('[ERROR]', "Invalid setcode supplied: '$setcode'");
+        exit(1);
+    endif;
+    if (!SetImageReloadScope::isValid($scope)) :
+        $msg->logMessage('[ERROR]', "Invalid set image reload scope supplied: '$scope'");
+        exit(1);
+    endif;
+    $scopeLabel = SetImageReloadScope::label($scope);
+    $msg->logMessage('[NOTICE]', "Called with set $setcode and scope $scope");
 
-    $query = "SELECT id FROM cards_scry WHERE setcode = ?";
+    $query = SetImageReloadScope::cardIdQuery($scope);
     $stmt = $db->prepare($query);
 
     if ($stmt) :
         $stmt->bind_param("s", $setcode);
         $stmt->execute();
         $stmt->store_result();
-        $msg->logMessage('[ERROR]', "Number of images to be refreshed in $setcode: " . $stmt->num_rows);
+        $msg->logMessage(
+            '[ERROR]',
+            "Number of $scopeLabel images to be refreshed in $setcode: " . $stmt->num_rows
+        );
         $cardId = '';
         $stmt->bind_result($cardId);
         $iteration = 1;
@@ -71,13 +85,14 @@ if (isset($argv[1])) :
         $completediterations = $iteration - 1;
         $msg->logMessage(
             '[DEBUG]',
-            "Processed $completediterations of $num_rows images for $setcode. Success: $success_count; "
+            "Processed $completediterations of $num_rows $scopeLabel images for $setcode. Success: $success_count; "
             . "Failed: $fail_count"
         );
 
         // Email result
-        $subject = "MTG Images reloaded for $setcode";
-        $body = "Processed $completediterations of $num_rows images for $setcode. Success: $success_count; "
+        $subject = "MTG $scopeLabel images reloaded for $setcode";
+        $body = "Processed $completediterations of $num_rows $scopeLabel images for $setcode. "
+            . "Success: $success_count; "
             . "Failed: $fail_count";
         if (isset($emailEnabled) && $emailEnabled === true) :
             $mail = new MyPHPMailer(true, $appConfig);
@@ -92,9 +107,9 @@ if (isset($argv[1])) :
         $msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");
     else :
         echo json_encode(["status" => "error", "message" => "SQL error"]);
-        throw new Exception('[ERROR] ajaxsetimg.php: Error: ' . $db->error);
+        throw new Exception('[ERROR] setimgreload.php: Error: ' . $db->error);
     endif;
 else :
-    $msg->logMessage('[ERROR]', "Not called with setcode");
-    exit;
+    $msg->logMessage('[ERROR]', "Not called with setcode and scope");
+    exit(1);
 endif;

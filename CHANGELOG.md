@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Documented the Composer dependency maintenance and deployment process for
   root-owned bare-metal installations and persistent container vendor volumes.
+- Admin set-image reloads now require an explicit choice between primary-language images and all-language images;
+  all-language reloads also require confirmation.
 
 ### Fixed
 -

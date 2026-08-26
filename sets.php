@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.37
-Date:        02/02/26
+Version:     4.38
+Date:        26/08/26
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
 Notes:       This page is the only one NOT mobile responsive design. Access via profile link hidden on mobile.
@@ -79,13 +79,134 @@ endif;
     <script>
         const csrfToken = <?php echo json_encode(SessionManager::generateCsrfToken()); ?>;
 
-        function reloadImages(setcode) {
+        function createReloadImagesControl(setcode) {
+            var control = document.createElement('div');
+            control.className = 'set-image-reload-control';
+            control.dataset.setcode = setcode;
+
+            var trigger = document.createElement('button');
+            trigger.type = 'button';
+            trigger.className = 'set-image-reload-trigger';
+            trigger.setAttribute('aria-haspopup', 'menu');
+            trigger.setAttribute('aria-expanded', 'false');
+            trigger.setAttribute('aria-label', 'Choose image reload scope for ' + setcode.toUpperCase());
+            trigger.title = 'Reload set images';
+
+            var icon = document.createElement('span');
+            icon.className = 'material-symbols-outlined';
+            icon.setAttribute('aria-hidden', 'true');
+            icon.textContent = 'frame_reload';
+            trigger.appendChild(icon);
+
+            var menu = document.createElement('div');
+            menu.className = 'set-image-reload-menu';
+            menu.setAttribute('role', 'menu');
+            menu.setAttribute('aria-label', 'Image reload scope');
+            menu.hidden = true;
+
+            [
+                { scope: 'primary', label: 'Primary language only' },
+                { scope: 'all', label: 'All languages...' }
+            ].forEach(function(option) {
+                var menuItem = document.createElement('button');
+                menuItem.type = 'button';
+                menuItem.className = 'set-image-reload-option';
+                menuItem.dataset.scope = option.scope;
+                menuItem.setAttribute('role', 'menuitem');
+                menuItem.textContent = option.label;
+                menu.appendChild(menuItem);
+            });
+
+            control.appendChild(trigger);
+            control.appendChild(menu);
+            return control;
+        }
+
+        function populateReloadImagesCell(cell, setcode) {
+            cell.textContent = '';
+            cell.appendChild(createReloadImagesControl(setcode));
+        }
+
+        function closeReloadImageMenus() {
+            document.querySelectorAll('.set-image-reload-menu').forEach(function(menu) {
+                menu.hidden = true;
+                menu.parentElement.querySelector('.set-image-reload-trigger')
+                    .setAttribute('aria-expanded', 'false');
+            });
+        }
+
+        document.addEventListener('click', function(event) {
+            var trigger = event.target.closest('.set-image-reload-trigger');
+            if (trigger) {
+                event.preventDefault();
+                var menu = trigger.parentElement.querySelector('.set-image-reload-menu');
+                var shouldOpen = menu.hidden;
+                closeReloadImageMenus();
+                if (shouldOpen) {
+                    menu.hidden = false;
+                    trigger.setAttribute('aria-expanded', 'true');
+                    menu.querySelector('.set-image-reload-option').focus();
+                }
+                return;
+            }
+
+            var option = event.target.closest('.set-image-reload-option');
+            if (option) {
+                event.preventDefault();
+                var control = option.closest('.set-image-reload-control');
+                var setcode = control.dataset.setcode;
+                var scope = option.dataset.scope;
+                var controlTrigger = control.querySelector('.set-image-reload-trigger');
+                closeReloadImageMenus();
+                controlTrigger.focus();
+
+                if (
+                    scope === 'all'
+                    && !window.confirm(
+                        'Reload images for all languages in set ' + setcode.toUpperCase()
+                        + '? This can start a large background job.'
+                    )
+                ) {
+                    return;
+                }
+
+                reloadImages(setcode, scope);
+                return;
+            }
+
+            closeReloadImageMenus();
+        });
+
+        document.addEventListener('keydown', function(event) {
+            var menuItem = event.target.closest('.set-image-reload-option');
+            if (menuItem && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+                event.preventDefault();
+                var menuItems = Array.from(menuItem.parentElement.querySelectorAll('.set-image-reload-option'));
+                var direction = event.key === 'ArrowDown' ? 1 : -1;
+                var nextIndex = (menuItems.indexOf(menuItem) + direction + menuItems.length) % menuItems.length;
+                menuItems[nextIndex].focus();
+                return;
+            }
+
+            if (event.key !== 'Escape') {
+                return;
+            }
+
+            var openMenu = document.querySelector('.set-image-reload-menu:not([hidden])');
+            if (openMenu) {
+                var openTrigger = openMenu.parentElement.querySelector('.set-image-reload-trigger');
+                closeReloadImageMenus();
+                openTrigger.focus();
+            }
+        });
+
+        function reloadImages(setcode, scope) {
             document.body.style.cursor = "wait";
             $.ajax({
                 type: 'POST',
                 url: 'ajax/ajaxsetimg.php',
                 dataType: 'json',
-                data: { setcode: setcode, csrf_token: csrfToken },
+                data: { setcode: setcode, scope: scope, csrf_token: csrfToken },
                 success: function(response) {
                     var result = response;
                     if (typeof response === 'string') {
@@ -393,19 +514,7 @@ endif;
                 if (isAdmin) {
                     var reloadCell = row.insertCell(7);
                     reloadCell.style.textAlign = 'center';
-
-                    var link = document.createElement('a');
-                    link.href = 'javascript:void(0);';
-                    link.onclick = function() {
-                        reloadImages(set.setcode);
-                    };
-
-                    var iconSpan = document.createElement('span');
-                    iconSpan.className = 'material-symbols-outlined';
-                    iconSpan.textContent = 'frame_reload';
-
-                    link.appendChild(iconSpan);
-                    reloadCell.appendChild(link);
+                    populateReloadImagesCell(reloadCell, set.setcode);
                 }
             });
         }
@@ -427,6 +536,9 @@ endif;
             } else {
                 updateHistoryState(currentPage, currentFilter, true);
             }
+            document.querySelectorAll('[data-set-image-reload]').forEach(function(cell) {
+                populateReloadImagesCell(cell, cell.dataset.setImageReload);
+            });
             window.addEventListener('popstate', function(e) {
                 var state = e.state || getStateFromUrl();
                 var pageNumber = state.page || 1;
@@ -562,6 +674,7 @@ require APP_ROOT . '/includes/menu.php';
                     else :
                         $setcodeupper = '';
                     endif;
+                    $setcodeEsc = htmlspecialchars((string) ($row['setcode'] ?? ''), ENT_QUOTES, 'UTF-8');
                     if (isset($row['set_name']) && $row['set_name'] !== null) :
                         $setname = $row['set_name'];
                     else :
@@ -626,11 +739,11 @@ require APP_ROOT . '/includes/menu.php';
                             <?php echo number_format($cardcount); ?>
                         </td>
                         <?php if ($admin == 1) : ?>
-                        <td class='setcell' style='text-align: center;'>
-                            <?php echo '<a href="javascript:void(0);" onclick="reloadImages(\''
-                                . $row['setcode'] . '\')"><span class="material-symbols-outlined">'
-                                . 'frame_reload</span></a>'; ?>
-                        </td>
+                        <td
+                            class='setcell'
+                            style='text-align: center;'
+                            data-set-image-reload='<?php echo $setcodeEsc; ?>'
+                        ></td>
                         <?php endif; ?>
                     </tr>
                     <?php

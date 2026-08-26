@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        06/05/26
+Version:     1.1
+Date:        26/08/26
 Name:        AjaxSetImageSecurityTest.php
 Purpose:     Tests set image reload AJAX authorization.
 Notes:       -
@@ -43,10 +43,27 @@ class AjaxSetImageSecurityTest extends TestCase
     public function testSetcodeValidationStillRunsBeforeCommandBuild(): void
     {
         $validationPosition = strpos($this->source, "preg_match('/^[A-Za-z0-9_]+$/'");
-        $commandPosition = strpos($this->source, '$cmd = "php $safeRoot $safeSetcode > /dev/null 2>&1 &";');
+        $commandPosition = strpos(
+            $this->source,
+            '$cmd = "php $safeRoot $safeSetcode $safeScope > /dev/null 2>&1 &";'
+        );
 
         $this->assertNotFalse($validationPosition);
         $this->assertNotFalse($commandPosition);
         $this->assertLessThan($commandPosition, $validationPosition);
+    }
+
+    public function testScopeValidationRunsBeforeCommandBuild(): void
+    {
+        $validationPosition = strpos($this->source, 'SetImageReloadScope::isValid($scope)');
+        $commandPosition = strpos(
+            $this->source,
+            '$cmd = "php $safeRoot $safeSetcode $safeScope > /dev/null 2>&1 &";'
+        );
+
+        $this->assertNotFalse($validationPosition);
+        $this->assertNotFalse($commandPosition);
+        $this->assertLessThan($commandPosition, $validationPosition);
+        $this->assertStringContainsString('"Invalid image reload scope supplied"', $this->source);
     }
 }
