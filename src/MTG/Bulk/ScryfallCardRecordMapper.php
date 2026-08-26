@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        08/07/26
+Version:     1.1
+Date:        26/08/26
 Name:        ScryfallCardRecordMapper.php
 Purpose:     Normalises a Scryfall card record into cards_scry import fields.
 Notes:       -
@@ -35,7 +35,7 @@ class ScryfallCardRecordMapper
         $fields['uri'] = $value["uri"] ?? null;
         $fields['scryfall_uri'] = $value["scryfall_uri"] ?? null;
         $fields['layout'] = $value["layout"] ?? null;
-        $fields['image_uri'] = $value["image_uris"]["normal"] ?? null;
+        $fields['image_uri'] = self::preferredImageUri($value["image_uris"] ?? null);
         $fields['illustration_id'] = $value["illustration_id"] ?? null;
         $fields['mana_cost'] = $value["mana_cost"] ?? null;
         $fields['cmc'] = $value["cmc"] ?? null;
@@ -270,8 +270,9 @@ class ScryfallCardRecordMapper
             if (isset($face["flavor_text"])) :
                 $fields["flavor_{$faceLoop}"] = $face["flavor_text"];
             endif;
-            if (isset($face["image_uris"]["normal"])) :
-                $fields["image_{$faceLoop}"] = $face["image_uris"]["normal"];
+            $faceImageUri = self::preferredImageUri($face["image_uris"] ?? null);
+            if ($faceImageUri !== null) :
+                $fields["image_{$faceLoop}"] = $faceImageUri;
             endif;
             if (isset($face["illustration_id"])) :
                 $fields["illustration_id_{$faceLoop}"] = $face["illustration_id"];
@@ -641,6 +642,21 @@ class ScryfallCardRecordMapper
             $fields['maxloyalty'],
             $fields['minloyalty'],
         ];
+    }
+
+    private static function preferredImageUri(mixed $imageUris): ?string
+    {
+        if (!is_array($imageUris)) :
+            return null;
+        endif;
+
+        foreach (['grid', 'normal'] as $key) :
+            if (isset($imageUris[$key]) && is_string($imageUris[$key]) && $imageUris[$key] !== '') :
+                return $imageUris[$key];
+            endif;
+        endforeach;
+
+        return null;
     }
 
     private static function nonEmpty(mixed $value): mixed

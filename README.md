@@ -10,6 +10,7 @@
 - [Install Options](#install-options)
 - [Dependencies](#dependencies)
 - [Configuration & Admin Settings](#configuration--admin-settings)
+- [Scryfall Image Cache](#scryfall-image-cache)
 - [Deck Detail Fragments](#deck-detail-fragments)
 - [Work In Progress](#work-in-progress)
 - [Third-Party Licenses](#third-party-licenses)
@@ -43,7 +44,7 @@ disk usage ranges from 10 GB TO 100 GB depending on downloaded images.
 
 - Web server (e.g. Apache) with CLI access and ability to configure PHP/MySQL.
 - PHP 8.2 (minimum supported) to 8.4 with extensions: `mysqli`, `gd` (with JPEG
-  support), `exif`, `mbstring`, `intl`, `curl`.
+  and WebP support), `exif`, `mbstring`, `intl`, `curl`.
 - PHP settings: `upload_max_filesize`/`post_max_size` ≥ 25 M; secure session
   cookie settings (HTTPOnly, Secure, SameSite=Strict).
 - MySQL 8+ (InnoDB tables, proper indexing for performance).
@@ -100,6 +101,21 @@ disk usage ranges from 10 GB TO 100 GB depending on downloaded images.
   when Admin UI configuration editing is enabled; keep the file private to that
   account (`0600`) and keep its parent directory private (`0750`/`0700`). See
   INSTALL.md for the supported permission modes.
+
+## Scryfall Image Cache
+
+Scryfall card images use the API's WebP `grid` image when available, with the
+JPEG `normal` image retained as an import fallback. Local lookup prefers
+`<card-id>.webp` and then the legacy `<card-id>.jpg`, so existing caches remain
+usable without a bulk migration.
+
+Phase-one downloads occur for missing images encountered through the UI, newly
+inserted default-card records, and explicit refreshes from Card Detail or Sets.
+Normal page and deck checks never convert or replace an existing JPEG. See
+[Scryfall image handling](docs/scryfall_images.md) for the cache and rollout
+contract. Existing native installations should follow the
+[bare-metal WebP upgrade checklist](INSTALL.md#existing-bare-metal-webp-upgrade)
+on each host before enabling the new image paths.
 
 ## Work In Progress
 

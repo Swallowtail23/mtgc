@@ -28,7 +28,7 @@ The script is a thin wrapper around `MTG\Bulk\ScryfallBulkCommand`.
 
 | Command | Effect |
 | --- | --- |
-| no argument / `default` | Imports Scryfall Default Cards; establishes primary-language card data and may download images. |
+| no argument / `default` | Imports Scryfall Default Cards; establishes primary-language data and downloads WebP images only for newly inserted rows. |
 | `all` | Imports All Cards without bulk image download. |
 | `refresh` | Downloads and imports All Cards, then Default Cards, without file-age reuse. |
 | `test` | Recreates `cards_scry_test` and imports the two test fixtures. |
@@ -43,6 +43,14 @@ Card record flow is:
 
 The runner writes `cards_scry`, detects content/price changes using hashes, and calls `ScryfallSyncStateUpdater` for
 new cards and content changes. `ScryfallSchemaGuard` verifies required card columns before writing.
+
+Card and face image mapping selects Scryfall `grid` WebP URLs, falling back to
+legacy `normal` JPEG URLs when `grid` is absent. Existing cache files are
+resolved WebP first and JPEG second. Bulk image download remains limited to new
+rows in a `default` import. UI cache misses download WebP on demand, while
+ordinary checks leave existing JPEGs in place. Explicit Card Detail and Sets
+refreshes are the phase-one migration paths. See
+[`docs/scryfall_images.md`](../docs/scryfall_images.md).
 
 ### Rulings: `bulk/scryfall_rulings.php`
 

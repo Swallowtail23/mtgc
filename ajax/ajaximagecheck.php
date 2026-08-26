@@ -1,11 +1,11 @@
 <?php
 
 /*
-Version:     1.25
-Date:        10/03/26
+Version:     1.26
+Date:        26/08/26
 Name:        ajaximagecheck.php
-Purpose:     Check and refresh card images asynchronously.
-Notes:       Lightweight head/refresh; relies on ImageManager.
+Purpose:     Resolve card images asynchronously and populate missing cache entries.
+Notes:       Existing WebP and JPEG cache entries are never replaced by this endpoint.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
@@ -58,11 +58,11 @@ if ($cardUUID === false) :
     AjaxResponse::json(['error' => 'Invalid UUID provided'], 400);
 endif;
 
-$msg->logMessage('[DEBUG]', "Async image check for $cardUUID");
+$msg->logMessage('[DEBUG]', "Async missing-image cache resolution for $cardUUID");
 
 if (session_status() === PHP_SESSION_ACTIVE) :
     session_write_close();
-    $msg->logMessage('[DEBUG]', 'ajaximagecheck.php: Session closed before image refresh');
+    $msg->logMessage('[DEBUG]', 'ajaximagecheck.php: Session closed before image resolution');
 endif;
 
 try {
@@ -70,14 +70,14 @@ try {
     $result = $obj->checkAndRefreshImage($cardUUID);
     $msg->logMessage(
         '[DEBUG]',
-        "Async image refresh: $cardUUID front_changed="
+        "Async image resolution: $cardUUID front_changed="
             . ($result['front_changed'] ? 'yes' : 'no')
             . " back_changed="
             . ($result['back_changed'] ? 'yes' : 'no')
     );
     $msg->logMessage(
         '[DEBUG]',
-        "Async image refresh paths for $cardUUID: front={$result['front']} back={$result['back']}"
+        "Async image resolution paths for $cardUUID: front={$result['front']} back={$result['back']}"
     );
 
     AjaxResponse::json([

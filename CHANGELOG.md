@@ -8,7 +8,9 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Changed
--
+- Scryfall card and face images now prefer WebP `grid` sources with `normal`
+  JPEG fallback. Existing JPEG caches remain readable, while missing images,
+  new cards, and explicitly refreshed cards or sets are stored as WebP.
 
 ### Fixed
 -
@@ -17,7 +19,8 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Infrastructure
--
+- Apache, service-worker caching, and the container GD build now support WebP
+  card images alongside legacy JPEG cache files.
 
 ## [v0.6.7] - 26/08/2026
 

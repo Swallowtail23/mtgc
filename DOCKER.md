@@ -173,7 +173,7 @@ for you; there is no longer a root-level `.env`.
 The host paths defined during bootstrap contain persistent data:
 
 - `${BASE_DIR}/cardimg` – bulk Scryfall data cache (`json/`, including JSONL
-  bulk downloads) and card images (can be tens of GBs).
+  bulk downloads) and WebP/legacy JPEG card images (can be tens of GBs).
 - `${BASE_DIR}/config` – holds `mtg_new.ini`, `php_custom.ini`, the cron
   template `cron_mtgc`, and the `data_updates.sh` helper under
   `config/scripts`. This is copied from `setup/data_updates.sh` on the first
@@ -227,9 +227,11 @@ performs an `all` bulk pass that writes every card record while skipping image
 downloads, followed by a `default` bulk pass that marks the primary language. A
 `default` run only downloads an image when a new row is inserted; because the
 `all` pass already populated all cards, the first-load `default` pass does not
-pull every image. Cards later viewed via the UI or added in future bulk runs
-download on demand, so storage grows gradually rather than all at once. Full
-image sets can be downloaded per set from the Sets page.
+pull every image. New downloads use Scryfall's WebP `grid` image where available.
+Missing images encountered through the UI are downloaded on demand. Existing
+`.jpg` files remain readable and are not converted by normal page or deck image
+checks. Explicit Card Detail refreshes and set downloads from the Sets page
+replace affected images with WebP.
 
 The bulk `default` run is designed to be a nightly card data maintenance task -
 getting new cards with their images and any data changes released by Scryfall.
@@ -240,6 +242,10 @@ each language present in `cards_scry`.
 
 Bare-metal installs should follow the same command order (see `INSTALL.md`) to avoid
 pulling the full image set unnecessarily.
+
+The web image includes GD support for both JPEG and WebP. Existing container
+installations must rebuild the web image after deploying this change; normal
+`docker-init`/`podman-compose build` upgrade workflows do this automatically.
 
 DO NOT abuse the Scryfall service. See <https://scryfall.com/docs/api> for rules.
 
