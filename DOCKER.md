@@ -219,6 +219,9 @@ When `docker/docker-init.sh` runs on a fresh database it executes:
 
 1. `/opt/mtg/scripts/data_updates.sh new`
 
+The wrapper automatically uses the image's `APACHE_DOCUMENT_ROOT` as the application root when it runs from the
+separately mounted scripts directory, so the initial import requires no path configuration.
+
 The `new` run deliberately avoids downloading the full card image catalogue. It
 performs an `all` bulk pass that writes every card record while skipping image
 downloads, followed by a `default` bulk pass that marks the primary language. A
@@ -328,10 +331,10 @@ The template shipped at `docker/cron_mtgc.example` is copied to
 `${BASE_DIR}/config/cron_mtgc` by the init script; customise it there if you
 want to adjust schedules or log locations. Cron entries use
 `SCRIPT_ROOT=/opt/mtg/scripts` (the entrypoint creates that symlink) and
-`LOG_ROOT=/var/log/mtg` (the mounted logs directory). After editing the file,
-restart the web container (`podman-compose restart web` or `docker compose
-restart web`) so the crontab reloads. Ensure the log files referenced in the
-cron entries exist and are rotated (see “Log rotation”).
+`MTG_APP_ROOT=/var/www/mtgnew` (the application path provided by the image), as well as
+`LOG_ROOT=/var/log/mtg` (the mounted logs directory). These defaults work without modification. After editing the
+file, restart the web container (`podman-compose restart web` or `docker compose restart web`) so the crontab reloads.
+Ensure the log files referenced in the cron entries exist and are rotated (see “Log rotation”).
 
 ## Using Podman
 

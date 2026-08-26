@@ -17,7 +17,10 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Infrastructure
--
+
+- The data-update wrapper now resolves in-tree application paths automatically and supports an explicit
+  `MTG_APP_ROOT` when installed separately, instead of embedding a deployment-specific path. Container installs use
+  the image's document root automatically and ship cron configuration that works without path changes.
 
 ## [v0.6.5] - 26/08/2026
 

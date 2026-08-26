@@ -70,7 +70,8 @@ Adjust paths/commands for your platform.
   ```
 
 - Edit `/opt/mtg/mtg_new.ini` per your environment (see README for key settings).
-- Copy `setup/data_updates.sh` into `/opt/mtg/scripts/` and make it executable.
+- Copy `setup/data_updates.sh` into `/opt/mtg/scripts/`, make it executable, and set `MTG_APP_ROOT` to the application
+  directory when invoking it from that separate location.
 - Ensure the log file path specified in the ini exists and is writable (e.g.
   `/var/log/mtg/mtgapp.log`).
 - Ensure `ImgLocation` specified in the ini exists, is writable, and contains a
@@ -114,7 +115,7 @@ it (root crontab):
 - Run the data update wrapper to populate Scryfall-managed data.
 
   ```bash
-  /opt/mtg/scripts/data_updates.sh new
+  MTG_APP_ROOT=/path/to/mtgnew /opt/mtg/scripts/data_updates.sh new
   ```
   The `new` run performs the supported first-load sequence: sets, all-cards
   bulk import, default-cards bulk import, rulings, migrations, manifest
@@ -179,13 +180,14 @@ Install the cron file (adjusting the user, script path, and log locations):
 ```bash
 sudo cp setup/cron_mtgc.crond /opt/mtg/cron_mtgc
 sudo sed -i 's|/opt/mtg|/your/script/path|' /opt/mtg/cron_mtgc
+sudo sed -i 's|/var/www/mtgnew|/your/application/path|' /opt/mtg/cron_mtgc
 sudo sed -i 's|/var/log/mtg|/your/log/path|' /opt/mtg/cron_mtgc
 sudo mv /opt/mtg/cron_mtgc /etc/cron.d/mtgc
 sudo systemctl reload crond    # or the cron service on your distro
 ```
 
-Ensure the cron user can execute PHP, access `/var/www/mtgnew`, and write to the
-log directory referenced in the cron file.
+Ensure the cron user can execute PHP, access the configured `MTG_APP_ROOT`, and write to the log directory referenced
+in the cron file.
 
 ## Final checks
 

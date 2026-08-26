@@ -3,12 +3,28 @@ set -euo pipefail
 
 mode="${1:-nightly}"
 confirm="${2:-}"
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+app_root_source="${MTG_APP_ROOT:-${APACHE_DOCUMENT_ROOT:-${script_dir}/..}}"
+
+if [[ ! -d "${app_root_source}" ]]; then
+    echo "Application root does not exist: ${app_root_source}" >&2
+    echo "Set MTG_APP_ROOT when data_updates.sh is installed outside the application tree." >&2
+    exit 2
+fi
+
+app_root="$(cd -- "${app_root_source}" && pwd)"
+if [[ ! -d "${app_root}/bulk" || ! -f "${app_root}/bootstrap.php" ]]; then
+    echo "Application root is invalid: ${app_root}" >&2
+    echo "Set MTG_APP_ROOT when data_updates.sh is installed outside the application tree." >&2
+    exit 2
+fi
+
+cd "${app_root}"
 
 run_bulk_php() {
     local script="$1"
     shift || true
     echo "[$(date -Is)] running php ./bulk/${script} $*"
-    cd /var/www/mtgnew
     php "./bulk/${script}" "$@"
 }
 

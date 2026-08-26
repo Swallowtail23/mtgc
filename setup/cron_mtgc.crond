@@ -3,6 +3,7 @@
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 SCRIPT_ROOT=/opt/mtg/scripts
+MTG_APP_ROOT=/var/www/mtgnew
 LOG_ROOT=/var/log/mtg
 
 5 0 * * * root /usr/sbin/logrotate /etc/logrotate.d/mtgc
