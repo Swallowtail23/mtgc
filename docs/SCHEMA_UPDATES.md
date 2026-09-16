@@ -104,7 +104,7 @@ When adding a new schema change:
 -- ============================================================
 --
 -- Prerequisites:
---   - MySQL 8+ server.
+--   - MySQL 8.0.16+ server (enforced CHECK constraints require 8.0.16+).
 --   - Current schema version must be NNN-1.
 --   - Database user must have CREATE, ALTER, and/or INSERT privileges as needed.
 --
@@ -176,9 +176,9 @@ MySQL DDL auto-commits. If a migration fails mid-execution:
 
 1. Check the current schema version: `SELECT schema_version FROM schema_metadata LIMIT 1;`
 2. Check for partially created objects: `SHOW TABLES LIKE '%<partial_name>%';`
-3. Clean up any partial objects manually.
-4. Manually bump `schema_version` to the last successfully applied version.
-5. Re-run the migration — it will skip already-applied versions.
+3. Verify the complete schema state — ensure all expected tables, columns, and constraints are present.
+4. Only manually bump `schema_version` if you have verified the complete schema state and are confident the database is consistent.
+5. Re-run the maintenance script — it will skip already-applied versions.
 
 To avoid partial failures, keep migration files focused on a single logical change.
 
@@ -186,7 +186,7 @@ To avoid partial failures, keep migration files focused on a single logical chan
 
 - Migration files contain SQL that runs with full database privileges. Only apply migrations from trusted sources.
 - The maintenance script reads database credentials from the INI file. The INI file should be stored outside the web root with restrictive filesystem permissions.
-- The maintenance script is CLI-only. A `.htaccess` file in the `tools/` directory denies HTTP access.
+- The maintenance script is CLI-only. HTTP access to the `tools/` directory is denied via Apache configuration (`<Directory "/var/www/mtgnew/tools"> Require all denied` in the container config, `Order deny,allow / Deny from all` in the bare-metal config), and a fallback `.htaccess` file in the `tools/` directory also denies access.
 - No raw keys, credentials, or sensitive data are logged by the maintenance script.
 - The runner acquires a MySQL advisory lock to prevent concurrent execution.
 - The runner uses MySQL 8.0.16+ enforced CHECK constraints for the `schema_metadata` singleton.
@@ -198,4 +198,4 @@ To avoid partial failures, keep migration files focused on a single logical chan
 | `schema_vNNN.sql` | Versioned migration file (applied sequentially) |
 | `schema_vNNN_<name>.sql` | Versioned migration with a descriptive name (optional suffix) |
 
-The maintenance script uses `glob('setup/schema_v*.sql')` to discover migrations and sorts them by filename to ensure correct application order. It supports both naming patterns and will warn on duplicate version numbers (keeping the last file found).
+The maintenance script uses `glob('setup/schema_v*.sql')` to discover migrations and sorts them by filename to ensure correct application order. Both naming patterns are supported. Duplicate version numbers are rejected with a fatal error — the runner will not proceed if two files claim the same version. Malformed filenames (e.g., `schema_v000.sql`, `schema_v01.sql`) are also rejected.

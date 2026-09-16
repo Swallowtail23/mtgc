@@ -1,15 +1,16 @@
 <?php
 
 /*
-Version:     2.0
+Version:     2.1
 Date:        16/09/26
 Name:        maintenance.php
 Purpose:     CLI entry point to apply schema update migrations.
 Notes:       Thin wrapper around MTG\Bulk\MigrationRunner.
-              - Reads DB credentials from the INI file.
-              - Delegates all logic to MigrationRunner service.
-              - CLI-only guard; should not be web-accessible.
-              - Add /tools access denial to Apache config.
+               - Reads DB credentials from the INI file.
+               - Delegates all logic to MigrationRunner service.
+               - CLI-only guard; should not be web-accessible.
+               - Add /tools access denial to Apache config.
+               - Connection and setup wrapped in same try/catch as runner.
 Author:      Simon Wilson
 Copyright:   2026 MTG Collection
 To do:       -
@@ -17,9 +18,7 @@ To do:       -
 
 // CLI-only guard — must be first executable code.
 if (PHP_SAPI !== 'cli') {
-    if (function_exists('fwrite') && function_exists('STDERR')) {
-        fwrite(STDERR, "This script must be run from the command line.\n");
-    }
+    fwrite(STDERR, "This script must be run from the command line.\n");
     exit(1);
 }
 
@@ -54,24 +53,21 @@ if ($dbHost === '' || $dbUser === '' || $dbName === '') {
     exit(1);
 }
 
-// Build AppConfig from INI data.
-$appConfig = \MTG\Core\AppConfig::fromIni($iniData);
-
-// Connect to MySQL.
-$db = new \mysqli($dbHost, $dbUser, $dbPass, $dbName);
-if ($db->connect_error) {
-    fwrite(STDERR, "Error: Failed to connect to MySQL: " . $db->connect_error . "\n");
-    exit(1);
-}
-$db->set_charset('utf8mb4');
-
-// Determine the setup directory (repository root's setup/ subdirectory).
+// Build AppConfig and connect to MySQL — wrapped in try/catch so connection
+// or charset exceptions are handled the same way as runner exceptions.
 $setupDir = dirname(__DIR__) . '/setup';
-
-// Delegate to the MigrationRunner service.
-$runner = new \MTG\Bulk\MigrationRunner($db, $appConfig, $setupDir);
+$db = null;
+$runner = null;
 
 try {
+    $appConfig = \MTG\Core\AppConfig::fromIni($iniData);
+    $db = new \mysqli($dbHost, $dbUser, $dbPass, $dbName);
+    if ($db->connect_error) {
+        throw new \RuntimeException('Failed to connect to MySQL: ' . $db->connect_error);
+    }
+    $db->set_charset('utf8mb4');
+    $runner = new \MTG\Bulk\MigrationRunner($db, $appConfig, $setupDir);
+
     $applied = $runner->run();
     if (empty($applied)) {
         echo "Database is already at the latest schema version. No migrations needed.\n";
@@ -79,14 +75,11 @@ try {
         echo "\nMigrations complete.\n";
         echo "Applied: " . implode(', ', $applied) . "\n";
     }
-    $db->close();
     exit(0);
-} catch (\Exception $e) {
-    fwrite(STDERR, "Error: " . $e->getMessage() . "\n");
-    $db->close();
-    exit(1);
 } catch (\Throwable $e) {
     fwrite(STDERR, "Error: " . $e->getMessage() . "\n");
-    $db->close();
+    if ($db !== null) {
+        $db->close();
+    }
     exit(1);
 }

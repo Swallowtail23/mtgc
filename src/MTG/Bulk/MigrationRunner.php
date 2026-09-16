@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.0
+Version:     1.2
 Date:        16/09/26
 Name:        MigrationRunner.php
 Purpose:     Testable schema migration runner service.
@@ -30,6 +30,11 @@ class MigrationRunner
      * Migration file naming regex — exactly three zero-padded digits, optional suffix.
      */
     private const VERSION_PATTERN = '/^schema_v(\d{3})(?:_.+)?\.sql$/';
+
+    /**
+     * Minimum valid migration version (version 0 is reserved and rejected).
+     */
+    private const MIN_VERSION = 1;
 
     /**
      * Advisory lock name for concurrent runner prevention.
@@ -65,7 +70,7 @@ class MigrationRunner
      */
     public function run(): array
     {
-        $lockAcquired = $this->acquireLock();
+        $this->acquireLock();
         try {
             $preflight = $this->preflight();
 
@@ -90,7 +95,17 @@ class MigrationRunner
             // Enable maintenance mode before applying changes.
             $wasAlreadyOn = $originalMaintenanceState === 1;
             if (!$wasAlreadyOn) {
-                AdminSettings::setMaintenanceMode('on', $this->db, $this->appConfig);
+                $onOk = AdminSettings::setMaintenanceMode('on', $this->db, $this->appConfig);
+                if ($onOk === false) {
+                    throw new \Exception('Failed to enable maintenance mode before migrations');
+                }
+                // Re-read mtce and verify it is actually 1 before running DDL.
+                $verifyState = $this->readMaintenanceState();
+                if ($verifyState !== 1) {
+                    throw new \Exception(
+                        'Maintenance mode verification failed — expected 1 but got ' . $verifyState
+                    );
+                }
             }
 
             try {
@@ -101,9 +116,16 @@ class MigrationRunner
 
                 // Disable maintenance mode only if we turned it on.
                 if (!$wasAlreadyOn) {
-                    $ok = AdminSettings::setMaintenanceMode('off', $this->db, $this->appConfig);
-                    if (!$ok) {
+                    $offOk = AdminSettings::setMaintenanceMode('off', $this->db, $this->appConfig);
+                    if ($offOk === false) {
                         throw new \Exception('Failed to disable maintenance mode after migrations');
+                    }
+                    // Verify maintenance mode is actually off after completion.
+                    $finalState = $this->readMaintenanceState();
+                    if ($finalState !== 0) {
+                        throw new \Exception(
+                            'Maintenance mode restoration verification failed — expected 0 but got ' . $finalState
+                        );
                     }
                 }
 
@@ -114,9 +136,7 @@ class MigrationRunner
                 throw $e;
             }
         } finally {
-            if ($lockAcquired) {
-                $this->releaseLock();
-            }
+            $this->releaseLock();
         }
     }
 
@@ -165,6 +185,22 @@ class MigrationRunner
             $result->currentVersion = 0;
         }
 
+        // Validate that discovered versions form a complete sequence 1..latestVersion.
+        // This catches missing/gap files (e.g. v001+v003 without v002) regardless of
+        // the database version, so the no-op check below cannot silently skip gaps.
+        $missing = [];
+        for ($v = 1; $v <= $latestVersion; $v++) {
+            if (!isset($migrations[$v])) {
+                $missing[] = $v;
+            }
+        }
+        if (!empty($missing)) {
+            throw new \Exception(
+                'Missing migration version(s): ' . implode(', ', $missing)
+                . '. Available versions: ' . implode(', ', array_keys($migrations))
+            );
+        }
+
         // Already at latest — no work needed.
         if ($result->currentVersion === $latestVersion) {
             $result->noWork = true;
@@ -179,29 +215,15 @@ class MigrationRunner
             );
         }
 
-        // Detect duplicates (warn already emitted during discovery).
-        if (count($migrations) !== $latestVersion) {
-            $duplicates = [];
-            for ($v = 1; $v <= $latestVersion; $v++) {
-                if (!isset($migrations[$v])) {
-                    $duplicates[] = $v;
-                }
-            }
-            if (!empty($duplicates)) {
-                throw new \Exception(
-                    'Duplicate or missing migration versions detected: '
-                    . implode(', ', $duplicates) . '. Remove duplicate files or add missing migrations.'
-                );
-            }
-        }
-
         // Build pending list and check for gaps.
         $pending = [];
         for ($v = $result->currentVersion + 1; $v <= $latestVersion; $v++) {
+            // At this point every version 1..latestVersion is guaranteed present by the
+            // validation above, but we keep the guard for defensive clarity.
             if (!isset($migrations[$v])) {
-                $available = implode(', ', array_keys($migrations));
                 throw new \Exception(
-                    "Missing migration for version $v (gap detected). Available versions: $available"
+                    "Missing migration for version $v (gap detected). Available versions: "
+                    . implode(', ', array_keys($migrations))
                 );
             }
             $pending[$v] = $migrations[$v];
@@ -228,13 +250,18 @@ class MigrationRunner
         sort($files);
 
         $migrations = [];
+        $malformed = [];
         foreach ($files as $file) {
             $basename = basename($file);
             if (!preg_match(self::VERSION_PATTERN, $basename, $matches)) {
-                // Skip non-matching files silently.
+                $malformed[] = $basename;
                 continue;
             }
             $version = (int) $matches[1];
+            if ($version < self::MIN_VERSION) {
+                $malformed[] = $basename;
+                continue;
+            }
             if (isset($migrations[$version])) {
                 $existing = basename($migrations[$version]);
                 fwrite(STDERR, "Warning: Duplicate migration version $version — using $basename (ignoring $existing)\n");
@@ -244,6 +271,13 @@ class MigrationRunner
                 );
             }
             $migrations[$version] = $file;
+        }
+
+        if (!empty($malformed)) {
+            throw new \Exception(
+                'Malformed migration file(s) found: ' . implode(', ', $malformed)
+                . '. Expected pattern: schema_vNNN[.suffix].sql (NNN = 3-digit version >= 001).'
+            );
         }
 
         if (empty($migrations)) {
@@ -370,21 +404,37 @@ class MigrationRunner
     // Advisory locking
     // ------------------------------------------------------------------
 
-    private function acquireLock(): bool
+    /**
+     * @throws \Exception
+     */
+    private function acquireLock(): void
     {
         $result = $this->db->query(
             "SELECT GET_LOCK('" . self::LOCK_NAME . "', " . self::LOCK_WAIT_TIMEOUT . ') AS locked'
         );
         if ($result === false) {
-            return false;
+            throw new \Exception(
+                'Failed to acquire advisory lock: ' . $this->db->error
+            );
         }
         $row = $result->fetch_assoc();
-        return (int) ($row['locked'] ?? 0) === 1;
+        $locked = (int) ($row['locked'] ?? -1);
+        if ($locked !== 1) {
+            throw new \Exception(
+                'Failed to acquire advisory lock (got ' . var_export($locked, true)
+                . '). Another migration may be running.'
+            );
+        }
     }
 
     private function releaseLock(): void
     {
-        $this->db->query("SELECT RELEASE_LOCK('" . self::LOCK_NAME . "')");
+        try {
+            $this->db->query("SELECT RELEASE_LOCK('" . self::LOCK_NAME . "')");
+        } catch (\Throwable $e) {
+            // Release lock errors are non-fatal — do not mask earlier exceptions.
+            fwrite(STDERR, "Warning: Failed to release advisory lock: " . $e->getMessage() . "\n");
+        }
     }
 
     // ------------------------------------------------------------------
@@ -394,16 +444,26 @@ class MigrationRunner
     /**
      * Read the current mtce value from the admin table.
      *
-     * @return int 0 or 1, or -1 on error
+     * @throws \Exception if the query fails, the row is absent,
+     *                    or the value is not 0 or 1.
      */
     private function readMaintenanceState(): int
     {
         $result = $this->db->query('SELECT mtce FROM admin LIMIT 1');
         if ($result === false) {
-            return -1;
+            throw new \Exception('Unable to read maintenance state: ' . $this->db->error);
         }
         $row = $result->fetch_assoc();
-        return (int) ($row['mtce'] ?? 0);
+        if ($row === null || !isset($row['mtce'])) {
+            throw new \Exception('admin table has no row — maintenance state cannot be determined');
+        }
+        $mtce = (int) $row['mtce'];
+        if ($mtce !== 0 && $mtce !== 1) {
+            throw new \Exception(
+                "admin table has invalid mtce value: $mtce (expected 0 or 1)"
+            );
+        }
+        return $mtce;
     }
 }
 

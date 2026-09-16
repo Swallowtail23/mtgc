@@ -1,5 +1,5 @@
 # Deny all access to the tools directory via HTTP.
 # This directory contains CLI-only scripts that must never be executed
 # through the web server.
-Order deny,allow
-Deny from all
+# Apache 2.4 syntax — matches shipped container and bare-metal configs.
+Require all denied
