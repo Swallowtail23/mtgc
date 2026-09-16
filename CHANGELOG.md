@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 ## [v0.6.8-dev] - Unreleased
 
 ### Added
+- Added `schema_metadata` table as a dedicated singleton for database schema version
+  tracking. A baseline row (`id=1, schema_version=1`) is seeded on fresh install.
+- Added `maintenance.php` — CLI tool to apply schema update migrations from the
+  command line. Discovers `schema_v*.sql` files in `setup/`, reads the current
+  schema version from `schema_metadata`, and applies migrations sequentially
+  up to the latest version. Supports multi-version migration files.
+- Added `docs/SCHEMA_UPDATES.md` — documentation for schema update management,
+  migration file conventions, and the maintenance script.
 - Added `bulk/image_webp_migrate.php` to fetch remote WebP variants for existing
   card JPEG caches in resumable batches, with validation and an explicit
   post-success JPEG deletion option.
