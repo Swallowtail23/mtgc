@@ -1,0 +1,5 @@
+# Deny all access to the tools directory via HTTP.
+# This directory contains CLI-only scripts that must never be executed
+# through the web server.
+Order deny,allow
+Deny from all

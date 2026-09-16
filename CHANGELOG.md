@@ -12,9 +12,14 @@ All notable changes to this project will be documented in this file.
   schema version from `schema_metadata`, and applies migrations sequentially
   up to the latest version. Supports multi-version and suffixed migration files
   (`schema_vNNN.sql` and `schema_vNNN_<name>.sql`).
-- Added `tests/MaintenanceRunnerTest.php` — 18 behavioral tests covering migration
+- Added `src/MTG/Bulk/MigrationRunner.php` — testable service class for migration
+  execution with advisory locking, maintenance state preservation, per-migration
+  version verification, and concurrent runner prevention.
+- Added `tests/TestMysqli.php` — mock mysqli class for MigrationRunner tests.
+- Added `tests/MigrationRunnerTest.php` — 18 production-path tests covering migration
   directory resolution, filename parsing, version gap detection, maintenance mode
   lifecycle, partial failure handling, and final version verification.
+- Added `tools/.htaccess` — denies HTTP access to the tools/ directory.
 - Added `docs/SCHEMA_UPDATES.md` — documentation for schema update management,
   migration file conventions, and the maintenance script.
 - Added `bulk/image_webp_migrate.php` to fetch remote WebP variants for existing
@@ -46,8 +51,8 @@ All notable changes to this project will be documented in this file.
   preventing the site from being left in maintenance mode when no migrations
   are needed.
 - Fixed `extractVersion()` regex to support suffixed migration filenames
-  (`schema_vNNN_<name>.sql`) in addition to version-only names.
-- Fixed migration discovery to detect and warn on duplicate version numbers.
+  (`schema_vNNN_<name>.sql`) and to require exactly three zero-padded digits.
+- Fixed migration discovery to reject duplicate version numbers as fatal errors.
 - Fixed migration chain validation to detect and reject version gaps (e.g.
   applying v003 without v002).
 - Fixed `multi_query()` error handling to check `$db->error` after each SQL
@@ -57,16 +62,25 @@ All notable changes to this project will be documented in this file.
 - Fixed empty `schema_metadata` table handling to avoid undefined index errors.
 - Fixed partial failure path to exit(1) before disabling maintenance mode,
   keeping the site protected when migrations fail.
+- Fixed maintenance state preservation — original state is read and restored
+  rather than always toggling on/off.
+- Fixed per-migration version verification to check schema_version after each
+  migration, not just at the end.
+- Fixed concurrent runner prevention with MySQL advisory locking.
 - Fixed WebP migration option parsing so \`--after=<UUID>\` loads validation before
   checking the resume cursor.
 
 ### Security
--
+- Added `tools/.htaccess` to deny HTTP access to the tools/ directory,
+  preventing CLI-only scripts from being executed via web SAPI.
+- MigrationRunner acquires a MySQL advisory lock to prevent concurrent
+  schema migration execution.
 
 ### Infrastructure
-- Updated `docs/SCHEMA_UPDATES.md` to fix documentation inaccuracies: correct
-  CLI command path (`php tools/maintenance.php`), accurate preflight/maintenance
-  mode lifecycle description, and clarified singleton constraint wording.
+- Extracted migration logic into `src/MTG/Bulk/MigrationRunner.php` testable
+  service class. The CLI script now acts as a thin wrapper.
+- Updated `docs/SCHEMA_UPDATES.md` with accurate preflight/maintenance mode
+  lifecycle, concurrency controls, and partial failure recovery steps.
 - Apache, service-worker caching, and the container GD build now support WebP
   card images alongside legacy JPEG cache files.
 

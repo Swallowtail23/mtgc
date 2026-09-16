@@ -179,6 +179,11 @@ if (!function_exists('mtgDbOverride')) :
     }
 endif;
 
+// Require test doubles that are not covered by the Composer autoloader.
+if (file_exists(__DIR__ . '/TestMysqli.php')) :
+    require_once __DIR__ . '/TestMysqli.php';
+endif;
+
 $autoload = __DIR__ . '/../vendor/autoload.php';
 if (file_exists($autoload)) :
     require_once $autoload;
