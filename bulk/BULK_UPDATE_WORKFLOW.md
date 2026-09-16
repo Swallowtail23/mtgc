@@ -61,6 +61,21 @@ storing the WebP. JPEG deletion is disabled unless `--delete-jpeg` is supplied;
 Use `--after=<UUID>` to resume an interrupted run. Deck photos are outside the
 card cache contract and are not selected by this utility.
 
+The same utility can audit stale `.jpg` and `.webp` card-cache files. It checks
+that each canonical UUID filename still exists in `cards_scry` under the same
+set-code directory. The audit is report-only by default:
+
+```bash
+php bulk/image_webp_migrate.php --cleanup-stale --dry-run
+```
+
+`--cleanup-stale` is report-only even when `--dry-run` is omitted. After
+reviewing the reported paths and taking a backup, explicitly enable
+deletion with `--cleanup-stale --delete-stale`. The complete `deck_photos`
+subtree, symbolic links, and files with unrelated extensions are excluded.
+Database validation is batched, and no deletion starts unless the full scan and
+all database lookups complete successfully.
+
 ### Rulings: `bulk/scryfall_rulings.php`
 
 The wrapper calls `ScryfallRulingsImport`. It fetches rulings bulk metadata, maintains a local JSONL file, upserts

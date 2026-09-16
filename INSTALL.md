@@ -406,6 +406,17 @@ card-cache paths, and leaves failures in place for a later retry. Because
 administrator card uploads use the same legacy filename convention, retain a
 backup and review the dry-run before enabling deletion.
 
+After migration, audit cache files whose UUID no longer exists or whose
+set-code directory no longer matches the database:
+
+```bash
+php bulk/image_webp_migrate.php --cleanup-stale --dry-run
+```
+
+This is report-only. Review the paths and retain a filesystem backup before
+running `php bulk/image_webp_migrate.php --cleanup-stale --delete-stale`.
+Deck photos are always excluded from this cleanup.
+
 ## Final checks
 
 - Confirm the application account can read `/opt/mtg/mtg_new.ini`; it requires

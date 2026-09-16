@@ -93,6 +93,37 @@ the failure. Existing administrator card uploads use the same legacy filename
 convention as cached Scryfall images, so review the dry-run and retain a backup
 before enabling JPEG deletion.
 
+## Stale card-image cleanup
+
+After bulk imports or set corrections, cache files can remain for card UUIDs
+that no longer exist or under a card's former set-code directory. Audit the
+cache without deleting anything with:
+
+```bash
+php bulk/image_webp_migrate.php --cleanup-stale --dry-run
+```
+
+The audit checks canonical `<setcode>/<UUID>.jpg`, `.webp`, and `_b` face paths
+against `cards_scry` in database batches. It reports missing UUIDs, incorrect
+set-code directories, and malformed cache paths. The entire `deck_photos`
+subtree is excluded, as are symbolic links and files with extensions outside
+the managed `.jpg`/`.webp` card cache. Use `--limit=N` for a bounded test scan
+and `--batch-size=N` to tune database lookup batches. The cleanup mode remains
+report-only if `--dry-run` is omitted; deletion always requires the separate
+`--delete-stale` option.
+
+Once the report and a filesystem backup have been reviewed, remove the proven
+stale files with:
+
+```bash
+php bulk/image_webp_migrate.php --cleanup-stale --delete-stale
+```
+
+Deletion begins only after the complete filesystem scan and every database
+lookup succeeds. A scan or database failure therefore leaves all files in
+place. Re-running the report-only command after deletion provides a final
+verification.
+
 ## Browser And Server Caching
 
 Card images remain cache-first service-worker resources. Phase one uses a new

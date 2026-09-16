@@ -115,7 +115,9 @@ Normal page and deck checks never convert or replace an existing JPEG. See
 [Scryfall image handling](docs/scryfall_images.md) for the cache and rollout
 contract. Existing card caches can be migrated from remote CDN WebP variants
 with `php bulk/image_webp_migrate.php --dry-run`, followed by the explicit
-`--delete-jpeg` mode after review. Existing native installations should follow the
+`--delete-jpeg` mode after review. Stale UUID or set-directory cache entries can
+be audited separately with `--cleanup-stale --dry-run`; deletion additionally
+requires `--delete-stale`. Existing native installations should follow the
 [bare-metal WebP upgrade checklist](INSTALL.md#existing-bare-metal-webp-upgrade)
 on each host before enabling the new image paths.
 

@@ -25,6 +25,10 @@ All notable changes to this project will be documented in this file.
 - Added `bulk/image_webp_migrate.php` to fetch remote WebP variants for existing
   card JPEG caches in resumable batches, with validation and an explicit
   post-success JPEG deletion option.
+- Added an opt-in stale card-image cache cleanup mode to `image_webp_migrate.php`.
+  It validates UUID and set-directory pairs against `cards_scry` in batches,
+  excludes `deck_photos`, reports without mutation by default, and requires
+  `--delete-stale` before removing files.
 
 ### Changed
 - Scryfall card and face images now prefer WebP `grid` sources with `normal`
