@@ -2,9 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.7.0-dev] - Unreleased
+## [v0.7.0] - 17/09/2026
 
-### Added
+### Added - 17/09/2026
 - Added `schema_metadata` table as a dedicated singleton for database schema version
   tracking. A baseline row (`id=1, schema_version=1`) is seeded on fresh install.
 - Added `tools/maintenance.php` — CLI tool to apply schema update migrations from the
@@ -30,7 +30,7 @@ All notable changes to this project will be documented in this file.
   excludes `deck_photos`, reports without mutation by default, and requires
   `--delete-stale` before removing files.
 
-### Changed
+### Changed - 17/09/2026
 - Scryfall card and face images now prefer WebP `grid` sources with `normal`
   JPEG fallback. Existing JPEG caches remain readable, while missing images,
   new cards, and explicitly refreshed cards or sets are stored as WebP.
@@ -48,7 +48,7 @@ All notable changes to this project will be documented in this file.
   `normal/...jpg` URLs to the corresponding `grid/...webp` source, so new
   downloads do not create additional JPEG caches during migration.
 
-### Fixed
+### Fixed - 17/09/2026
 - Fixed `tools/maintenance.php` migration directory path to resolve from the
   repository root (`dirname(__DIR__) . '/setup'`) instead of `tools/setup`.
 - Fixed no-op path to run preflight checks before enabling maintenance mode,
@@ -74,13 +74,13 @@ All notable changes to this project will be documented in this file.
 - Fixed WebP migration option parsing so \`--after=<UUID>\` loads validation before
   checking the resume cursor.
 
-### Security
+### Security - 17/09/2026
 - Added `tools/.htaccess` to deny HTTP access to the tools/ directory,
   preventing CLI-only scripts from being executed via web SAPI.
 - MigrationRunner acquires a MySQL advisory lock to prevent concurrent
   schema migration execution.
 
-### Infrastructure
+### Infrastructure - 17/09/2026
 - Extracted migration logic into `src/MTG/Bulk/MigrationRunner.php` testable
   service class. The CLI script now acts as a thin wrapper.
 - Updated `docs/SCHEMA_UPDATES.md` with accurate preflight/maintenance mode
@@ -89,9 +89,6 @@ All notable changes to this project will be documented in this file.
   card images alongside legacy JPEG cache files.
 
 ## [v0.6.7] - 26/08/2026
-
-### Added - 26/08/2026 (2)
--
 
 ### Changed - 26/08/2026 (2)
 - Documented the Composer dependency maintenance and deployment process for
