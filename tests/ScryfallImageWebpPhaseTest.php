@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        26/08/26
+Version:     1.1
+Date:        16/09/26
 Name:        ScryfallImageWebpPhaseTest.php
 Purpose:     Tests phase-one WebP trigger, cache, and deployment configuration.
 Notes:       -
@@ -89,7 +89,9 @@ class ScryfallImageWebpPhaseTest extends TestCase
         $this->assertStringContainsString("source_type IN ('all_cards', 'default_cards')", $source);
         $this->assertStringContainsString('php bulk/scryfall_bulk.php refresh', $source);
         $this->assertStringContainsString('Do **not** run `setup/data_updates.sh refresh --confirm`', $source);
-        $this->assertStringContainsString('Keep the existing `.jpg` files', $source);
+        $this->assertStringContainsString('php bulk/image_webp_migrate.php --dry-run', $source);
+        $this->assertStringContainsString('php bulk/image_webp_migrate.php --delete-jpeg', $source);
+        $this->assertStringContainsString('does not convert local JPEG', $source);
     }
 
     private function readProjectFile(string $path): string

@@ -386,9 +386,25 @@ Expect `Content-Type: image/webp`, the configured cache headers, and no gzip
 `mtg-images-webp1-<VERSION>` and does not retain an alternate JPEG after an
 explicit refresh.
 
-Keep the existing `.jpg` files. Phase one has no bulk conversion or deletion
-step; WebP files are added for cache misses and replace JPEGs only during an
-explicit refresh of the affected card or set.
+The remote migration is optional. To inspect existing card JPEGs without
+changing them, run:
+
+```bash
+php bulk/image_webp_migrate.php --dry-run
+```
+
+When the report has been reviewed, run the migration with explicit JPEG
+deletion:
+
+```bash
+php bulk/image_webp_migrate.php --delete-jpeg
+```
+
+This fetches WebP files from the remote CDN; it does not convert local JPEG
+bytes. It validates each WebP before deleting its matching JPEG, processes only
+card-cache paths, and leaves failures in place for a later retry. Because
+administrator card uploads use the same legacy filename convention, retain a
+backup and review the dry-run before enabling deletion.
 
 ## Final checks
 

@@ -49,8 +49,17 @@ legacy `normal` JPEG URLs when `grid` is absent. Existing cache files are
 resolved WebP first and JPEG second. Bulk image download remains limited to new
 rows in a `default` import. UI cache misses download WebP on demand, while
 ordinary checks leave existing JPEGs in place. Explicit Card Detail and Sets
-refreshes are the phase-one migration paths. See
+refreshes and `bulk/image_webp_migrate.php` are the explicit migration paths. See
 [`docs/scryfall_images.md`](../docs/scryfall_images.md).
+
+### Existing card images: `bulk/image_webp_migrate.php`
+
+This utility walks `cards_scry` in UUID batches and fetches remote WebP variants
+for matching cached card JPEGs. It validates each response before atomically
+storing the WebP. JPEG deletion is disabled unless `--delete-jpeg` is supplied;
+`--dry-run` reports eligible records without network or filesystem mutation.
+Use `--after=<UUID>` to resume an interrupted run. Deck photos are outside the
+card cache contract and are not selected by this utility.
 
 ### Rulings: `bulk/scryfall_rulings.php`
 

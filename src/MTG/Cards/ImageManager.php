@@ -1,11 +1,11 @@
 <?php
 
 /*
-Version:     1.26
-Date:        26/08/26
+Version:     1.28
+Date:        16/09/26
 Name:        ImageManager.php
 Purpose:     Resolves and downloads locally cached Scryfall card images.
-Notes:       Prefers WebP, retains JPEG fallback, and fills missing UI cache entries on demand.
+Notes:       Prefers WebP, retains JPEG fallback, and supports remote WebP cache migration.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
@@ -22,6 +22,7 @@ use MTG\Core\UserAgent;
 
 class ImageManager
 {
+    private const MAX_REMOTE_IMAGE_BYTES = 20 * 1024 * 1024;
     private const WEBP_EXTENSION = '.webp';
     private const JPEG_EXTENSION = '.jpg';
     private const PLACEHOLDER_IMAGE = '/images/back.jpg';
@@ -74,6 +75,27 @@ class ImageManager
         endif;
 
         return ['front' => $front, 'back' => $back];
+    }
+
+    /** @return array{deleted: bool, failed: bool} */
+    public function cleanupMigratedJpeg(array $faceResult): array
+    {
+        $status = (string) ($faceResult['status'] ?? '');
+        $jpegPath = (string) ($faceResult['jpeg_path'] ?? '');
+        if (!in_array($status, ['converted', 'already_webp'], true) || $jpegPath === '') :
+            return ['deleted' => false, 'failed' => false];
+        endif;
+        if (!$this->fileExists($jpegPath)) :
+            return ['deleted' => false, 'failed' => false];
+        endif;
+
+        if (@unlink($jpegPath)) :
+            $this->message->logMessage('[DEBUG]', "Removed migrated JPEG $jpegPath");
+            return ['deleted' => true, 'failed' => false];
+        endif;
+
+        $this->message->logMessage('[ERROR]', "Unable to remove migrated JPEG $jpegPath");
+        return ['deleted' => false, 'failed' => true];
     }
 
     /** @return array{success: bool, front: string, back: string} */
@@ -154,7 +176,61 @@ class ImageManager
         ];
     }
 
-    /** @return array{front: string, back: string, setcode: string, layout: string} */
+    /**
+     * Fetch remote WebP variants for existing JPEG card cache files.
+     *
+     * The migration deliberately uses the remote image URL rather than
+     * transcoding the locally stored JPEG. JPEG deletion is opt-in so the
+     * command can be run once to populate WebP and again to reclaim space.
+     *
+     * @return array{front: array<string, mixed>, back: array<string, mixed>}
+     */
+    public function migrateCardToWebp(
+        string $cardId,
+        bool $deleteJpeg = false,
+        bool $dryRun = false
+    ): array {
+        try {
+            $cardData = $this->getCardImageUris($cardId);
+        } catch (\Throwable $exception) {
+            $this->message->logMessage(
+                '[ERROR]',
+                "Unable to load image data for $cardId: {$exception->getMessage()}"
+            );
+            return [
+                'front' => $this->migrationFailure('card_lookup_failed'),
+                'back' => $this->migrationFailure('card_lookup_failed'),
+            ];
+        }
+
+        $imgLocation = (string) $this->appConfig->general('imageBaseDir', '');
+        $front = $this->migrateImageFace(
+            $cardData['front'],
+            $imgLocation,
+            $cardData['setcode'],
+            $cardId,
+            $cardData['front_field'],
+            $deleteJpeg,
+            $dryRun
+        );
+        $back = $this->migrationNotRequired();
+
+        if ($this->layoutHasSeparateBack($cardData['layout']) && $cardData['back'] !== '') :
+            $back = $this->migrateImageFace(
+                $cardData['back'],
+                $imgLocation,
+                $cardData['setcode'],
+                $cardId . '_b',
+                $cardData['back_field'],
+                $deleteJpeg,
+                $dryRun
+            );
+        endif;
+
+        return ['front' => $front, 'back' => $back];
+    }
+
+    /** @return array{front: string, back: string, front_field: ?string, back_field: ?string, setcode: string, layout: string} */
     private function getCardImageUris(string $cardId): array
     {
         $sql = "SELECT image_uri, f1_image_uri, f2_image_uri, setcode, layout
@@ -174,19 +250,25 @@ class ImageManager
         endif;
 
         $front = '';
-        if (isset($row['image_uri']) && $row['image_uri'] !== null) :
+        $frontField = null;
+        if (isset($row['image_uri']) && trim((string) $row['image_uri']) !== '') :
             $front = (string) $row['image_uri'];
-        elseif (isset($row['f1_image_uri']) && $row['f1_image_uri'] !== null) :
+            $frontField = 'image_uri';
+        elseif (isset($row['f1_image_uri']) && trim((string) $row['f1_image_uri']) !== '') :
             $front = (string) $row['f1_image_uri'];
+            $frontField = 'f1_image_uri';
         endif;
 
         $back = isset($row['f2_image_uri']) && $row['f2_image_uri'] !== null
             ? (string) $row['f2_image_uri']
             : '';
+        $backField = trim($back) === '' ? null : 'f2_image_uri';
 
         return [
             'front' => trim($front),
             'back' => trim($back),
+            'front_field' => $frontField,
+            'back_field' => $backField,
             'setcode' => (string) $row['setcode'],
             'layout' => (string) $row['layout'],
         ];
@@ -267,27 +349,177 @@ class ImageManager
         return $result;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function migrateImageFace(
+        string $remoteUrl,
+        string $imgLocation,
+        string $setcode,
+        string $fileStem,
+        ?string $databaseField,
+        bool $deleteJpeg,
+        bool $dryRun
+    ): array {
+        $basePath = $imgLocation . $setcode . '/' . $fileStem;
+        $jpegPath = $basePath . self::JPEG_EXTENSION;
+        $webpPath = $basePath . self::WEBP_EXTENSION;
+        $jpegExists = $this->fileExists($jpegPath);
+        $jpegBytes = $this->fileSize($jpegPath);
+        $webpSource = $this->webpVariantUrl($remoteUrl);
+
+        if ($this->isValidWebpFile($webpPath)) :
+            $jpegDeleted = false;
+            $cleanupFailed = false;
+            if ($deleteJpeg && !$dryRun && $jpegExists) :
+                if (@unlink($jpegPath)) :
+                    $jpegDeleted = true;
+                    $this->message->logMessage('[DEBUG]', "Removed superseded JPEG $jpegPath");
+                else :
+                    $cleanupFailed = true;
+                    $this->message->logMessage('[ERROR]', "Unable to remove superseded JPEG $jpegPath");
+                endif;
+            endif;
+            return [
+                'status' => 'already_webp',
+                'source' => $webpSource,
+                'database_field' => $databaseField,
+                'webp_path' => $webpPath,
+                'jpeg_path' => $jpegPath,
+                'jpeg_bytes' => $jpegBytes,
+                'webp_bytes' => $this->fileSize($webpPath),
+                'jpeg_deleted' => $jpegDeleted,
+                'cleanup_failed' => $cleanupFailed,
+            ];
+        endif;
+
+        if (!$jpegExists) :
+            return $this->migrationResult(
+                'missing_jpeg',
+                $remoteUrl,
+                $jpegPath,
+                $webpPath,
+                $jpegBytes,
+                $databaseField
+            );
+        endif;
+
+        $webpSources = $this->webpSourceUrls($remoteUrl);
+        if ($webpSources === []) :
+            $this->message->logMessage(
+                '[ERROR]',
+                "Unable to derive a remote WebP URL from $remoteUrl for $fileStem"
+            );
+            return $this->migrationResult(
+                'missing_webp_source',
+                $remoteUrl,
+                $jpegPath,
+                $webpPath,
+                $jpegBytes,
+                $databaseField
+            );
+        endif;
+
+        if ($dryRun) :
+            return $this->migrationResult(
+                'dry_run',
+                $webpSources[0],
+                $jpegPath,
+                $webpPath,
+                $jpegBytes,
+                $databaseField
+            );
+        endif;
+
+        $sourceUrl = '';
+        $result = 'error';
+        foreach ($webpSources as $webpUrl) :
+            $this->message->logMessage('[DEBUG]', "Migrating $jpegPath from remote WebP $webpUrl");
+            $result = $this->fetchAndStoreImage(
+                $webpUrl,
+                $imgLocation,
+                $setcode,
+                $webpPath,
+                'image/webp'
+            );
+            if ($this->isCachedImageResult($result)) :
+                $sourceUrl = $webpUrl;
+                break;
+            endif;
+        endforeach;
+        if (!$this->isCachedImageResult($result)) :
+            return $this->migrationResult(
+                'download_failed',
+                $remoteUrl,
+                $jpegPath,
+                $webpPath,
+                $jpegBytes,
+                $databaseField
+            );
+        endif;
+
+        $jpegDeleted = false;
+        $cleanupFailed = false;
+        if ($deleteJpeg) :
+            if (@unlink($jpegPath)) :
+                $jpegDeleted = true;
+                $this->message->logMessage('[DEBUG]', "Removed migrated JPEG $jpegPath");
+            else :
+                $cleanupFailed = true;
+                $this->message->logMessage('[ERROR]', "Unable to remove migrated JPEG $jpegPath");
+            endif;
+        endif;
+
+        return [
+            'status' => 'converted',
+            'source' => $sourceUrl,
+            'database_field' => $databaseField,
+            'webp_path' => $webpPath,
+            'jpeg_path' => $jpegPath,
+            'jpeg_bytes' => $jpegBytes,
+            'webp_bytes' => $this->fileSize($webpPath),
+            'jpeg_deleted' => $jpegDeleted,
+            'cleanup_failed' => $cleanupFailed,
+        ];
+    }
+
     private function fetchAndStoreImage(
         string $remoteUrl,
         string $imgLocation,
         string $setcode,
-        string $destination
+        string $destination,
+        ?string $expectedMime = null
     ): string {
         if ($remoteUrl === '') :
             return 'empty';
         endif;
 
-        if (!RemoteFileChecker::exists($remoteUrl, $this->appConfig, $this->message)) :
-            $this->message->logMessage('[ERROR]', "Scryfall image does not exist: $remoteUrl");
-            return 'error';
+        if ($expectedMime === null) :
+            if (!RemoteFileChecker::exists($remoteUrl, $this->appConfig, $this->message)) :
+                $this->message->logMessage('[ERROR]', "Scryfall image does not exist: $remoteUrl");
+                return 'error';
+            endif;
+
+            $userAgent = UserAgent::buildFromConfig($this->appConfig, null, $this->message);
+            $options = ['http' => ['user_agent' => $userAgent]];
+            $context = stream_context_create($options);
+            $image = @file_get_contents($remoteUrl, false, $context);
+            if ($image === false) :
+                $this->message->logMessage('[ERROR]', "Unable to download Scryfall image $remoteUrl");
+                return 'error';
+            endif;
+        else :
+            $image = $this->fetchRemoteImage($remoteUrl);
+            if ($image === false) :
+                return 'error';
+            endif;
         endif;
 
-        $userAgent = UserAgent::buildFromConfig($this->appConfig, null, $this->message);
-        $options = ['http' => ['user_agent' => $userAgent]];
-        $context = stream_context_create($options);
-        $image = @file_get_contents($remoteUrl, false, $context);
-        if ($image === false) :
-            $this->message->logMessage('[ERROR]', "Unable to download Scryfall image $remoteUrl");
+        if ($expectedMime !== null && !$this->isValidImageBytes($image, $expectedMime)) :
+            $this->message->logMessage(
+                '[ERROR]',
+                "Remote image $remoteUrl is not a valid $expectedMime image"
+            );
             return 'error';
         endif;
 
@@ -324,6 +556,162 @@ class ImageManager
             return self::WEBP_EXTENSION;
         endif;
         return self::JPEG_EXTENSION;
+    }
+
+    private function webpVariantUrl(string $remoteUrl): string
+    {
+        if (
+            preg_match('/\.webp(?=$|[?#])/i', $remoteUrl) !== 1
+            && preg_match('/\.jpe?g(?=$|[?#])/i', $remoteUrl) !== 1
+        ) :
+            return '';
+        endif;
+
+        $webpUrl = preg_replace('/\.jpe?g(?=$|[?#])/i', '.webp', $remoteUrl, 1);
+        if (!is_string($webpUrl)) :
+            return '';
+        endif;
+
+        foreach (
+            [
+                'small' => 'thumb',
+                'normal' => 'grid',
+                'large' => 'display',
+                'art_crop' => 'art',
+                'border_crop' => 'crop',
+            ] as $sourceVariant => $webpVariant
+        ) :
+            $candidate = preg_replace(
+                '#/' . preg_quote($sourceVariant, '#') . '/#',
+                '/' . $webpVariant . '/',
+                $webpUrl,
+                1
+            );
+            if (is_string($candidate) && $candidate !== $webpUrl) :
+                return $candidate;
+            endif;
+        endforeach;
+
+        return $webpUrl;
+    }
+
+    /** @return array<int, string> */
+    private function webpSourceUrls(string $remoteUrl): array
+    {
+        $webpUrl = $this->webpVariantUrl($remoteUrl);
+        if ($webpUrl === '') :
+            return [];
+        endif;
+
+        return [$webpUrl];
+    }
+
+    private function isValidWebpFile(string $path): bool
+    {
+        if (!$this->isReadable($path)) :
+            return false;
+        endif;
+
+        $imageInfo = @getimagesize($path);
+        return is_array($imageInfo) && ($imageInfo['mime'] ?? '') === 'image/webp';
+    }
+
+    private function isValidImageBytes(string $image, string $expectedMime): bool
+    {
+        $imageInfo = @getimagesizefromstring($image);
+        return is_array($imageInfo) && ($imageInfo['mime'] ?? '') === $expectedMime;
+    }
+
+    private function fetchRemoteImage(string $remoteUrl): string|false
+    {
+        if (stripos($remoteUrl, 'file://') === 0) :
+            $localPath = substr($remoteUrl, 7);
+            if (!is_file($localPath)) :
+                $this->message->logMessage('[ERROR]', "Remote image does not exist: $remoteUrl");
+                return false;
+            endif;
+            $localSize = $this->fileSize($localPath);
+            if ($localSize < 1 || $localSize > self::MAX_REMOTE_IMAGE_BYTES) :
+                $this->message->logMessage('[ERROR]', "Remote image has an invalid size: $remoteUrl");
+                return false;
+            endif;
+            $image = @file_get_contents($localPath);
+            return $image === false ? false : $image;
+        endif;
+
+        $userAgent = UserAgent::buildFromConfig($this->appConfig, null, $this->message);
+        $body = '';
+        $tooLarge = false;
+        $curl = curl_init($remoteUrl);
+        curl_setopt($curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
+        curl_setopt($curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS);
+        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($curl, CURLOPT_MAXREDIRS, 5);
+        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 15);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 60);
+        curl_setopt($curl, CURLOPT_FAILONERROR, true);
+        curl_setopt($curl, CURLOPT_USERAGENT, $userAgent);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, ['Accept: image/webp,*/*;q=0.8']);
+        curl_setopt($curl, CURLOPT_WRITEFUNCTION, function ($curl, string $chunk) use (&$body, &$tooLarge): int {
+            $body .= $chunk;
+            if (strlen($body) > self::MAX_REMOTE_IMAGE_BYTES) :
+                $tooLarge = true;
+                return 0;
+            endif;
+            return strlen($chunk);
+        });
+        $success = curl_exec($curl);
+        $httpCode = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+        $error = curl_error($curl);
+        curl_close($curl);
+
+        if ($success === false || $tooLarge || $httpCode < 200 || $httpCode >= 300 || $body === '') :
+            $reason = $tooLarge ? 'response exceeds the size limit' : "HTTP $httpCode: $error";
+            $this->message->logMessage('[ERROR]', "Unable to download remote WebP $remoteUrl ($reason)");
+            return false;
+        endif;
+
+        return $body;
+    }
+
+    private function fileSize(string $path): int
+    {
+        $size = @filesize($path);
+        return $size === false ? 0 : $size;
+    }
+
+    /** @return array<string, mixed> */
+    private function migrationResult(
+        string $status,
+        string $source,
+        string $jpegPath,
+        string $webpPath,
+        int $jpegBytes,
+        ?string $databaseField = null
+    ): array {
+        return [
+            'status' => $status,
+            'source' => $source,
+            'database_field' => $databaseField,
+            'webp_path' => $webpPath,
+            'jpeg_path' => $jpegPath,
+            'jpeg_bytes' => $jpegBytes,
+            'webp_bytes' => 0,
+            'jpeg_deleted' => false,
+            'cleanup_failed' => false,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function migrationFailure(string $status): array
+    {
+        return $this->migrationResult($status, '', '', '', 0);
+    }
+
+    /** @return array<string, mixed> */
+    private function migrationNotRequired(): array
+    {
+        return $this->migrationResult('not_required', '', '', '', 0);
     }
 
     private function relativeImagePath(string $path): string

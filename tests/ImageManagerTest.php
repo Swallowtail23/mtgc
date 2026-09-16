@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.2
-Date:        26/08/26
+Version:     1.6
+Date:        16/09/26
 Name:        ImageManagerTest.php
 Purpose:     Tests dual-format Scryfall image caching and explicit refresh behavior.
 Notes:       -
@@ -323,6 +323,98 @@ class ImageManagerTest extends TestCase
         $this->assertFileDoesNotExist($this->imgRoot . 'refresh-failure/card-10.webp');
     }
 
+    public function testMigratesExistingJpegFromRemoteWebpAndDeletesItAfterValidation(): void
+    {
+        $remoteJpeg = $this->createRemoteImage('scryfall/normal/front/migration.jpg', 'legacy-source');
+        $this->createRemoteWebp('scryfall/grid/front/migration.webp');
+        $row = $this->cardRow('migration', 'normal', $remoteJpeg);
+        $legacyJpeg = $this->createLocalImage('migration', 'card-11', '.jpg', 'legacy-local');
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $result = $manager->migrateCardToWebp('card-11', true);
+
+        $this->assertSame('converted', $result['front']['status']);
+        $this->assertStringEndsWith('scryfall/grid/front/migration.webp', $result['front']['source']);
+        $this->assertSame('image_uri', $result['front']['database_field']);
+        $this->assertTrue($result['front']['jpeg_deleted']);
+        $this->assertFileDoesNotExist($legacyJpeg);
+        $this->assertFileExists($this->imgRoot . 'migration/card-11.webp');
+        $imageInfo = getimagesize($this->imgRoot . 'migration/card-11.webp');
+        $this->assertIsArray($imageInfo);
+        $this->assertSame('image/webp', $imageInfo['mime']);
+    }
+
+    public function testFailedRemoteWebpMigrationKeepsExistingJpeg(): void
+    {
+        $remoteJpeg = $this->createRemoteImage('migration-failure.jpg', 'legacy-source');
+        $this->createRemoteImage('migration-failure.webp', 'not-a-webp');
+        $row = $this->cardRow('migration-failure', 'normal', $remoteJpeg);
+        $legacyJpeg = $this->createLocalImage(
+            'migration-failure',
+            'card-12',
+            '.jpg',
+            'legacy-local'
+        );
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $result = $manager->migrateCardToWebp('card-12', true);
+
+        $this->assertSame('download_failed', $result['front']['status']);
+        $this->assertFileExists($legacyJpeg);
+        $this->assertSame('legacy-local', file_get_contents($legacyJpeg));
+        $this->assertFileDoesNotExist($this->imgRoot . 'migration-failure/card-12.webp');
+    }
+
+    public function testDryRunReportsRemoteWebpWithoutDownloadingOrDeleting(): void
+    {
+        $remoteJpeg = $this->createRemoteImage('migration-dry-run.jpg', 'legacy-source');
+        $row = $this->cardRow('migration-dry-run', 'normal', $remoteJpeg);
+        $legacyJpeg = $this->createLocalImage(
+            'migration-dry-run',
+            'card-13',
+            '.jpg',
+            'legacy-local'
+        );
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $result = $manager->migrateCardToWebp('card-13', true, true);
+
+        $this->assertSame('dry_run', $result['front']['status']);
+        $this->assertStringEndsWith('migration-dry-run.webp', $result['front']['source']);
+        $this->assertFileExists($legacyJpeg);
+        $this->assertFileDoesNotExist($this->imgRoot . 'migration-dry-run/card-13.webp');
+    }
+
+    public function testDeletePassRemovesJpegWhenValidWebpAlreadyExists(): void
+    {
+        $row = $this->cardRow('existing-webp', 'normal', 'https://img.example/card.webp');
+        $legacyJpeg = $this->createLocalImage('existing-webp', 'card-14', '.jpg', 'legacy-local');
+        $this->createLocalWebp('existing-webp', 'card-14');
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $result = $manager->migrateCardToWebp('card-14', true);
+
+        $this->assertSame('already_webp', $result['front']['status']);
+        $this->assertTrue($result['front']['jpeg_deleted']);
+        $this->assertFileDoesNotExist($legacyJpeg);
+        $this->assertFileExists($this->imgRoot . 'existing-webp/card-14.webp');
+    }
+
+    public function testDryRunDoesNotDeleteJpegWhenValidWebpAlreadyExists(): void
+    {
+        $remoteUrl = 'https://cards.scryfall.io/grid/front/0/0/card-15.webp?1';
+        $row = $this->cardRow('existing-webp-dry-run', 'normal', $remoteUrl);
+        $legacyJpeg = $this->createLocalImage('existing-webp-dry-run', 'card-15', '.jpg', 'legacy-local');
+        $this->createLocalWebp('existing-webp-dry-run', 'card-15');
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $result = $manager->migrateCardToWebp('card-15', true, true);
+
+        $this->assertSame('already_webp', $result['front']['status']);
+        $this->assertFalse($result['front']['jpeg_deleted']);
+        $this->assertFileExists($legacyJpeg);
+    }
+
     /** @return array<string, mixed> */
     private function cardRow(string $setcode, string $layout, string $frontUrl, string $backUrl = ''): array
     {
@@ -353,6 +445,36 @@ class ImageManagerTest extends TestCase
         }
         file_put_contents($path, $contents);
         return 'file://' . $path;
+    }
+
+    private function createRemoteWebp(string $name): string
+    {
+        $path = $this->tempDir . '/remote/' . $name;
+        if (!is_dir(dirname($path))) {
+            mkdir(dirname($path), 0777, true);
+        }
+
+        $image = imagecreatetruecolor(2, 2);
+        imagefill($image, 0, 0, 0x336699);
+        imagewebp($image, $path, 80);
+        imagedestroy($image);
+
+        return 'file://' . $path;
+    }
+
+    private function createLocalWebp(string $setcode, string $name): string
+    {
+        $path = $this->imgRoot . $setcode . '/' . $name . '.webp';
+        if (!is_dir(dirname($path))) {
+            mkdir(dirname($path), 0777, true);
+        }
+
+        $image = imagecreatetruecolor(2, 2);
+        imagefill($image, 0, 0, 0x336699);
+        imagewebp($image, $path, 80);
+        imagedestroy($image);
+
+        return $path;
     }
 
     private function removeDir(string $dir): void

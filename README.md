@@ -113,7 +113,9 @@ Phase-one downloads occur for missing images encountered through the UI, newly
 inserted default-card records, and explicit refreshes from Card Detail or Sets.
 Normal page and deck checks never convert or replace an existing JPEG. See
 [Scryfall image handling](docs/scryfall_images.md) for the cache and rollout
-contract. Existing native installations should follow the
+contract. Existing card caches can be migrated from remote CDN WebP variants
+with `php bulk/image_webp_migrate.php --dry-run`, followed by the explicit
+`--delete-jpeg` mode after review. Existing native installations should follow the
 [bare-metal WebP upgrade checklist](INSTALL.md#existing-bare-metal-webp-upgrade)
 on each host before enabling the new image paths.
 

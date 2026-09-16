@@ -56,6 +56,43 @@ Administrator JPEG uploads on Card Detail remain supported. A successful
 upload removes the corresponding Scryfall WebP cache entry so that the uploaded
 JPEG remains visible until an administrator explicitly refreshes it again.
 
+## Remote WebP migration
+
+Existing card JPEG cache files can be migrated by fetching the corresponding
+remote WebP variant. The utility does not transcode local JPEG bytes and does
+not touch `cardimg/deck_photos`:
+
+```bash
+php bulk/image_webp_migrate.php --dry-run
+php bulk/image_webp_migrate.php --delete-jpeg
+```
+
+The first command reports records eligible for remote migration. The second
+stores and validates each WebP atomically, then removes its matching JPEG only
+after the WebP is safely in place. JPEG deletion is deliberately an explicit
+option. Use `--batch-size=N` to tune database batches and `--after=<card UUID>`
+to resume an interrupted run; completed WebP files are skipped on subsequent
+runs.
+
+Use `--limit=N` to stop after a small number of card records for staged or
+batch testing. `--batch-size` controls query chunks only and does not stop the
+overall run.
+
+Dry-run byte totals intentionally do not estimate savings: the utility does not
+download remote WebP files in that mode. Its report separates legacy JPEG bytes
+found, candidate JPEG bytes, existing WebP bytes, downloaded WebP bytes, and
+deleted JPEG bytes.
+
+The utility uses the exact WebP CDN URL stored in `image_uri`, `f1_image_uri`,
+or `f2_image_uri`. For legacy rows that still contain a Scryfall JPEG URL, it
+resolves the corresponding `grid` WebP CDN variant as a compatibility fallback.
+After a valid WebP is stored, the matching database URI is updated in the same
+migration batch. If the source is unavailable, or the response is not a valid
+WebP image, the legacy JPEG and database URI are retained and the run reports
+the failure. Existing administrator card uploads use the same legacy filename
+convention as cached Scryfall images, so review the dry-run and retain a backup
+before enabling JPEG deletion.
+
 ## Browser And Server Caching
 
 Card images remain cache-first service-worker resources. Phase one uses a new
@@ -78,8 +115,7 @@ php -r '$info = gd_info(); var_export($info["WebP Support"] ?? false); echo PHP_
 ```
 
 Deploy the application, Apache/service-worker changes, and rebuilt container
-before running any explicit image refresh. Phase one does not include a bulk
-conversion command; existing JPEGs should not be deleted manually.
+before running any explicit image refresh or the remote WebP migration.
 
 For an existing native host, follow the complete
 [bare-metal WebP upgrade checklist](../INSTALL.md#existing-bare-metal-webp-upgrade).

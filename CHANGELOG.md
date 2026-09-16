@@ -5,15 +5,25 @@ All notable changes to this project will be documented in this file.
 ## [v0.6.8-dev] - Unreleased
 
 ### Added
--
+- Added `bulk/image_webp_migrate.php` to fetch remote WebP variants for existing
+  card JPEG caches in resumable batches, with validation and an explicit
+  post-success JPEG deletion option.
 
 ### Changed
 - Scryfall card and face images now prefer WebP `grid` sources with `normal`
   JPEG fallback. Existing JPEG caches remain readable, while missing images,
   new cards, and explicitly refreshed cards or sets are stored as WebP.
+- WebP migration summaries now separate legacy JPEG, existing WebP, downloaded
+  WebP, and deleted JPEG byte totals so dry-run results are not misleading.
+- WebP migration now supports bounded test runs with `--limit=N`; a later run
+  with `--delete-jpeg` can clean matching JPEGs even when WebP files already
+  exist.
+- Successful WebP migrations now update the matching card image URI fields in
+  database batches, before optional JPEG cleanup.
 
 ### Fixed
--
+- Fixed WebP migration option parsing so \`--after=<UUID>\` loads validation before
+  checking the resume cursor.
 
 ### Security
 -

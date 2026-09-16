@@ -17,6 +17,7 @@ class BulkScriptBootstrapTest extends TestCase
             'bulk/weekly_exports.php',
             'bulk/collection_snapshots.php',
             'bulk/setimgreload.php',
+            'bulk/image_webp_migrate.php',
         ];
 
         foreach ($scripts as $script) :
@@ -33,5 +34,18 @@ class BulkScriptBootstrapTest extends TestCase
                 $source
             );
         endforeach;
+    }
+
+    public function testImageWebpMigrationLoadsAutoloaderBeforeParsingOptions()
+    {
+        $path = __DIR__ . '/../bulk/image_webp_migrate.php';
+        $source = file_get_contents($path);
+        $this->assertNotFalse($source);
+
+        $autoloadPosition = strpos($source, "require_once dirname(__DIR__) . '/vendor/autoload.php';");
+        $parsePosition = strpos($source, 'parseImageWebpMigrationOptions();');
+        $this->assertNotFalse($autoloadPosition);
+        $this->assertNotFalse($parsePosition);
+        $this->assertLessThan($parsePosition, $autoloadPosition);
     }
 }
