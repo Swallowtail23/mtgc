@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.1
+Version:     2.2
 Date:        16/09/26
 Name:        maintenance.php
 Purpose:     CLI entry point to apply schema update migrations.
@@ -18,7 +18,11 @@ To do:       -
 
 // CLI-only guard — must be first executable code.
 if (PHP_SAPI !== 'cli') {
-    fwrite(STDERR, "This script must be run from the command line.\n");
+    if (defined('STDERR')) {
+        fwrite(STDERR, "This script must be run from the command line.\n");
+    } else {
+        http_response_code(404);
+    }
     exit(1);
 }
 

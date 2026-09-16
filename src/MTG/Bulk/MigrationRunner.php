@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.3
 Date:        16/09/26
 Name:        MigrationRunner.php
 Purpose:     Testable schema migration runner service.
@@ -264,7 +264,6 @@ class MigrationRunner
             }
             if (isset($migrations[$version])) {
                 $existing = basename($migrations[$version]);
-                fwrite(STDERR, "Warning: Duplicate migration version $version — using $basename (ignoring $existing)\n");
                 throw new \Exception(
                     "Duplicate migration version $version: $basename and $existing. "
                     . 'Remove or rename one of the files.'
@@ -276,7 +275,7 @@ class MigrationRunner
         if (!empty($malformed)) {
             throw new \Exception(
                 'Malformed migration file(s) found: ' . implode(', ', $malformed)
-                . '. Expected pattern: schema_vNNN[.suffix].sql (NNN = 3-digit version >= 001).'
+                . '. Expected pattern: schema_vNNN[_suffix].sql (NNN = 3-digit version >= 001).'
             );
         }
 

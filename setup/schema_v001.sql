@@ -9,7 +9,7 @@
 -- ============================================================
 --
 -- Prerequisites:
---   - MySQL 8+ server with existing tables (users, admin, etc.).
+--   - MySQL 8.0.16+ server with existing tables (users, admin, etc.).
 --   - Database user must have CREATE and INSERT privileges.
 --
 -- Deployment sequencing:

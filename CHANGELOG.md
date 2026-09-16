@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
   execution with advisory locking, maintenance state preservation, per-migration
   version verification, and concurrent runner prevention.
 - Added `tests/TestMysqli.php` — mock mysqli class for MigrationRunner tests.
-- Added `tests/MigrationRunnerTest.php` — 18 production-path tests covering migration
+- Added `tests/MigrationRunnerTest.php` — production-path tests covering migration
   directory resolution, filename parsing, version gap detection, maintenance mode
   lifecycle, partial failure handling, and final version verification.
 - Added `tools/.htaccess` — denies HTTP access to the tools/ directory.
