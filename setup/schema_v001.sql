@@ -3,7 +3,7 @@
 -- Migration ID: 202609160001
 -- Date: 2026-09-16
 -- Purpose: Create schema_metadata table and seed baseline version
--- Bundled with release: v0.6.8
+-- Bundled with release: v0.7.0
 -- ============================================================
 -- MySQL DDL auto-commits. Do not wrap in a transaction.
 -- ============================================================

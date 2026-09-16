@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.6.8-dev] - Unreleased
+## [v0.7.0-dev] - Unreleased
 
 ### Added
 - Added `schema_metadata` table as a dedicated singleton for database schema version
