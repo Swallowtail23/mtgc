@@ -1,11 +1,11 @@
 <?php
 
 /*
-Version:     1.28
+Version:     1.29
 Date:        16/09/26
 Name:        ImageManager.php
 Purpose:     Resolves and downloads locally cached Scryfall card images.
-Notes:       Prefers WebP, retains JPEG fallback, and supports remote WebP cache migration.
+Notes:       Prefers WebP, retains local JPEG fallback, and supports remote WebP cache migration.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
@@ -312,9 +312,13 @@ class ImageManager
             return ['path' => self::PLACEHOLDER_IMAGE, 'changed' => false];
         endif;
 
-        $destination = $basePath . $this->extensionForRemoteUrl($remoteUrl);
-        $this->message->logMessage('[DEBUG]', "Image cache miss for $fileStem; downloading $remoteUrl");
-        $path = $this->fetchAndStoreImage($remoteUrl, $imgLocation, $setcode, $destination);
+        $preferredRemoteUrl = $this->preferredRemoteImageUrl($remoteUrl);
+        $destination = $basePath . $this->extensionForRemoteUrl($preferredRemoteUrl);
+        $this->message->logMessage(
+            '[DEBUG]',
+            "Image cache miss for $fileStem; downloading $preferredRemoteUrl"
+        );
+        $path = $this->fetchAndStoreImage($preferredRemoteUrl, $imgLocation, $setcode, $destination);
         return ['path' => $path, 'changed' => $this->isCachedImageResult($path)];
     }
 
@@ -329,8 +333,9 @@ class ImageManager
         endif;
 
         $basePath = $imgLocation . $setcode . '/' . $fileStem;
-        $destination = $basePath . $this->extensionForRemoteUrl($remoteUrl);
-        $result = $this->fetchAndStoreImage($remoteUrl, $imgLocation, $setcode, $destination);
+        $preferredRemoteUrl = $this->preferredRemoteImageUrl($remoteUrl);
+        $destination = $basePath . $this->extensionForRemoteUrl($preferredRemoteUrl);
+        $result = $this->fetchAndStoreImage($preferredRemoteUrl, $imgLocation, $setcode, $destination);
         if (!$this->isCachedImageResult($result)) :
             return $result;
         endif;
@@ -558,12 +563,26 @@ class ImageManager
         return self::JPEG_EXTENSION;
     }
 
+    private function preferredRemoteImageUrl(string $remoteUrl): string
+    {
+        if (preg_match('/\.webp(?=$|[?#])/i', $remoteUrl) === 1) :
+            return $remoteUrl;
+        endif;
+        if (!$this->isScryfallImageVariantUrl($remoteUrl)) :
+            return $remoteUrl;
+        endif;
+
+        $webpUrl = $this->webpVariantUrl($remoteUrl);
+        return $webpUrl === '' ? $remoteUrl : $webpUrl;
+    }
+
     private function webpVariantUrl(string $remoteUrl): string
     {
-        if (
-            preg_match('/\.webp(?=$|[?#])/i', $remoteUrl) !== 1
-            && preg_match('/\.jpe?g(?=$|[?#])/i', $remoteUrl) !== 1
-        ) :
+        if (preg_match('/\.webp(?=$|[?#])/i', $remoteUrl) === 1) :
+            return $remoteUrl;
+        endif;
+
+        if (preg_match('/\.jpe?g(?=$|[?#])/i', $remoteUrl) !== 1) :
             return '';
         endif;
 
@@ -593,6 +612,14 @@ class ImageManager
         endforeach;
 
         return $webpUrl;
+    }
+
+    private function isScryfallImageVariantUrl(string $remoteUrl): bool
+    {
+        return preg_match(
+            '#/(?:small|normal|large|art_crop|border_crop)/#i',
+            $remoteUrl
+        ) === 1;
     }
 
     /** @return array<int, string> */

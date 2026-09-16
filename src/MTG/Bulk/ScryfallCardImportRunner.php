@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        10/07/26
+Version:     1.4
+Date:        16/09/26
 Name:        ScryfallCardImportRunner.php
 Purpose:     Runs Scryfall card import batching and persistence orchestration.
 Notes:       -
@@ -200,9 +200,14 @@ class ScryfallCardImportRunner
                     $count_inc = $count_inc + 1;
 
                     $content_changed = false;
+                    $content_hash_changed = false;
                     $price_changed = false;
+                    $image_path_changed = false;
                     $existing_content_hash = null;
                     $existing_price_hash = null;
+                    $existing_image_uri = null;
+                    $existing_f1_image_uri = null;
+                    $existing_f2_image_uri = null;
 
                     $hash_id = $id;
                     $hashExec = $hashStmt->execute();
@@ -225,7 +230,13 @@ class ScryfallCardImportRunner
                             $appConfig
                         );
                     endif;
-                    $hashBindResult = $hashStmt->bind_result($existing_content_hash, $existing_price_hash);
+                    $hashBindResult = $hashStmt->bind_result(
+                        $existing_content_hash,
+                        $existing_price_hash,
+                        $existing_image_uri,
+                        $existing_f1_image_uri,
+                        $existing_f2_image_uri
+                    );
                     if ($hashBindResult === false) :
                         mtgError(
                             E_USER_ERROR,
@@ -237,8 +248,19 @@ class ScryfallCardImportRunner
                     endif;
                     if ($hashStmt->num_rows > 0) :
                         $hashStmt->fetch();
-                        $content_changed = ($existing_content_hash !== $content_hash);
+                        $content_hash_changed = ($existing_content_hash !== $content_hash);
                         $price_changed = ($existing_price_hash !== $price_hash);
+                        $image_path_changed = ScryfallCardImportStatement::webpImagePathNeedsRefresh(
+                            $mappedCard['image_uri'] ?? null,
+                            $existing_image_uri
+                        ) || ScryfallCardImportStatement::webpImagePathNeedsRefresh(
+                            $mappedCard['image_1'] ?? null,
+                            $existing_f1_image_uri
+                        ) || ScryfallCardImportStatement::webpImagePathNeedsRefresh(
+                            $mappedCard['image_2'] ?? null,
+                            $existing_f2_image_uri
+                        );
+                        $content_changed = $content_hash_changed || $image_path_changed;
                     endif;
                     $hashStmt->free_result();
 
@@ -278,7 +300,10 @@ class ScryfallCardImportRunner
                                 $count_update_both = $count_update_both + 1;
                                 $msg->logMessage(
                                     '[DEBUG]',
-                                    "Updated card - content and price hash change; return code: $status"
+                                    $image_path_changed && !$content_hash_changed
+                                        ? "Updated card - stale image path replaced with WebP and price hash change; "
+                                            . "return code: $status"
+                                        : "Updated card - content and price hash change; return code: $status"
                                 );
                                 if ($syncStateUpdater !== null) :
                                     $syncStateUpdater->update($id, 'content update');
@@ -287,7 +312,9 @@ class ScryfallCardImportRunner
                                 $count_update_content = $count_update_content + 1;
                                 $msg->logMessage(
                                     '[DEBUG]',
-                                    "Updated card - content hash change; return code: $status"
+                                    $image_path_changed && !$content_hash_changed
+                                        ? "Updated card - stale image path replaced with WebP; return code: $status"
+                                        : "Updated card - content hash change; return code: $status"
                                 );
                                 if ($syncStateUpdater !== null) :
                                     $syncStateUpdater->update($id, 'content update');

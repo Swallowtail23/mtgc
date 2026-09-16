@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.8
 Date:        16/09/26
 Name:        ImageManagerTest.php
 Purpose:     Tests dual-format Scryfall image caching and explicit refresh behavior.
@@ -201,6 +201,25 @@ class ImageManagerTest extends TestCase
         $this->assertFileExists($this->imgRoot . 'fallback/card-4.jpg');
     }
 
+    public function testMissingLegacyScryfallUrlFetchesGridWebp(): void
+    {
+        $remoteJpeg = $this->createRemoteImage('scryfall/normal/front/live.jpg', 'jpeg-bytes');
+        $remoteWebp = $this->createRemoteWebp('scryfall/grid/front/live.webp');
+        $row = $this->cardRow('live', 'normal', $remoteJpeg);
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $result = $manager->getImage('live', 'card-live', 'normal');
+
+        $destination = $this->imgRoot . 'live/card-live.webp';
+        $this->assertSame('cardimg/live/card-live.webp', $result['front']);
+        $this->assertFileExists($destination);
+        $this->assertSame(
+            file_get_contents(substr($remoteWebp, 7)),
+            file_get_contents($destination)
+        );
+        $this->assertFileDoesNotExist($this->imgRoot . 'live/card-live.jpg');
+    }
+
     public function testAsyncCheckDoesNotMigrateLegacyJpeg(): void
     {
         $remoteUrl = $this->createRemoteImage('front.webp', 'new-webp');
@@ -306,6 +325,22 @@ class ImageManagerTest extends TestCase
         $this->assertSame('cardimg/refresh/card-9_b.webp', $result['back']);
         $this->assertFileDoesNotExist($frontJpeg);
         $this->assertFileDoesNotExist($backJpeg);
+    }
+
+    public function testRefreshImageMapsLegacyScryfallUrlToGridWebp(): void
+    {
+        $remoteJpeg = $this->createRemoteImage('scryfall/normal/front/refresh.jpg', 'jpeg-bytes');
+        $this->createRemoteWebp('scryfall/grid/front/refresh.webp');
+        $row = $this->cardRow('refresh-legacy', 'normal', $remoteJpeg);
+        $legacyJpeg = $this->createLocalImage('refresh-legacy', 'card-refresh', '.jpg', 'legacy-jpeg');
+
+        $manager = new ImageManager(new FakeDbForImages($row), $this->appConfig, $this->gameRules);
+        $result = $manager->refreshImage('card-refresh');
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('cardimg/refresh-legacy/card-refresh.webp', $result['front']);
+        $this->assertFileExists($this->imgRoot . 'refresh-legacy/card-refresh.webp');
+        $this->assertFileDoesNotExist($legacyJpeg);
     }
 
     public function testFailedWebpRefreshKeepsExistingLegacyJpeg(): void

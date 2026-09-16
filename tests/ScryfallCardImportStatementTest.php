@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        08/07/26
+Version:     1.1
+Date:        16/09/26
 Name:        ScryfallCardImportStatementTest.php
 Purpose:     Tests Scryfall card import SQL and bind field ordering.
 Notes:       -
@@ -69,8 +69,47 @@ class ScryfallCardImportStatementTest extends TestCase
             substr_count($insertSql, '?')
         );
         $this->assertSame(
-            'SELECT content_hash, price_hash FROM `cards_scry_test` WHERE id = ? LIMIT 1',
+            'SELECT content_hash, price_hash, image_uri, f1_image_uri, f2_image_uri FROM `cards_scry_test` WHERE id = ? LIMIT 1',
             $hashSql
+        );
+    }
+
+    public function testIncomingWebpReplacesLegacyJpegEvenWhenContentHashMatches(): void
+    {
+        $insertSql = ScryfallCardImportStatement::insertSql('cards_scry_test');
+
+        foreach (['image_uri', 'f1_image_uri', 'f2_image_uri'] as $column) :
+            $this->assertStringContainsString(
+                "VALUES($column) IS NOT NULL",
+                $insertSql
+            );
+            $this->assertStringContainsString(
+                "LOWER(VALUES($column)) LIKE '%.webp%'",
+                $insertSql
+            );
+            $this->assertStringContainsString(
+                "LOWER(COALESCE($column, '')) NOT LIKE '%.webp%'",
+                $insertSql
+            );
+        endforeach;
+
+        $this->assertTrue(
+            ScryfallCardImportStatement::webpImagePathNeedsRefresh(
+                'https://cards.scryfall.io/grid/front/card.webp?123',
+                'https://cards.scryfall.io/normal/front/card.jpg?123'
+            )
+        );
+        $this->assertFalse(
+            ScryfallCardImportStatement::webpImagePathNeedsRefresh(
+                'https://cards.scryfall.io/grid/front/card.webp?123',
+                'https://cards.scryfall.io/grid/front/card.webp?123'
+            )
+        );
+        $this->assertFalse(
+            ScryfallCardImportStatement::webpImagePathNeedsRefresh(
+                'https://cards.scryfall.io/normal/front/card.jpg?123',
+                'https://cards.scryfall.io/normal/front/card.jpg?123'
+            )
         );
     }
 

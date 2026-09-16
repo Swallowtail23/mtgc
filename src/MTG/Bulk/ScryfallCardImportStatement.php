@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        08/07/26
+Version:     1.1
+Date:        16/09/26
 Name:        ScryfallCardImportStatement.php
 Purpose:     Defines cards_scry import SQL and bind field order for Scryfall card imports.
 Notes:       -
@@ -15,6 +15,12 @@ namespace MTG\Bulk;
 
 class ScryfallCardImportStatement
 {
+    private const IMAGE_URI_COLUMNS = [
+        'image_uri',
+        'f1_image_uri',
+        'f2_image_uri',
+    ];
+
     private const CONTENT_HASHED_COLUMNS = [
         'id',
         'oracle_id',
@@ -348,9 +354,14 @@ class ScryfallCardImportStatement
     public static function hashLookupSql(string $tableName): string
     {
         return sprintf(
-            "SELECT content_hash, price_hash FROM `%s` WHERE id = ? LIMIT 1",
+            "SELECT content_hash, price_hash, image_uri, f1_image_uri, f2_image_uri FROM `%s` WHERE id = ? LIMIT 1",
             $tableName
         );
+    }
+
+    public static function webpImagePathNeedsRefresh(mixed $incomingUri, mixed $existingUri): bool
+    {
+        return self::isWebpUri($incomingUri) && !self::isWebpUri($existingUri);
     }
 
     /**
@@ -401,7 +412,11 @@ class ScryfallCardImportStatement
     {
         $updates = [];
         foreach (self::CONTENT_HASHED_COLUMNS as $column) :
-            $updates[] = self::hashedUpdateSql($column, 'content_hash');
+            if (in_array($column, self::IMAGE_URI_COLUMNS, true)) :
+                $updates[] = self::imageUriUpdateSql($column);
+            else :
+                $updates[] = self::hashedUpdateSql($column, 'content_hash');
+            endif;
         endforeach;
         foreach (self::PRICE_HASHED_COLUMNS as $column) :
             $updates[] = self::hashedUpdateSql($column, 'price_hash');
@@ -422,6 +437,26 @@ class ScryfallCardImportStatement
     private static function hashedUpdateSql(string $column, string $hashColumn): string
     {
         return "$column = IF(NOT ($hashColumn <=> VALUES($hashColumn)), VALUES($column), $column)";
+    }
+
+    private static function imageUriUpdateSql(string $column): string
+    {
+        return "$column = IF(
+                                    NOT (content_hash <=> VALUES(content_hash))
+                                        OR (
+                                            VALUES($column) IS NOT NULL
+                                            AND LOWER(VALUES($column)) LIKE '%.webp%'
+                                            AND LOWER(COALESCE($column, '')) NOT LIKE '%.webp%'
+                                        ),
+                                    VALUES($column),
+                                    $column
+                                )";
+    }
+
+    private static function isWebpUri(mixed $uri): bool
+    {
+        return is_string($uri)
+            && preg_match('/\.webp(?:[?#]|$)/i', trim($uri)) === 1;
     }
 
     private static function placeholders(int $count, int $perLine): string

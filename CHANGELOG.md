@@ -20,6 +20,12 @@ All notable changes to this project will be documented in this file.
   exist.
 - Successful WebP migrations now update the matching card image URI fields in
   database batches, before optional JPEG cleanup.
+- Bulk card imports now replace legacy Scryfall JPEG image URI fields whenever
+  the incoming record provides a WebP path, even when the existing content hash
+  does not indicate a change.
+- Live cache misses and explicit refreshes now map legacy Scryfall
+  `normal/...jpg` URLs to the corresponding `grid/...webp` source, so new
+  downloads do not create additional JPEG caches during migration.
 
 ### Fixed
 - Fixed WebP migration option parsing so \`--after=<UUID>\` loads validation before
