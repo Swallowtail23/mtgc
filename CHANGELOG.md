@@ -7,10 +7,14 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Added `schema_metadata` table as a dedicated singleton for database schema version
   tracking. A baseline row (`id=1, schema_version=1`) is seeded on fresh install.
-- Added `maintenance.php` — CLI tool to apply schema update migrations from the
+- Added `tools/maintenance.php` — CLI tool to apply schema update migrations from the
   command line. Discovers `schema_v*.sql` files in `setup/`, reads the current
   schema version from `schema_metadata`, and applies migrations sequentially
-  up to the latest version. Supports multi-version migration files.
+  up to the latest version. Supports multi-version and suffixed migration files
+  (`schema_vNNN.sql` and `schema_vNNN_<name>.sql`).
+- Added `tests/MaintenanceRunnerTest.php` — 18 behavioral tests covering migration
+  directory resolution, filename parsing, version gap detection, maintenance mode
+  lifecycle, partial failure handling, and final version verification.
 - Added `docs/SCHEMA_UPDATES.md` — documentation for schema update management,
   migration file conventions, and the maintenance script.
 - Added `bulk/image_webp_migrate.php` to fetch remote WebP variants for existing
@@ -36,6 +40,23 @@ All notable changes to this project will be documented in this file.
   downloads do not create additional JPEG caches during migration.
 
 ### Fixed
+- Fixed `tools/maintenance.php` migration directory path to resolve from the
+  repository root (`dirname(__DIR__) . '/setup'`) instead of `tools/setup`.
+- Fixed no-op path to run preflight checks before enabling maintenance mode,
+  preventing the site from being left in maintenance mode when no migrations
+  are needed.
+- Fixed `extractVersion()` regex to support suffixed migration filenames
+  (`schema_vNNN_<name>.sql`) in addition to version-only names.
+- Fixed migration discovery to detect and warn on duplicate version numbers.
+- Fixed migration chain validation to detect and reject version gaps (e.g.
+  applying v003 without v002).
+- Fixed `multi_query()` error handling to check `$db->error` after each SQL
+  statement, not just whether execution started.
+- Fixed final version verification to compare against the expected latest
+  version and fail the run on mismatch.
+- Fixed empty `schema_metadata` table handling to avoid undefined index errors.
+- Fixed partial failure path to exit(1) before disabling maintenance mode,
+  keeping the site protected when migrations fail.
 - Fixed WebP migration option parsing so \`--after=<UUID>\` loads validation before
   checking the resume cursor.
 
@@ -43,6 +64,9 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Infrastructure
+- Updated `docs/SCHEMA_UPDATES.md` to fix documentation inaccuracies: correct
+  CLI command path (`php tools/maintenance.php`), accurate preflight/maintenance
+  mode lifecycle description, and clarified singleton constraint wording.
 - Apache, service-worker caching, and the container GD build now support WebP
   card images alongside legacy JPEG cache files.
 

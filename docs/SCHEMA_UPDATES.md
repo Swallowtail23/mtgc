@@ -18,7 +18,7 @@ CREATE TABLE `schema_metadata` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 ```
 
-- The table uses `id=1` as a singleton primary key with a MySQL CHECK constraint to enforce exactly one row.
+- The table uses `id=1` as a singleton primary key with a MySQL CHECK constraint to enforce at most one row.
 - `schema_version` tracks the current database schema version.
 - `updated_at` is automatically updated when the row changes.
 
@@ -50,17 +50,18 @@ Each file is self-contained and may include multiple schema changes (multiple `C
 Run the maintenance script from the command line:
 
 ```bash
-php maintenance.php
+php tools/maintenance.php
 ```
 
 The script:
 
 1. Reads database credentials from the INI file (same as the application).
 2. Queries the current schema version from `schema_metadata`.
-3. Discovers all `schema_v*.sql` files in `setup/`.
-4. Applies migrations sequentially from the current version up to the latest.
-5. Verifies the final schema version.
-6. Reports which migrations were applied.
+3. Discovers all `schema_v*.sql` files in `setup/` (supports `schema_vNNN.sql` and `schema_vNNN_<name>.sql`).
+4. Verifies there are no gaps in the migration chain before applying any changes.
+5. Applies migrations sequentially from the current version up to the latest.
+6. Verifies the final schema version matches the expected latest version.
+7. Reports which migrations were applied.
 
 **Idempotency:** If the database is already at the latest version, the script exits cleanly with no action.
 
@@ -195,4 +196,4 @@ To avoid partial failures, keep migration files focused on a single logical chan
 | `schema_vNNN.sql` | Versioned migration file (applied sequentially) |
 | `schema_vNNN_<name>.sql` | Versioned migration with a descriptive name (optional suffix) |
 
-The maintenance script uses `glob('setup/schema_v*.sql')` to discover migrations and sorts them by filename to ensure correct application order.
+The maintenance script uses `glob('setup/schema_v*.sql')` to discover migrations and sorts them by filename to ensure correct application order. It supports both naming patterns and will warn on duplicate version numbers (keeping the last file found).
