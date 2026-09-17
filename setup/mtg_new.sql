@@ -18,7 +18,7 @@ CREATE TABLE `schema_metadata` (
   CONSTRAINT `chk_schema_metadata_singleton` CHECK (`id` = 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `schema_metadata` (`id`, `schema_version`) VALUES (1, 1);
+INSERT INTO `schema_metadata` (`id`, `schema_version`) VALUES (1, 2);
 
 CREATE TABLE `cards_scry` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
@@ -376,6 +376,23 @@ CREATE TABLE `users` (
   `tfa_app_secret` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE `user_api_keys` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `usernumber` SMALLINT NOT NULL,
+  `key_hash` CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `key_prefix` VARCHAR(23) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `label` VARCHAR(128) DEFAULT NULL,
+  `scope` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT 'collection:read',
+  `created_at` DATETIME NOT NULL,
+  `last_used_at` DATETIME DEFAULT NULL,
+  `expires_at` DATETIME DEFAULT NULL,
+  `revoked_at` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_user_api_keys_hash` (`key_hash`),
+  KEY `idx_user_api_keys_owner` (`usernumber`, `revoked_at`),
+  KEY `idx_user_api_keys_last_used` (`last_used_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 CREATE TABLE `collection_values` (
   `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
   `usernumber` smallint NOT NULL,
@@ -571,6 +588,11 @@ ALTER TABLE `users`
 
 ALTER TABLE `collection_values`
   ADD CONSTRAINT `fk_collection_values_user`
+    FOREIGN KEY (`usernumber`) REFERENCES `users` (`usernumber`)
+    ON DELETE CASCADE;
+
+ALTER TABLE `user_api_keys`
+  ADD CONSTRAINT `fk_user_api_keys_user`
     FOREIGN KEY (`usernumber`) REFERENCES `users` (`usernumber`)
     ON DELETE CASCADE;
 

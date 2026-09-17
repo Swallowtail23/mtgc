@@ -29,11 +29,55 @@ class SchemaMetadataTest extends TestCase
     private const MIGRATION_FILE = 'schema_v001.sql';
 
     /**
+     * Extract the version number from a migration filename.
+     *
+     * Returns 0 if the filename does not match the expected pattern.
+     */
+    private function extractVersionFromFilename(string $filename): int
+    {
+        if (preg_match('/schema_v(\d{3})(?:_.+)?\.sql$/', basename($filename), $matches)) {
+            return (int) $matches[1];
+        }
+        return 0;
+    }
+
+    /**
      * Get the path to a setup SQL file relative to APP_ROOT.
      */
     private function setupPath(string $fileName): string
     {
         return APP_ROOT . '/setup/' . $fileName;
+    }
+
+    /**
+     * Discover the highest migration version across all schema_v*.sql files.
+     */
+    private function latestMigrationVersion(): int
+    {
+        $versions = [];
+        foreach (glob(APP_ROOT . '/setup/schema_v*.sql') ?: [] as $path) {
+            $version = $this->extractVersionFromFilename($path);
+            if ($version > 0) {
+                $versions[] = $version;
+            }
+        }
+        self::assertNotEmpty($versions, 'At least one migration file must exist in setup/');
+        return max($versions);
+    }
+
+    /**
+     * Extract the schema_version value from the fresh-install seed INSERT.
+     *
+     * Returns 0 if the pattern is not found.
+     */
+    private function extractFreshInstallSchemaVersion(string $content): int
+    {
+        $pattern = '/INSERT INTO `schema_metadata`.*?VALUES\s*\(\s*1\s*,\s*(\d+)\s*\)/';
+        preg_match($pattern, $content, $matches);
+        if (empty($matches)) {
+            return 0;
+        }
+        return (int) $matches[1];
     }
 
     /**
@@ -71,10 +115,15 @@ class SchemaMetadataTest extends TestCase
             'The fresh-install schema must seed the schema_metadata table.'
         );
 
-        self::assertStringContainsString(
-            '(1, 1)',
-            $content,
-            'The baseline row must have id=1 and schema_version=1.'
+        $expectedVersion = $this->latestMigrationVersion();
+        $actualVersion = $this->extractFreshInstallSchemaVersion($content);
+
+        self::assertGreaterThan(0, $actualVersion, 'The fresh-install schema must seed a positive schema_version.');
+        self::assertSame(
+            $expectedVersion,
+            $actualVersion,
+            'The fresh-install schema_version must match the highest migration filename version (expected '
+            . $expectedVersion . ', got ' . $actualVersion . '). This catches stale schema when migrations are added.'
         );
     }
 
@@ -387,11 +436,15 @@ class SchemaMetadataTest extends TestCase
             'schema_metadata must use id as PRIMARY KEY.'
         );
 
-        // The INSERT must target id=1
-        self::assertStringContainsString(
-            "VALUES (1, 1)",
-            $content,
-            'The baseline INSERT must target id=1, schema_version=1.'
+        $expectedVersion = $this->latestMigrationVersion();
+        $actualVersion = $this->extractFreshInstallSchemaVersion($content);
+
+        self::assertGreaterThan(0, $actualVersion, 'The fresh-install schema must seed a positive schema_version.');
+        self::assertSame(
+            $expectedVersion,
+            $actualVersion,
+            'The fresh-install schema_version must match the highest migration filename version (expected '
+            . $expectedVersion . ', got ' . $actualVersion . '). This catches stale schema when migrations are added.'
         );
     }
 
