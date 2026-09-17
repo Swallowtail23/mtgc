@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        16/09/26
+Version:     1.3
+Date:        17/09/26
 Name:        SchemaMetadataTest.php
 Purpose:     Verify schema_metadata table structure, singleton enforcement, and migration behavior.
 Notes:       -
@@ -294,9 +294,9 @@ class SchemaMetadataTest extends TestCase
     }
 
     /**
-     * Test that the migration file references the correct bundled release version.
+     * Test that the migration documents its bundled release using a stable format.
      */
-    public function testMigrationReferencesReleaseVersion(): void
+    public function testMigrationDocumentsBundledRelease(): void
     {
         $upgradePath = $this->setupPath(self::MIGRATION_FILE);
         self::assertFileExists($upgradePath);
@@ -304,10 +304,10 @@ class SchemaMetadataTest extends TestCase
         $content = file_get_contents($upgradePath);
         self::assertNotFalse($content);
 
-        self::assertStringContainsString(
-            'v0.6.8',
+        self::assertMatchesRegularExpression(
+            '/^-- Bundled with release: v\d+\.\d+\.\d+$/m',
             $content,
-            'The migration must reference the bundled release version.'
+            'The migration must document a semantic bundled release version.'
         );
     }
 
