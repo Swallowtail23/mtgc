@@ -1,11 +1,11 @@
 <?php
 
 /*
-Version:     2.33
-Date:        04/07/26
+Version:     2.34
+Date:        18/09/26
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
-Notes:       {none}
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
@@ -14,7 +14,9 @@ To do:       -
 
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
+use MTG\Bulk\ScryfallCardDeletionSafety;
 use MTG\Bulk\ScryfallImport;
+use MTG\Bulk\ScryfallMigrationSafetyAdapter;
 use MTG\Core\AppConfig;
 use MTG\Core\Filesystem;
 use MTG\Core\MyPHPMailer;
@@ -144,73 +146,19 @@ function getRowCount(string $file): int
 
 function safeDeleteCheck(string $id, \mysqli $db, AppConfig $appConfig): ?int
 {
-    $safeScore = null;
     global $msg;
 
-    //Find if it's in any decks
-    $sql = "SELECT deckname, username FROM decks
-        LEFT JOIN users ON decks.owner = users.usernumber
-        LEFT JOIN deckcards ON decks.decknumber = deckcards.decknumber
-        WHERE deckcards.cardnumber = ?";
-    $params = [$id];
-    $result = $db->execute_query($sql, $params);
-    if ($result === false) :
-        $safeScore = 10000;
-    else :
-        $deckMatches = $result->num_rows;
-        $msg->logMessage('[DEBUG]', "Matches in decks for '$id': $deckMatches");
-        if ($deckMatches > 0) :
-            $safeScore = 1;
-        else :
-            $safeScore = 0;
-        endif;
-    endif;
-
-    //Get user list
-    $sql = "SELECT usernumber,username FROM users";
-    $result = $db->execute_query($sql);
-    if ($result === false) :
-        $safeScore = 20000;
-        $users = [];
-    else :
-        $users = [];
-        while ($row = $result->fetch_assoc()) :
-            $users[] = ['usernumber' => $row['usernumber'], 'username' => $row['username']];
-        endwhile;
-    endif;
-
-    //Find if it's in any user collections
-    foreach ($users as $user) :
-        $table = $user['usernumber'] . "collection";
-        $tableExistsSql = "SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() "
-            . "AND table_name = ?";
-        $tableExists = $db->execute_query($tableExistsSql, [$table]);
-        if ($tableExists === false || $tableExists->num_rows === 0) :
-            $msg->logMessage(
-                '[DEBUG]',
-                "Collection table {$table} missing; skipping safe-delete check for {$user['username']}"
-            );
-            continue;
-        endif;
-        $sql = "SELECT SUM(COALESCE(`$table`.`normal`, 0) + COALESCE(`$table`.`foil`, 0) + "
-            . "COALESCE(`$table`.`etched`, 0)) AS total FROM `$table` WHERE id = ?";
-        $params = [$id];
-        $result = $db->execute_query($sql, $params);
-        if ($result === false) :
-            $safeScore = $safeScore + 100000;
-        else :
-            while ($row = $result->fetch_assoc()) :
-                if ($row['total'] !== null and $row['total'] != 0) :
-                    $msg->logMessage(
-                        '[DEBUG]',
-                        "Found one!: User: {$user['username']}, ID: $id: Total: {$row['total']}"
-                    );
-                    $safeScore = $safeScore + 5;
-                endif;
-            endwhile;
-        endif;
-    endforeach;
-    return $safeScore;
+    try {
+        $service = new ScryfallCardDeletionSafety($db, $msg, null, 500);
+        $adapter = new ScryfallMigrationSafetyAdapter($service);
+        return $adapter->check($id);
+    } catch (\Throwable $e) {
+        $msg->logMessage(
+            '[ERROR]',
+            "safeDeleteCheck: service construction or check failed for $id: " . $e->getMessage()
+        );
+        return 10001;
+    }
 }
 
 // Script logic runs from here
