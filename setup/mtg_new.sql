@@ -18,7 +18,24 @@ CREATE TABLE `schema_metadata` (
   CONSTRAINT `chk_schema_metadata_singleton` CHECK (`id` = 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `schema_metadata` (`id`, `schema_version`) VALUES (1, 2);
+INSERT INTO `schema_metadata` (`id`, `schema_version`) VALUES (1, 3);
+
+CREATE TABLE `scryfall_game_types` (
+  `code` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `label` VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `sort_order` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  `selected` TINYINT(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`code`),
+  KEY `idx_scryfall_game_types_selected` (`selected`),
+  KEY `idx_scryfall_game_types_sort` (`sort_order`, `code`),
+  CONSTRAINT `chk_scryfall_game_types_code` CHECK (code REGEXP '^[a-z][a-z0-9]*$'),
+  CONSTRAINT `chk_scryfall_game_types_selected` CHECK (selected IN (0, 1))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `scryfall_game_types` (`code`, `label`, `sort_order`, `selected`) VALUES
+  ('arena', 'MtG Arena', 10, 1),
+  ('mtgo', 'MtG Online', 20, 0),
+  ('paper', 'Paper', 30, 1);
 
 CREATE TABLE `cards_scry` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,

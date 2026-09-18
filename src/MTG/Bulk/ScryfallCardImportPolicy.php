@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        10/07/26
+Version:     2.0
+Date:        18/09/26
 Name:        ScryfallCardImportPolicy.php
 Purpose:     Decide whether a mapped Scryfall card is eligible for an import mode.
 Notes:       -
@@ -17,7 +17,7 @@ use MTG\Core\GameRules;
 
 class ScryfallCardImportPolicy
 {
-    /** @var array<int, mixed> */
+    /** @var array<int, string> */
     private array $gamesToInclude;
     /** @var array<int, mixed> */
     private array $languagesToSkip;
@@ -26,9 +26,13 @@ class ScryfallCardImportPolicy
     /** @var array<int, mixed> */
     private array $layoutsToSkip;
 
-    public function __construct(GameRules $gameRules)
+    /**
+     * @param GameRules $gameRules          Game rules configuration
+     * @param ScryfallGameTypeRepository $repository Database-backed game-type repository
+     */
+    public function __construct(GameRules $gameRules, ScryfallGameTypeRepository $repository)
     {
-        $this->gamesToInclude = self::ruleArray($gameRules->get('games_to_include', []));
+        $this->gamesToInclude = $repository->getSelectedCodes();
         $this->languagesToSkip = self::ruleArray($gameRules->get('langs_to_skip', []));
         $this->allLanguagesToSkip = self::ruleArray($gameRules->get('langs_to_skip_all', []));
         $this->layoutsToSkip = self::ruleArray($gameRules->get('layouts_to_skip', []));

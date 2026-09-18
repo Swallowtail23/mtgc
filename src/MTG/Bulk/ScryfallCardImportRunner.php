@@ -32,7 +32,14 @@ class ScryfallCardImportRunner
         bool $collectStats = true
     ): string|false {
         $msg = new Message($appConfig);
-        $importPolicy = new ScryfallCardImportPolicy($gameRules);
+
+        try {
+            $repository = new ScryfallGameTypeRepository($db, $msg);
+            $importPolicy = new ScryfallCardImportPolicy($gameRules, $repository);
+        } catch (\RuntimeException $e) {
+            $msg->logMessage('[ERROR]', 'Game type repository failed: ' . $e->getMessage());
+            return false;
+        }
 
         $allowedTables = ['cards_scry', 'cards_scry_test'];
         if (!in_array($tableName, $allowedTables, true)) :

@@ -132,6 +132,73 @@ class PrintedFieldsDbStub
     {
         return true;
     }
+
+    /**
+     * @param array<int, string>|null $params
+     * @return \mysqli_result|false
+     */
+    public function execute_query(string $query, ?array $params = null)
+    {
+        unset($params);
+        if (stripos($query, 'scryfall_game_types') !== false) {
+            $rows = [
+                ['code' => 'arena', 'label' => 'MtG Arena', 'sort_order' => 10, 'selected' => 1],
+                ['code' => 'mtgo', 'label' => 'MtG Online', 'sort_order' => 20, 'selected' => 0],
+                ['code' => 'paper', 'label' => 'Paper', 'sort_order' => 30, 'selected' => 1],
+            ];
+            if (stripos($query, 'selected = 1') !== false) {
+                $rows = array_filter($rows, fn($r) => $r['selected'] === 1);
+                $rows = array_values($rows);
+            }
+            if (stripos($query, 'COUNT') !== false || stripos($query, 'count(*)') !== false) {
+                $count = count(array_filter($rows, fn($r) => $r['selected'] === 1));
+                return new class (['cnt' => $count]) extends \mysqli_result {
+                    private array $row;
+                    private bool $fetched = false;
+                    public function __construct(array $row)
+                    {
+                        $this->row = $row;
+                    }
+                    public function fetch_assoc(): ?array
+                    {
+                        if ($this->fetched) {
+                            return null;
+                        }
+                        $this->fetched = true;
+                        return $this->row;
+                    }
+                    public function free(): void
+                    {
+                    }
+                };
+            }
+            return new class ($rows) extends \mysqli_result {
+                private array $rows;
+                private int $index = 0;
+                public function __construct(array $rows)
+                {
+                    $this->rows = $rows;
+                }
+                public function fetch_assoc(): ?array
+                {
+                    if ($this->index >= count($this->rows)) {
+                        return null;
+                    }
+                    return $this->rows[$this->index++];
+                }
+                public function free(): void
+                {
+                    $this->index = 0;
+                }
+            };
+        }
+        $trimmed = trim($query);
+        if (in_array(strtolower($trimmed), ['begin', 'commit', 'rollback'], true)) {
+            return true;
+        }
+        $this->error = 'Unmocked execute_query: ' . $query;
+        return false;
+    }
 }
 
 class ScryfallImportPrintedFieldsTest extends TestCase

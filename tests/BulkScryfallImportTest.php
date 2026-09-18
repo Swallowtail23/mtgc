@@ -2,6 +2,19 @@
 
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Integration test for the bulk scryfall import script.
+ *
+ * Environment prerequisite:
+ *   - The target database (/opt/mtg/mtg_new.ini, tier=dev) must have the
+ *     scryfall_game_types table present (schema version >= 3).
+ *   - This test runs the real bulk/scryfall_bulk.php script against a live
+ *     database and requires the full schema including cards_scry_test,
+ *     scryfall_game_types, and all supporting tables.
+ *   - If the migration has not been applied, the test will fail at the
+ *     ScryfallGameTypeRepository construction step.
+ *   - To bring the database to schema 3, run: php tools/maintenance.php
+ */
 class BulkScryfallImportTest extends TestCase
 {
     public function testScryfallBulkScriptTestModeRuns()
