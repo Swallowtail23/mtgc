@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        04/07/26
+Version:     1.2
+Date:        19/09/26
 Name:        ScryfallImportTest.php
 Purpose:     Tests Scryfall bulk metadata helpers.
 Notes:       -
@@ -442,7 +442,6 @@ class ScryfallImportTest extends TestCase
     {
         $appConfig = $this->buildAppConfig();
         $gameRules = new GameRules([
-            'games_to_include' => ['paper'],
             'langs_to_skip' => [],
             'langs_to_skip_all' => [],
             'layouts_to_skip' => [],
@@ -458,7 +457,6 @@ class ScryfallImportTest extends TestCase
     {
         $appConfig = $this->buildAppConfig();
         $gameRules = new GameRules([
-            'games_to_include' => ['paper'],
             'langs_to_skip' => [],
             'langs_to_skip_all' => [],
             'layouts_to_skip' => [],
@@ -475,7 +473,6 @@ class ScryfallImportTest extends TestCase
     {
         $appConfig = $this->buildAppConfig();
         $gameRules = new GameRules([
-            'games_to_include' => ['paper'],
             'langs_to_skip' => [],
             'langs_to_skip_all' => [],
             'layouts_to_skip' => [],

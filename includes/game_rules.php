@@ -1,11 +1,13 @@
 <?php
 
 /*
-Version:     1.13
-Date:        25/08/26
+Version:     1.14
+Date:        26/09/26
 Name:        game_rules.php
 Purpose:     Game rules arrays and constants.
 Notes:       Add a new rule by defining it once below; it is returned automatically.
+             Removed the dead $games_to_include key (selected game types now come from
+             the DB-backed scryfall_game_types table).
 Author:      Simon Wilson
 Copyright:   2026 MTG Collection
 To do:       -
@@ -507,8 +509,8 @@ if (!function_exists('mtg_game_rules')) :
         /// Layouts to skip (currently empty, so all layouts are imported)
         $layouts_to_skip = [];
 
-        // Which type of cards to include
-        $games_to_include = ['paper','arena'];
+        // Selected game types are read from the DB-backed scryfall_game_types table
+        // via ScryfallGameTypeRepository::getSelectedCodes().
 
         // Scryfall API endpoints
         $scryfallApiBaseUrl = "https://api.scryfall.com";

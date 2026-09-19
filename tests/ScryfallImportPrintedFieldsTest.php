@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.2
-Date:        07/07/26
+Version:     1.3
+Date:        19/09/26
 Name:        ScryfallImportPrintedFieldsTest.php
 Purpose:     Verifies printed type/text fields are captured in Scryfall bulk import binds.
 Notes:       -
@@ -321,7 +321,6 @@ class ScryfallImportPrintedFieldsTest extends TestCase
         $db = new PrintedFieldsDbStub($insertStmt, $hashStmt);
         $appConfig = $this->buildAppConfig();
         $gameRules = new GameRules([
-            'games_to_include' => ['paper'],
             'langs_to_skip' => [],
             'langs_to_skip_all' => [],
             'layouts_to_skip' => [],

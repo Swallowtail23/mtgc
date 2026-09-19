@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        04/07/26
+Version:     1.2
+Date:        19/09/26
 Name:        ScryfallImportBranchPathsTest.php
 Purpose:     Tests Scryfall import update path classification.
 Notes:       -
@@ -274,7 +274,6 @@ class ScryfallImportBranchPathsTest extends TestCase
         $db = new ScryfallBranchDbStub($insertStmt, $hashStmt);
 
         $gameRules = new GameRules([
-            'games_to_include' => ['paper'],
             'langs_to_skip' => [],
             'langs_to_skip_all' => [],
             'layouts_to_skip' => [],
